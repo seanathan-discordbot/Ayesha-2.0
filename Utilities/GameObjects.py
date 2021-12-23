@@ -1,4 +1,4 @@
-import nextcord
+import discord
 
 import asyncpg
 import coolname
@@ -45,16 +45,81 @@ WEAPON_TYPES = ['Spear', 'Sword', 'Dagger', 'Bow', 'Trebuchet', 'Gauntlets',
                 'Staff', 'Greatsword', 'Axe', 'Sling', 'Javelin', 'Falx', 
                 'Mace']
 
+
 class Player:
     """The Ayesha character object
 
     Attributes
     ----------
-
+    disc_id : int
+        The player's Discord ID
+    unique_id : int
+        A unique ID for miscellaneous purposes. 
+        Use disc_id for a proper identifier
+    char_name : int
+        The player character's name (set by player, not their Discord username)
+    xp : int
+        The player's xp points
+    level : int
+        The player's level
+    equipped_item : GameObjects.Weapon
+        The weapon object of the item equipped by the player
+    acolyte1 : GameObjects.Acolyte
+        The acolyte object of the acolyte equipped by the player in Slot 1
+    acolyte2 : GameObjects.Acolyte
+        The acolyte object of the acolyte equipped by the player in Slot 2
+    assc : int (Changes to GameObject.Association when possible)
+        The ID of the association this player is in
+    guild_rank : str
+        The rank the player holds in the association they are in
+    gold : int
+        The player's wealth in gold (general currency)
+    occupation : str
+        The player's class/occupation role
+    location : str
+        The location of the player on the map
+    pvp_wins : int
+        The amount of wins the player has in PvP battles
+    pvp_fights : int
+        The total amount of PvP battles the player has participated in
+    boss_wins : int
+        The amount of wins the player has in PvE battles
+    boss_fights : int
+        The total amount of PvE battles the player has participated in
+    rubidics : int
+        The player's wealth in rubidics (gacha currency)
+    pity_counter : int
+        The amount of gacha pulls the player has done since their last 
+        legendary weapon or 5-star acolyte
+    adventure : int
+        The endtime (time.time()) of the player's adventure
+    destination : str
+        The destination of the player's adventure on the map
+    gravitas : int
+        The player's wealth in gravitas (alternate currency)
+    daily_streak : int
+        The amount of days in a row the player has used the `daily` command
 
     Methods
     -------
-    
+    get_level()
+        Returns the player's level using its current xp value
+    await is_weapon_owner()
+        Returns a bool of whether the item with the ID passed is in the player's
+        inventory
+    await equip_item()
+        Equips the item with the passed ID to the player
+    await unequip_item()
+        Replaces the equipped_item with an empty weapon and nullifies the
+        equipped_item in the database
+    await is_acolyte_owner()
+        Returns a bool of whether the acolyte with the ID passed is in the 
+        player's tavern
+    await equip_acolyte()
+        Equips the acolyte with the passed ID to the player in the given slot
+    await unequip_acolyte()
+        Replaces the acolyte with an empty one and nullifies the acolyte in the
+        database in the slot passed    
     """
     def __init__(self, record : asyncpg.Record):
         """
@@ -67,7 +132,7 @@ class Player:
         self.unique_id = record['num']
         self.char_name = record['user_name']
         self.xp = record['xp']
-        self.level = self.get_level(self.xp)
+        self.level = self.get_level()
         self.equipped_item = get_weapon_by_id(record['equipped_item'])
         self.acolyte1 = get_acolyte_by_id(record['acolyte1'])
         self.acolyte2 = get_acolyte_by_id(record['acolyte2'])
@@ -114,7 +179,7 @@ class Player:
                 SELECT item_id FROM items
                 WHERE user_id = $1 AND item_id = $2;
                 """
-        val = await conn.fetchval(conn, self.disc_id, item_id)
+        val = await conn.fetchval(self.disc_id, item_id)
 
         return val is not None
 
@@ -134,12 +199,74 @@ class Player:
 
     async def unequip_item(self, conn: asyncpg.Connection):
         """Unequips the current item from the player."""
-        self.equipped_item = None
+        self.equipped_item = Weapon() # Create an empty weapon
 
         psql = """
                 UPDATE players SET equipped_item = NULL WHERE user_id = $1;
                 """
         await conn.execute(psql, self.disc_id)
+
+    async def is_acolyte_owner(self, conn : asyncpg.Connection, a_id : int):
+        """Returns true/false depending on whether the acolyte with the given
+        ID is in this player's tavern.
+        """
+        psql = """
+                SELECT acolyte_id FROM acolytes
+                WHERE user_id = $1 AND acolyte_id = $2;
+                """
+        val = await conn.fetchval(self.disc_id, a_id)
+
+        return val is not None
+
+    async def equip_acolyte(self, conn : asyncpg.Connection, 
+            acolyte_id : int, slot : int):
+        """Equips the acolyte with the given ID to the player.
+        slot must be an integer 1 or 2.
+        """
+        if slot not in (1, 2):
+            raise Checks.InvalidAcolyteEquip
+            # Check this first because its inexpensive and won't waste time
+
+        if not self.is_acolyte_owner(conn, acolyte_id):
+            raise Checks.NotAcolyteOwner
+
+        a = acolyte_id == self.acolyte1.acolyte_id
+        b = acolyte_id == self.acolyte2.acolyte_id
+        if a or b:
+            raise Checks.InvalidAcolyteEquip
+
+        if slot == 1:
+            self.acolyte1 = get_acolyte_by_id(conn, acolyte_id)
+            psql = """
+                    UPDATE players
+                    SET acolyte1 = $1
+                    WHERE user_id = $2;
+                    """
+        elif slot == 2:
+            self.acolyte2 = get_acolyte_by_id(conn, acolyte_id)
+            psql = """
+                    UPDATE players
+                    SET acolyte2 = $1
+                    WHERE user_id = $2;
+                    """
+        
+        await conn.execute(psql, acolyte_id, self.disc_id)
+
+    async def unequip_acolyte(self, conn : asyncpg.Connection, slot : int):
+        """Removes the acolyte at the given slot of the player.
+        slot must be an integer 1 or 2.
+        """
+        if slot == 1:
+            self.acolyte1 = Acolyte()
+            psql = "UPDATE players SET acolyte1 = NULL WHERE user_id = $1;"
+            await conn.execute(psql, self.disc_id)
+        elif slot == 2:
+            self.acolyte2 = Acolyte()
+            psql = "UPDATE players SET acolyte2 = NULL WHERE user_id = $1;"
+            await conn.execute(psql, self.disc_id)
+        else:
+            raise Checks.InvalidAcolyteEquip
+
 
 class Weapon:
     """A weapon object. Changing the object attributes are not permanent; to
@@ -165,21 +292,22 @@ class Weapon:
 
     Methods
     -------
-    set_owner(asyncpg.Connection, int)
+    await set_owner()
         Change the owner of the weapon to the given ID.
-    set_name(asyncpg.Connection, str)
+    await set_name()
         Change the name of the weapon to the given string.
-    set_attack(asyncpg.Connection, int)
+    await set_attack()
         Change the attack of the weapon to the given attack.
-    destroy()
+    await destroy()
         Deletes this item from the database.
     """
-    def __init__(self, record : asyncpg.Connection=None):
+    def __init__(self, record : asyncpg.Connection = None):
         """
         Parameters
         ----------
-        record : asyncpg.Record
+        Optional[record] : asyncpg.Record
             A record containing information from the items table
+            Pass nothing to create an empty weapon
         """
         if record is not None:
             self.weapon_id = record['item_id']
@@ -228,20 +356,51 @@ class Weapon:
         await conn.execute(psql, self.weapon_id)
         self = None
 
+
 class Acolyte:
     """An acolyte object.
 
     Attributes
     ----------
+    gen_dict : dict
+        A dictionary containing the immutable, general information of the
+        acolyte with the given name. This information is loaded from json
+        and contains the following entries:
+        Name, Attack, Scale, Crit, HP, Rarity, Effect, Mat, Story, Image
+    acolyte_id : int
+        The unique ID of the acolyte
+    owner_id : int
+        The Discord ID of the owner of this acolyte
+    acolyte_name : str
+        The name of the acolyte, taken from gen_dict
+    xp : int
+        The acolyte's experience
+    level : int
+        The acolyte's level
+    dupes : int
+        The amount of duplicates this acolyte's owner has
 
     Methods
     -------
-    
+    get_acolyte_by_name(str)
+        Retrieves the information of an acolyte with a specific name from
+        the json file containing all acolytes and returns it as a dict
+    get_level()
+        Calculates an acolyte's level using its current xp value
+    get_attack()
+        Calculates and returns the acolyte's attack stat
+    get_crit()
+        Calculates and returns the acolyte's crit stat
+    get_hp()
+        Calculates and returns the acolyte's HP stat
     """
-    def __init__(self, record : asyncpg.Record=None):
+    def __init__(self, record : asyncpg.Record = None):
         """
         Parameters
         ----------
+        Optional[record] : asyncpg.Record
+            A record containing information from the acolytes table
+            Pass nothing to create an empty acolyte
         """
         if record is not None:
             self.gen_dict = self.get_acolyte_by_name(record['acolyte_name'])
@@ -249,8 +408,9 @@ class Acolyte:
             self.owner_id = record['user_id']
             self.acolyte_name = record['acolyte_name']
             self.xp = record['xp']
-            self.level = self.get_level(record['xp'])
+            self.level = self.get_level()
             self.dupes = 10 if record['duplicate'] > 10 else record['duplicate']
+            # Having more than 10 dupes has no gameplay effect
         else:
             self.gen_dict = {
                 'Name' : None,
@@ -279,13 +439,13 @@ class Acolyte:
         with open(config.ACOLYTE_LIST_PATH, 'r') as acolyte_list:
             return json.load(acolyte_list)[name]
 
-    def get_level(xp : int):
+    def get_level(self):
         """Returns the acolyte's level."""
         def f(x):
             return int(300 * (x**2))
 
         level = 0
-        while (xp >= f(level)):
+        while (self.xp >= f(level)):
             level += 1
         level -= 1
 
@@ -296,18 +456,47 @@ class Acolyte:
 
     def get_attack(self):
         """Returns the acolyte's attack stat."""
-        # Max 10 duplicates go into stat calculation
-        if self.dupes > 10:
-            self.dupes = 10
-
         # Duplicates give bonuses depending on acolyte rarity
         if self.gen_dict['Rarity'] == 5:
-            attack = self.duplicate * 3
+            attack = self.dupes * 3
+        elif self.gen_dict['Rarity'] == 4:
+            attack = self.dupes * 2.5
+        else:
+            attack = self.dupes * 2
 
         attack += self.gen_dict['Attack']
         attack += self.level * self.gen_dict['Scale']
 
-        return attack
+        return int(attack)
+
+    def get_crit(self):
+        """Returns the acolyte's crit stat."""
+        crit = self.gen_dict['Crit']
+        
+        # Duplicates give bonuses depending on acolyte rarity        
+        if self.gen_dict['Rarity'] == 5:
+            crit += self.dupes
+        elif self.gen_dict['Rarity'] == 4:
+            crit += self.dupes * .5
+        else:
+            crit += self.dupes * .2
+
+        return int(crit)
+
+    def get_hp(self):
+        """Returns the acolyte's HP stat."""
+        hp = self.gen_dict['HP']
+
+        # Duplicates give bonuses depending on acolyte rarity        
+        if self.gen_dict['Rarity'] == 5:
+            hp += self.dupes * 10
+        elif self.gen_dict['Rarity'] == 4:
+            hp += self.dupes * 7.5
+        else:
+            hp += self.dupes * 5
+
+        return int(hp)
+
 
 async def get_weapon_by_id(conn : asyncpg.Connection, item_id : int):
     """Return a weapon object of the item with the given ID."""
@@ -329,9 +518,8 @@ async def get_weapon_by_id(conn : asyncpg.Connection, item_id : int):
     return Weapon(weapon_record)
 
 async def create_weapon(conn : asyncpg.Connection, user_id : int, rarity : str,
-    attack : int = None, crit : int = None, weapon_name : str = None, 
-    weapon_type : str = None
-):
+        attack : int = None, crit : int = None, weapon_name : str = None, 
+        weapon_type : str = None):
     """Create a weapon with the specified information and returns it.
     Fields left blank will generate randomly
     """
@@ -417,7 +605,8 @@ async def get_player_by_id(conn : asyncpg.Connection, user_id : int):
 
     return Player(player_record)
 
-async def create_character(conn : asyncpg.Connection, user_id : int, name : str):
+async def create_character(conn : asyncpg.Connection, 
+        user_id : int, name : str):
     """Creates and returns a profile for the user with the given Discord ID."""
     psql = """
             INSERT INTO players (user_id, user_name) VALUES ($1, $2);
