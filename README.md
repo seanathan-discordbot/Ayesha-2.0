@@ -12,5 +12,5 @@ Ayesha is currently being rewritten using nextcord after the discontinuation of 
 
 ## Requirements
 - Python >=3.9.7
-- nextcord v.2.0.0a4
+- [pycord](https://pypi.org/project/py-cord/) v.1.7.3
 - [coolname](https://pypi.org/project/coolname/) v.1.1.0
