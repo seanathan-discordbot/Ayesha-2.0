@@ -2,6 +2,62 @@ ACOLYTE_LIST_PATH = r'F:\OneDrive\Python_Projects\Ayesha_Rewrite\Assets\Acolyte_
 
 ABLUE =  0xBEDCF6
 
+OCCUPATIONS = {
+    'Soldier' : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 0,
+        'hp_bonus' : 0
+    },
+    'Scribe' : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 10,
+        'hp_bonus' : 0
+    },
+    'Leatherworker' : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 0,
+        'hp_bonus' : 250
+    },
+}
+
+ORIGINS = {
+    'Riverburn' : {
+        'atk_bonus' : 5,
+        'crit_bonus' : 0,
+        'hp_bonus' : 0
+    },
+    'Thenuille' : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 0,
+        'hp_bonus' : 25
+    },
+    'Mythic Forest' : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 2,
+        'hp_bonus' : 0
+    },
+    'Lunaris' : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 0,
+        'hp_bonus' : 50
+    },
+    'Crumidia' : {
+        'atk_bonus' : 10,
+        'crit_bonus' : 0,
+        'hp_bonus' : 0
+    },
+    'Maritimiala' : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 4,
+        'hp_bonus' : 0
+    },
+    'Glakelys' : {
+        'atk_bonus' : 5,
+        'crit_bonus' : 0,
+        'hp_bonus' : 25
+    },
+}
+
 RARITIES = {
     'Common' : {
         'low_atk' : 10,

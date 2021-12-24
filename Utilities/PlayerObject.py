@@ -1,10 +1,6 @@
 import discord
 
 import asyncpg
-import coolname
-
-import json
-import random
 
 from Utilities import Checks, ItemObject, Vars, AcolyteObject
 from Utilities.ItemObject import Weapon
@@ -91,6 +87,12 @@ class Player:
         Give the player the passed amount of gold.
     await give_rubidics()
         Give the player the passed amount of rubidics.
+    get_attack()
+        Give the player's attack stat
+    get_crit()
+        Give the player's crit stat
+    get_hp()
+        Give the player's HP stat
     """
     def __init__(self, record : asyncpg.Record):
         """
@@ -111,6 +113,7 @@ class Player:
         self.guild_rank = record['guild_rank']
         self.gold = record['gold']
         self.occupation = record['occupation']
+        self.origin = record['origin']
         self.location = record['loc']
         self.pvp_wins = record['pvpwins']
         self.pvp_fights = record['pvpfights']
@@ -303,6 +306,51 @@ class Player:
 
         await conn.execute(psql, rubidics, self.disc_id)
 
+    def get_attack(self):
+        """Returns the player's attack stat, calculated from all other sources.
+        The value returned by this method is 'the final say' on the stat.
+        """
+        attack = 10 + int(self.level / 3)
+        attack += self.equipped_item.attack
+        attack += self.acolyte1.get_attack()
+        attack += self.acolyte2.get_attack()
+        # TODO implement player class - weapon type bonus
+        attack += Vars.ORIGINS[self.origin]['atk_bonus']
+        # TODO implement brotherhood bonus
+        attack += Vars.OCCUPATIONS[self.occupation]['atk_bonus']
+        attack = int(attack * 1.1) if self.occupation == "Soldier" else attack
+        # TODO implement comptroller bonus
+
+        return attack
+
+    def get_crit(self):
+        """Returns the player's crit stat, calculated from all other sources.
+        The value returned by this method is 'the final say' on the stat.
+        """
+        crit = 5
+        crit += self.equipped_item.crit
+        crit += self.acolyte1.get_crit()
+        crit += self.acolyte2.get_crit()
+        crit += Vars.ORIGINS[self.origin]['crit_bonus']
+        # TODO implement brotherhood bonus
+        crit += Vars.OCCUPATIONS[self.occupation]['crit_bonus']
+        # TODO implement comptroller bonus
+
+        return crit
+
+    def get_hp(self):
+        """Returns the player's HP stat, calculated from all other sources.
+        The value returned by this method is 'the final say' on the stat.
+        """
+        hp = 500 + self.level
+        hp += self.acolyte1.get_hp()
+        hp += self.acolyte2.get_hp()
+        hp += Vars.ORIGINS[self.origin]['hp_bonus']
+        hp += Vars.OCCUPATIONS[self.occupation]['hp_bonus']
+        # TODO implement comptroller bonus
+
+        return hp        
+
 
 async def get_player_by_id(conn : asyncpg.Connection, user_id : int):
     """Return a player object of the player with the given Discord ID."""
@@ -319,6 +367,7 @@ async def get_player_by_id(conn : asyncpg.Connection, user_id : int):
                 guild_rank,
                 gold,
                 occupation,
+                origin,
                 loc,
                 pvpwins,
                 pvpfights,
