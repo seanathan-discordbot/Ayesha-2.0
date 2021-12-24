@@ -1,5 +1,5 @@
-import nextcord
-from nextcord.ext import commands
+import discord
+from discord.ext import commands
 
 import logging
 import traceback
@@ -8,10 +8,19 @@ import asyncpg
 
 from Utilities import config
 
+logger = logging.getLogger('discord')
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler(filename=config.LOG_FILE, 
+                              encoding='utf-8', 
+                              mode='w')
+handler.setFormatter(logging.Formatter(
+    '%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(handler)
+
 async def get_prefix(client, message):
     """Return the prefix of a server. If DM, return '%'."""
-    a = isinstance(message.channel, nextcord.DMChannel)
-    b = isinstance(message.channel, nextcord.GroupChannel)
+    a = isinstance(message.channel, discord.DMChannel)
+    b = isinstance(message.channel, discord.GroupChannel)
     if a or b:
         return '%'
 
@@ -62,7 +71,7 @@ class Ayesha(commands.AutoShardedBot):
 
     async def on_ready(self):
         gp = "Read the %tutorial to get started!"
-        self.loop.create_task(self.change_presence(activity=nextcord.Game(gp)))
+        self.loop.create_task(self.change_presence(activity=discord.Game(gp)))
 
         print("Ayesha is online.")
 
@@ -77,15 +86,15 @@ async def reload(ctx, extension):
     await ctx.reply("Reloaded.")
 
 # Add bot cooldown
-_cd = commands.CooldownMapping.from_cooldown(1, 2.5, commands.BucketType.user)
+# _cd = commands.CooldownMapping.from_cooldown(1, 2.5, commands.BucketType.user)
 
-@bot.check
-async def cooldown_check(ctx):
-    bucket = _cd.get_bucket(ctx.message)
-    retry_after = bucket.update_rate_limit()
-    if retry_after:
-        raise commands.CommandOnCooldown(bucket, retry_after)
-    return True
+# @bot.check
+# async def cooldown_check(ctx):
+#     bucket = _cd.get_bucket(ctx.message)
+#     retry_after = bucket.update_rate_limit()
+#     if retry_after:
+#         raise commands.CommandOnCooldown(bucket, retry_after)
+#     return True
 
 # Connect to database
 async def create_db_pool():
@@ -113,13 +122,18 @@ async def on_guild_remove(guild):
         await conn.execute("DELETE FROM prefixes WHERE server = $1", guild.id)
 
 # Ping command
-@bot.command()
+@bot.slash_command()
 async def ping(ctx):
     """Ping to see if bot is working."""
     fmt = f"Latency is {bot.latency * 1000:.2f} ms"
-    embed = nextcord.Embed(title="Pong!", 
+    embed = discord.Embed(title="Pong!", 
                            description=fmt, 
                            color=bot.ayesha_blue)
-    await ctx.send(embed=embed)
+    await ctx.respond(embed=embed)
+
+@bot.slash_command()
+async def hello(ctx, name: str = None):
+    name = name or ctx.author.name
+    await ctx.respond(f"Hello {name}!")
 
 bot.run(config.TOKEN)
