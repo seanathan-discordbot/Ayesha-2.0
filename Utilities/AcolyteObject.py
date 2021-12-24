@@ -9,10 +9,21 @@ import random
 from Utilities import Checks, Vars
 
 class Acolyte:
-    """An acolyte object.
+    """An acolyte object. Changing the object attributes are not permanent,
+    and are suitable for cases in which temporary changes can be advantageous
+    for use in some commands. Only changes made by the set-methods will be
+    committed into the database.
+
+    It is convenient for the bot to assume that a player always has an acolyte
+    equipped, so this class can create empty objects by not passing a record
+    upon instantiation. If a command alters the object's database value, it
+    will first check the is_empty attribute to ensure such a change is possible.
+    Changing an empty object will result in an EmptyObject exception.
 
     Attributes
     ----------
+    is_empty : bool
+        Whether this object is a dummy object or not
     gen_dict : dict
         A dictionary containing the immutable, general information of the
         acolyte with the given name. This information is loaded from json
@@ -58,6 +69,7 @@ class Acolyte:
             Pass nothing to create an empty acolyte
         """
         if record is not None:
+            self.is_empty = False
             self.gen_dict = self.get_acolyte_by_name(record['acolyte_name'])
             self.acolyte_id = record['acolyte_id']
             self.owner_id = record['user_id']
@@ -67,6 +79,7 @@ class Acolyte:
             self.dupes = 10 if record['duplicate'] > 10 else record['duplicate']
             # Having more than 10 dupes has no gameplay effect
         else:
+            self.is_empty = True
             self.gen_dict = {
                 'Name' : None,
                 'Attack' : 0,
@@ -115,6 +128,9 @@ class Acolyte:
         """Increases the acolyte's xp by the given amount.
         If the xp increase results in a level-up, prints this out to Discord.        
         """
+        if self.is_empty:
+            raise Checks.EmptyObject
+
         old_level = self.level
         self.xp += xp
         psql = """
@@ -174,6 +190,9 @@ class Acolyte:
 
     async def add_duplicate(self, conn : asyncpg.Connection):
         """Increments the acolyte's duplicate value by 1"""
+        if self.is_empty:
+            raise Checks.EmptyObject   
+
         self.dupes += 1
 
         psql = """

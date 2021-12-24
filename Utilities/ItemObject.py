@@ -14,8 +14,16 @@ class Weapon:
     change a weapon's stats, use the set-methods, which commit any changes
     to the object into the database.
 
+    It is convenient for the bot to assume that a player always has a weapon
+    equipped, so this class can also create empty objects by not passing
+    a record upon instantiation. If a command alters the object's database
+    values, it should first check the is_empty attribute to ensure such a change
+    is possible. Changing an empty object will result in an EmptyObject error.
+
     Attributes
     ----------
+    is_empty : bool
+        Whether this object is a dummy object or not
     weapon_id : int
         The weapon's unique ID
     owner_id : int
@@ -51,6 +59,7 @@ class Weapon:
             Pass nothing to create an empty weapon
         """
         if record is not None:
+            self.is_empty = False
             self.weapon_id = record['item_id']
             self.owner_id = record['user_id']
             self.name = record['weapon_name']
@@ -59,6 +68,7 @@ class Weapon:
             self.attack = record['attack']
             self.crit = record['crit']
         else:
+            self.is_empty = True
             self.weapon_id = None
             self.owner_id = None
             self.name = "No Weapon"
@@ -69,6 +79,9 @@ class Weapon:
 
     async def set_owner(self, conn : asyncpg.Connection, user_id : int):
         """Changes the owner of this weapon."""
+        if self.is_empty:
+            raise Checks.EmptyObject
+
         self.owner_id = user_id
 
         psql = "UPDATE items SET user_id = $1 WHERE item_id = $2;"
@@ -76,6 +89,9 @@ class Weapon:
 
     async def set_name(self, conn : asyncpg.Connection, name : str):
         """Changes the name of the weapon. 'name' must be <= 20 characters."""
+        if self.is_empty:
+            raise Checks.EmptyObject
+        
         if len(name) > 20:
             raise Checks.ExcessiveCharacterCount(20)
 
@@ -86,6 +102,9 @@ class Weapon:
 
     async def set_attack(self, conn : asyncpg.Connection, attack : int):
         """Changes the attack of the weapon."""
+        if self.is_empty:
+            raise Checks.EmptyObject
+        
         self.attack = attack
 
         psql = "UPDATE items SET attack = $1 WHERE item_id $2;"
@@ -93,9 +112,12 @@ class Weapon:
 
     async def destroy(self, conn : asyncpg.Connection):
         """Deletes this item from the database."""
+        if self.is_empty:
+            raise Checks.EmptyObject
+        
         psql = "DELETE FROM items WHERE item_id = $1"
         await conn.execute(psql, self.weapon_id)
-        self = None
+        self = Weapon()
 
 
 async def get_weapon_by_id(conn : asyncpg.Connection, item_id : int):
