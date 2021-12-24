@@ -1,0 +1,354 @@
+import discord
+
+import asyncpg
+import coolname
+
+import json
+import random
+
+from Utilities import Checks, ItemObject, Vars, AcolyteObject
+from Utilities.ItemObject import Weapon
+from AcolyteObject import Acolyte
+
+
+class Player:
+    """The Ayesha character object
+
+    Attributes
+    ----------
+    disc_id : int
+        The player's Discord ID
+    unique_id : int
+        A unique ID for miscellaneous purposes. 
+        Use disc_id for a proper identifier
+    char_name : int
+        The player character's name (set by player, not their Discord username)
+    xp : int
+        The player's xp points
+    level : int
+        The player's level
+    equipped_item : GameObjects.Weapon
+        The weapon object of the item equipped by the player
+    acolyte1 : GameObjects.Acolyte
+        The acolyte object of the acolyte equipped by the player in Slot 1
+    acolyte2 : GameObjects.Acolyte
+        The acolyte object of the acolyte equipped by the player in Slot 2
+    assc : int (Changes to GameObject.Association when possible)
+        The ID of the association this player is in
+    guild_rank : str
+        The rank the player holds in the association they are in
+    gold : int
+        The player's wealth in gold (general currency)
+    occupation : str
+        The player's class/occupation role
+    location : str
+        The location of the player on the map
+    pvp_wins : int
+        The amount of wins the player has in PvP battles
+    pvp_fights : int
+        The total amount of PvP battles the player has participated in
+    boss_wins : int
+        The amount of wins the player has in PvE battles
+    boss_fights : int
+        The total amount of PvE battles the player has participated in
+    rubidics : int
+        The player's wealth in rubidics (gacha currency)
+    pity_counter : int
+        The amount of gacha pulls the player has done since their last 
+        legendary weapon or 5-star acolyte
+    adventure : int
+        The endtime (time.time()) of the player's adventure
+    destination : str
+        The destination of the player's adventure on the map
+    gravitas : int
+        The player's wealth in gravitas (alternate currency)
+    daily_streak : int
+        The amount of days in a row the player has used the `daily` command
+
+    Methods
+    -------
+    get_level()
+        Returns the player's level using its current xp value
+    check_xp_increase()
+        Increases the player's xp and checks for levelups.
+    await is_weapon_owner()
+        Returns a bool of whether the item with the ID passed is in the player's
+        inventory
+    await equip_item()
+        Equips the item with the passed ID to the player
+    await unequip_item()
+        Replaces the equipped_item with an empty weapon and nullifies the
+        equipped_item in the database
+    await is_acolyte_owner()
+        Returns a bool of whether the acolyte with the ID passed is in the 
+        player's tavern
+    await equip_acolyte()
+        Equips the acolyte with the passed ID to the player in the given slot
+    await unequip_acolyte()
+        Replaces the acolyte with an empty one and nullifies the acolyte in the
+        database in the slot passed
+    await give_gold()
+        Give the player the passed amount of gold.
+    await give_rubidics()
+        Give the player the passed amount of rubidics.
+    """
+    def __init__(self, record : asyncpg.Record):
+        """
+        Parameters
+        ----------
+        record : asyncpg.Record
+            A record containing information from the players table
+        """
+        self.disc_id = record['user_id']
+        self.unique_id = record['num']
+        self.char_name = record['user_name']
+        self.xp = record['xp']
+        self.level = self.get_level()
+        self.equipped_item = ItemObject.get_weapon_by_id(record['equipped_item'])
+        self.acolyte1 = AcolyteObject.get_acolyte_by_id(record['acolyte1'])
+        self.acolyte2 = AcolyteObject.get_acolyte_by_id(record['acolyte2'])
+        self.assc = record['assc']
+        self.guild_rank = record['guild_rank']
+        self.gold = record['gold']
+        self.occupation = record['occupation']
+        self.location = record['loc']
+        self.pvp_wins = record['pvpwins']
+        self.pvp_fights = record['pvpfights']
+        self.boss_wins = record['bosswins']
+        self.boss_fights = record['bossfights']
+        self.rubidics = record['rubidics']
+        self.pity_counter = record['pitycounter']
+        self.adventure = record['adventure']
+        self.destination = record['destination']
+        self.gravitas = record['gravitas']
+        self.daily_streak = record['daily_streak']
+
+    def get_level(self):
+        """Returns the player's level."""
+        def f(x):
+            return int(20 * x**3 + 500)
+        
+        def g(x):
+            return int(2/5 * x**4 + 250000)
+
+        if self.xp <= 540500: # Simpler scaling for first 30 levels
+            level = 0
+            while (self.xp >= f(level)):
+                level += 1
+        else:
+            level = 31
+            while (self.xp >= g(level)):
+                level += 1
+
+        return level - 1
+
+    async def check_xp_increase(self, conn : asyncpg.Connection, 
+            ctx : discord.context, xp : int):
+        """Increase the player's xp by a set amount.
+        This will also increase the player's equipped acolytes xp by 10% of the 
+        player's increase.
+        If the xp change results in a level-up for any of these entities, 
+        a reward will be given and printed to Discord.        
+        """
+        old_level = self.level
+        self.xp += xp
+        psql = """
+                UPDATE players
+                SET xp = xp + $1
+                WHERE user_id = $2;
+                """
+        await conn.execute(psql, xp, self.disc_id)
+        self.level = self.get_level()
+        if self.level > old_level: # Level up
+            gold = self.level * 500
+            rubidics = int(self.level / 30) + 1
+
+            self.give_gold(conn, gold)
+            self.give_rubidics(conn, rubidics)
+
+            embed = discord.Embed(
+                title = f"You have levelled up to level {self.level}!",
+                color = Vars.ABLUE)
+            embed.add_field(
+                name = f"{self.char_name}, you gained some rewards",
+                value = f"**Gold:** {gold}\n**Rubidics:**{rubidics}")
+
+            await ctx.respond(embed=embed)
+
+        # Check xp for the equipped acolytes
+        a_xp = int(xp / 10)
+        if self.acolyte1.acolyte_name is not None:
+            await self.acolyte1.check_xp_increase(conn, ctx, a_xp)
+
+        if self.acolyte2.acolyte_name is not None:
+            await self.acolyte2.check_xp_increase(conn, ctx, a_xp)
+
+    async def is_weapon_owner(self, conn : asyncpg.Connection, item_id : int):
+        """Returns true/false depending on whether the item with the given 
+        ID is in this player's inventory.
+        """
+        psql = """
+                SELECT item_id FROM items
+                WHERE user_id = $1 AND item_id = $2;
+                """
+        val = await conn.fetchval(self.disc_id, item_id)
+
+        return val is not None
+
+    async def equip_item(self, conn : asyncpg.Connection, item_id : int):
+        """Equips an item on the player."""
+        if not self.is_weapon_owner(conn, item_id):
+            raise Checks.NotWeaponOwner
+
+        self.equipped_item = ItemObject.get_weapon_by_id(conn, item_id)
+
+        psql = """
+                UPDATE players 
+                SET equipped_item = $1
+                WHERE user_id = $2;
+                """
+        await conn.execute(psql, item_id, self.disc_id)
+
+    async def unequip_item(self, conn: asyncpg.Connection):
+        """Unequips the current item from the player."""
+        self.equipped_item = Weapon() # Create an empty weapon
+
+        psql = """
+                UPDATE players SET equipped_item = NULL WHERE user_id = $1;
+                """
+        await conn.execute(psql, self.disc_id)
+
+    async def is_acolyte_owner(self, conn : asyncpg.Connection, a_id : int):
+        """Returns true/false depending on whether the acolyte with the given
+        ID is in this player's tavern.
+        """
+        psql = """
+                SELECT acolyte_id FROM acolytes
+                WHERE user_id = $1 AND acolyte_id = $2;
+                """
+        val = await conn.fetchval(self.disc_id, a_id)
+
+        return val is not None
+
+    async def equip_acolyte(self, conn : asyncpg.Connection, 
+            acolyte_id : int, slot : int):
+        """Equips the acolyte with the given ID to the player.
+        slot must be an integer 1 or 2.
+        """
+        if slot not in (1, 2):
+            raise Checks.InvalidAcolyteEquip
+            # Check this first because its inexpensive and won't waste time
+
+        if not self.is_acolyte_owner(conn, acolyte_id):
+            raise Checks.NotAcolyteOwner
+
+        a = acolyte_id == self.acolyte1.acolyte_id
+        b = acolyte_id == self.acolyte2.acolyte_id
+        if a or b:
+            raise Checks.InvalidAcolyteEquip
+
+        if slot == 1:
+            self.acolyte1 = AcolyteObject.get_acolyte_by_id(conn, acolyte_id)
+            psql = """
+                    UPDATE players
+                    SET acolyte1 = $1
+                    WHERE user_id = $2;
+                    """
+        elif slot == 2:
+            self.acolyte2 = AcolyteObject.get_acolyte_by_id(conn, acolyte_id)
+            psql = """
+                    UPDATE players
+                    SET acolyte2 = $1
+                    WHERE user_id = $2;
+                    """
+        
+        await conn.execute(psql, acolyte_id, self.disc_id)
+
+    async def unequip_acolyte(self, conn : asyncpg.Connection, slot : int):
+        """Removes the acolyte at the given slot of the player.
+        slot must be an integer 1 or 2.
+        """
+        if slot == 1:
+            self.acolyte1 = Acolyte()
+            psql = "UPDATE players SET acolyte1 = NULL WHERE user_id = $1;"
+            await conn.execute(psql, self.disc_id)
+        elif slot == 2:
+            self.acolyte2 = Acolyte()
+            psql = "UPDATE players SET acolyte2 = NULL WHERE user_id = $1;"
+            await conn.execute(psql, self.disc_id)
+        else:
+            raise Checks.InvalidAcolyteEquip
+
+    async def give_gold(self, conn : asyncpg.Connection, gold : int):
+        """Gives the player the passed amount of gold."""
+        self.gold += gold
+
+        psql = """
+                UPDATE players
+                SET gold = gold + $1
+                WHERE user_id = $2;
+                """
+
+        await conn.execute(psql, gold, self.disc_id)
+
+    async def give_rubidics(self, conn : asyncpg.Connection, rubidics : int):
+        """Gives the player the passed amount of rubidics."""
+        self.rubidics += rubidics
+
+        psql = """
+                UPDATE players
+                SET rubidics = rubidics + $1
+                WHERE user_id = $2;
+                """
+
+        await conn.execute(psql, rubidics, self.disc_id)
+
+
+async def get_player_by_id(conn : asyncpg.Connection, user_id : int):
+    """Return a player object of the player with the given Discord ID."""
+    psql = """
+            SELECT 
+                num,
+                user_id,
+                user_name,
+                xp,
+                equipped_item,
+                acolyte1,
+                acolyte2,
+                assc,
+                guild_rank,
+                gold,
+                occupation,
+                loc,
+                pvpwins,
+                pvpfights,
+                bosswins,
+                bossfights,
+                rubidics,
+                pitycounter,
+                adventure,
+                destination,
+                gravitas,
+                daily_streak
+            FROM players
+            WHERE user_id = $1;
+            """
+    
+    player_record = await conn.fetchrow(psql, user_id)
+
+    return Player(player_record)
+
+async def create_character(conn : asyncpg.Connection, 
+        user_id : int, name : str):
+    """Creates and returns a profile for the user with the given Discord ID."""
+    psql = """
+            INSERT INTO players (user_id, user_name) VALUES ($1, $2);
+            INSERT INTO resources (user_id) VALUES ($1);
+            INSERT INTO strategy (user_id) VALUES ($1);
+            """
+    await conn.execute(psql, user_id, name)
+
+    item = await ItemObject.create_weapon(conn, user_id, "Common", attack=20, crit=0, 
+                               weapon_name="Wooden Spear", weapon_type="Spear")
+
+    return await get_player_by_id(conn, user_id)
