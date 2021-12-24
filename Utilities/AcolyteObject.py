@@ -100,7 +100,7 @@ class Acolyte:
             self.dupes = 0
 
     @staticmethod
-    def get_acolyte_by_name(name : str):
+    def get_acolyte_by_name(name : str) -> dict:
         """
         Returns a dict of the general information of the acolyte.
         Dict: Name, Attack, Scale, Crit, HP, Rarity, Effect, Mat, Story, Image
@@ -108,7 +108,7 @@ class Acolyte:
         with open(Vars.ACOLYTE_LIST_PATH, 'r') as acolyte_list:
             return json.load(acolyte_list)[name]
 
-    def get_level(self):
+    def get_level(self) -> int:
         """Returns the acolyte's level."""
         def f(x):
             return int(300 * (x**2))
@@ -145,7 +145,7 @@ class Acolyte:
                 f"{self.acolyte_name} levelled up to level {self.level}!")
 
 
-    def get_attack(self):
+    def get_attack(self) -> int:
         """Returns the acolyte's attack stat."""
         # Duplicates give bonuses depending on acolyte rarity
         if self.gen_dict['Rarity'] == 5:
@@ -160,7 +160,7 @@ class Acolyte:
 
         return int(attack)
 
-    def get_crit(self):
+    def get_crit(self) -> int:
         """Returns the acolyte's crit stat."""
         crit = self.gen_dict['Crit']
         
@@ -174,7 +174,7 @@ class Acolyte:
 
         return int(crit)
 
-    def get_hp(self):
+    def get_hp(self) -> int:
         """Returns the acolyte's HP stat."""
         hp = self.gen_dict['HP']
 
@@ -204,7 +204,8 @@ class Acolyte:
         await conn.execute(psql, self.acolyte_id)
 
 
-async def get_acolyte_by_id(conn : asyncpg.Connection, acolyte_id : int):
+async def get_acolyte_by_id(conn : asyncpg.Connection, 
+        acolyte_id : int) -> Acolyte:
     """Return an acolyte object of the acolyte with the given ID."""
     psql = """
             SELECT acolyte_id, user_id, acolyte_name, xp, duplicate
@@ -216,7 +217,7 @@ async def get_acolyte_by_id(conn : asyncpg.Connection, acolyte_id : int):
     return Acolyte(acolyte_id)
 
 async def create_acolyte(conn : asyncpg.Connection, owner_id : int, 
-        acolyte : str):
+        acolyte : str) -> Acolyte:
     """Adds a new acolyte with the given name to the passed player.
     If the player already has this acolyte, increment their dupe count.
     Returns the acolyte object in either case

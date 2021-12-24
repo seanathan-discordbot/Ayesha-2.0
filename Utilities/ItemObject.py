@@ -120,7 +120,7 @@ class Weapon:
         self = Weapon()
 
 
-async def get_weapon_by_id(conn : asyncpg.Connection, item_id : int):
+async def get_weapon_by_id(conn : asyncpg.Connection, item_id : int) -> Weapon:
     """Return a weapon object of the item with the given ID."""
     psql = """
             SELECT
@@ -141,7 +141,7 @@ async def get_weapon_by_id(conn : asyncpg.Connection, item_id : int):
 
 async def create_weapon(conn : asyncpg.Connection, user_id : int, rarity : str,
         attack : int = None, crit : int = None, weapon_name : str = None, 
-        weapon_type : str = None):
+        weapon_type : str = None) -> Weapon:
     """Create a weapon with the specified information and returns it.
     Fields left blank will generate randomly
     """
@@ -174,7 +174,7 @@ async def create_weapon(conn : asyncpg.Connection, user_id : int, rarity : str,
 
     return get_weapon_by_id(conn, item_id)
 
-def _get_random_name():
+def _get_random_name() -> str:
     """Returns a str: random combination of words up to 20 characters."""
     
     length = random.randint(1,3)
