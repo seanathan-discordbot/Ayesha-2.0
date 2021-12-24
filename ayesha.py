@@ -62,10 +62,6 @@ class Ayesha(commands.AutoShardedBot):
                 print(f"Failed to load cog {cog}.")
                 traceback.print_exc()
 
-    @property
-    def ayesha_blue(self):
-        return 0xBEDCF6
-
     def is_admin(user_id : int):
         return user_id in config.ADMINS   
 
@@ -122,13 +118,13 @@ async def on_guild_remove(guild):
         await conn.execute("DELETE FROM prefixes WHERE server = $1", guild.id)
 
 # Ping command
-@bot.slash_command()
+@bot.slash_command(guild_ids=[762118688567984151])
 async def ping(ctx):
     """Ping to see if bot is working."""
     fmt = f"Latency is {bot.latency * 1000:.2f} ms"
     embed = discord.Embed(title="Pong!", 
                            description=fmt, 
-                           color=bot.ayesha_blue)
+                           color=config.ABLUE)
     await ctx.respond(embed=embed)
 
 @bot.slash_command()
