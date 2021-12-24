@@ -15,3 +15,9 @@ class NotAcolyteOwner(Exception):
 
 class InvalidAcolyteEquip(Exception):
     pass
+
+class InvalidAssociationID(Exception):
+    pass
+
+class AssociationAtCapacity(Exception):
+    pass

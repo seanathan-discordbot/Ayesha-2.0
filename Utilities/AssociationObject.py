@@ -49,7 +49,7 @@ class Association:
     -------
     
     """
-    def __init__(self, record : asyncpg.Record = None):
+    def __init__(self, record : asyncpg.Record = None): 
         """
         Parameters
         ----------
@@ -84,17 +84,17 @@ class Association:
             self.base_set = True
             self.lvl_req = 0
 
-    def get_level(self):
+    def get_level(self) -> int:
         """Returns the level of the guild. Each level is 1,000,000 xp."""
         return int(self.xp / 1000000) if int(self.xp / 1000000) < 10 else 10
 
-    def get_member_capacity(self):
+    def get_member_capacity(self) -> int:
         """Returns the member capacity of the association. 
         Default is 30, +2 for each level, up to 50 at level 10
         """
         return 30 + self.get_level() * 2
 
-    async def get_member_count(self, conn : asyncpg.Connection):
+    async def get_member_count(self, conn : asyncpg.Connection) -> int:
         """Returns the amount of players in this association"""
         if self.is_empty:
             raise Checks.EmptyObject
@@ -180,7 +180,6 @@ class Association:
                 """
         await conn.execute(psql, self.id)
 
-    # TODO implement join and leave commands for players
     # TODO implement functionality for each association type
     # TODO document
 
@@ -263,7 +262,8 @@ class Association:
         await conn.execute(psql, level, self.id)
 
 
-async def get_assc_by_id(conn : asyncpg.Connection, assc_id : int):
+async def get_assc_by_id(conn : asyncpg.Connection, 
+        assc_id : int) -> Association:
     """Return an association object of the association with the given ID."""
     psql = """
             SELECT 
@@ -276,7 +276,8 @@ async def get_assc_by_id(conn : asyncpg.Connection, assc_id : int):
 
     return Association(assc_record)
 
-async def get_assc_by_name(conn : asyncpg.Connection, assc_name : str):
+async def get_assc_by_name(conn : asyncpg.Connection, 
+        assc_name : str) -> Association:
     """Retrun an association object of the association with the given name."""
     psql = "SELECT assc_id FROM associations WHERE assc_name = $1;"
     assc_id = await conn.fetchval(psql, assc_name)

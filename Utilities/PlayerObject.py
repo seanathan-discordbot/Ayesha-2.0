@@ -127,7 +127,7 @@ class Player:
         self.gravitas = record['gravitas']
         self.daily_streak = record['daily_streak']
 
-    def get_level(self):
+    def get_level(self) -> int:
         """Returns the player's level."""
         def f(x):
             return int(20 * x**3 + 500)
@@ -187,7 +187,8 @@ class Player:
         if self.acolyte2.acolyte_name is not None:
             await self.acolyte2.check_xp_increase(conn, ctx, a_xp)
 
-    async def is_weapon_owner(self, conn : asyncpg.Connection, item_id : int):
+    async def is_weapon_owner(self, conn : asyncpg.Connection, 
+            item_id : int) -> bool:
         """Returns true/false depending on whether the item with the given 
         ID is in this player's inventory.
         """
@@ -222,7 +223,8 @@ class Player:
                 """
         await conn.execute(psql, self.disc_id)
 
-    async def is_acolyte_owner(self, conn : asyncpg.Connection, a_id : int):
+    async def is_acolyte_owner(self, conn : asyncpg.Connection, 
+            a_id : int) -> bool:
         """Returns true/false depending on whether the acolyte with the given
         ID is in this player's tavern.
         """
@@ -283,6 +285,56 @@ class Player:
         else:
             raise Checks.InvalidAcolyteEquip
 
+    async def join_assc(self, conn : asyncpg.Connection, assc_id : int):
+        """Makes the player join the association with the given ID"""
+        assc = AssociationObject.get_assc_by_id(conn, assc_id)
+        if assc.is_empty:
+            raise Checks.InvalidAssociationID
+        if assc.get_member_count(conn) >= assc.get_member_capacity():
+            raise Checks.AssociationAtCapacity
+
+        psql = """
+                UPDATE players
+                SET assc = $1, guild_rank = 'Member'
+                WHERE user_id = $2;
+                """
+        await conn.execute(psql, assc_id, self.disc_id)
+
+        self.assc = assc
+
+    async def leave_assc(self, conn : asyncpg.Connection):
+        """Makes the player leave their current association."""
+        if self.assc.is_empty:
+            return
+
+        psql1 = """
+                UPDATE players
+                SET assc = NULL, guild_rank = NULL
+                WHERE user_id = $1;
+                """
+        psql2 = """
+                UPDATE brotherhood_champions
+                SET champ1 = NULL
+                WHERE champ1 = $1;
+                """
+        psql3 = """
+                UPDATE brotherhood_champions
+                SET champ2 = NULL
+                WHERE champ2 = $1;
+                """
+        psql4 = """
+                UPDATE brotherhood_champions
+                SET champ3 = NULL
+                WHERE champ3 = $1;
+                """
+
+        await conn.execute(psql1, self.disc_id)
+        await conn.execute(psql2, self.disc_id)
+        await conn.execute(psql3, self.disc_id)
+        await conn.execute(psql4, self.disc_id)
+
+        self.assc = Association()
+
     async def give_gold(self, conn : asyncpg.Connection, gold : int):
         """Gives the player the passed amount of gold."""
         self.gold += gold
@@ -307,7 +359,7 @@ class Player:
 
         await conn.execute(psql, rubidics, self.disc_id)
 
-    def get_attack(self):
+    def get_attack(self) -> int:
         """Returns the player's attack stat, calculated from all other sources.
         The value returned by this method is 'the final say' on the stat.
         """
@@ -324,7 +376,7 @@ class Player:
 
         return attack
 
-    def get_crit(self):
+    def get_crit(self) -> int:
         """Returns the player's crit stat, calculated from all other sources.
         The value returned by this method is 'the final say' on the stat.
         """
@@ -339,7 +391,7 @@ class Player:
 
         return crit
 
-    def get_hp(self):
+    def get_hp(self) -> int:
         """Returns the player's HP stat, calculated from all other sources.
         The value returned by this method is 'the final say' on the stat.
         """
@@ -353,7 +405,7 @@ class Player:
         return hp        
 
 
-async def get_player_by_id(conn : asyncpg.Connection, user_id : int):
+async def get_player_by_id(conn : asyncpg.Connection, user_id : int) -> Player:
     """Return a player object of the player with the given Discord ID."""
     psql = """
             SELECT 
@@ -389,7 +441,7 @@ async def get_player_by_id(conn : asyncpg.Connection, user_id : int):
     return Player(player_record)
 
 async def create_character(conn : asyncpg.Connection, 
-        user_id : int, name : str):
+        user_id : int, name : str) -> Player:
     """Creates and returns a profile for the user with the given Discord ID."""
     psql = """
             INSERT INTO players (user_id, user_name) VALUES ($1, $2);
