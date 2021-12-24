@@ -2,9 +2,10 @@ import discord
 
 import asyncpg
 
-from Utilities import Checks, ItemObject, Vars, AcolyteObject
+from Utilities import Checks, ItemObject, Vars, AcolyteObject, AssociationObject
 from Utilities.ItemObject import Weapon
 from AcolyteObject import Acolyte
+from AssociationObject import Association
 
 
 class Player:
@@ -23,14 +24,14 @@ class Player:
         The player's xp points
     level : int
         The player's level
-    equipped_item : GameObjects.Weapon
+    equipped_item : ItemObject.Weapon
         The weapon object of the item equipped by the player
-    acolyte1 : GameObjects.Acolyte
+    acolyte1 : AcolyteObject.Acolyte
         The acolyte object of the acolyte equipped by the player in Slot 1
-    acolyte2 : GameObjects.Acolyte
+    acolyte2 : AcolyteObject.Acolyte
         The acolyte object of the acolyte equipped by the player in Slot 2
-    assc : int (Changes to GameObject.Association when possible)
-        The ID of the association this player is in
+    assc : AssociationObject.Association
+        The association object of the association this player is in
     guild_rank : str
         The rank the player holds in the association they are in
     gold : int
@@ -109,7 +110,7 @@ class Player:
         self.equipped_item = ItemObject.get_weapon_by_id(record['equipped_item'])
         self.acolyte1 = AcolyteObject.get_acolyte_by_id(record['acolyte1'])
         self.acolyte2 = AcolyteObject.get_acolyte_by_id(record['acolyte2'])
-        self.assc = record['assc']
+        self.assc = AssociationObject.get_assc_by_id(record['assc'])
         self.guild_rank = record['guild_rank']
         self.gold = record['gold']
         self.occupation = record['occupation']
