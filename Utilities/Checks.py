@@ -6,3 +6,9 @@ class ExcessiveCharacterCount(Exception):
 
 class NotWeaponOwner(Exception):
     pass
+
+class NotAcolyteOwner(Exception):
+    pass
+
+class InvalidAcolyteEquip(Exception):
+    pass

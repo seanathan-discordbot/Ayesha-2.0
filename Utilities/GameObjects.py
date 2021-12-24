@@ -166,10 +166,51 @@ class Player:
                 level += 1
         else:
             level = 31
-            while (self.xp >= f(level)):
+            while (self.xp >= g(level)):
                 level += 1
 
         return level - 1
+
+    async def check_xp_increase(self, conn : asyncpg.Connection, 
+            ctx : discord.context, xp : int):
+        """Increase the player's xp by a set amount.
+        This will also increase the player's equipped acolytes xp by 10% of the 
+        player's increase.
+        If the xp change results in a level-up for any of these entities, 
+        a reward will be given and printed to Discord.        
+        """
+        old_level = self.level
+        self.xp += xp
+        psql = """
+                UPDATE players
+                SET xp = xp + $1
+                WHERE user_id = $2;
+                """
+        await conn.execute(psql, xp, self.disc_id)
+        self.level = self.get_level()
+        if self.level > old_level: # Level up
+            gold = self.level * 500
+            rubidics = int(self.level / 30) + 1
+
+            self.give_gold(conn, gold)
+            self.give_rubidics(conn, rubidics)
+
+            embed = discord.Embed(
+                title = f"You have levelled up to level {self.level}!",
+                color = config.ABLUE)
+            embed.add_field(
+                name = f"{self.char_name}, you gained some rewards",
+                value = f"**Gold:** {gold}\n**Rubidics:**{rubidics}")
+
+            await ctx.respond(embed=embed)
+
+        # Check xp for the equipped acolytes
+        a_xp = int(xp / 10)
+        if self.acolyte1.acolyte_name is not None:
+            await self.acolyte1.check_xp_increase(conn, ctx, a_xp)
+
+        if self.acolyte2.acolyte_name is not None:
+            await self.acolyte2.check_xp_increase(conn, ctx, a_xp)
 
     async def is_weapon_owner(self, conn : asyncpg.Connection, item_id : int):
         """Returns true/false depending on whether the item with the given 
@@ -266,6 +307,30 @@ class Player:
             await conn.execute(psql, self.disc_id)
         else:
             raise Checks.InvalidAcolyteEquip
+
+    async def give_gold(self, conn : asyncpg.Connection, gold : int):
+        """Gives the player the passed amount of gold."""
+        self.gold += gold
+
+        psql = """
+                UPDATE players
+                SET gold = gold + $1
+                WHERE user_id = $2;
+                """
+
+        await conn.execute(psql, gold, self.disc_id)
+
+    async def give_rubidics(self, conn : asyncpg.Connection, rubidics : int):
+        """Gives the player the passed amount of rubidics."""
+        self.rubidics += rubidics
+
+        psql = """
+                UPDATE players
+                SET rubidics = rubidics + $1
+                WHERE user_id = $2;
+                """
+
+        await conn.execute(psql, rubidics, self.disc_id)
 
 
 class Weapon:
@@ -456,6 +521,25 @@ class Acolyte:
             level = 100
 
         return level
+
+    async def check_xp_increase(self, conn : asyncpg.Connection, 
+            ctx : discord.context, xp : int):
+        """Increases the acolyte's xp by the given amount.
+        If the xp increase results in a level-up, prints this out to Discord.        
+        """
+        old_level = self.level
+        self.xp += xp
+        psql = """
+                UPDATE acolytes
+                SET xp = xp + $1
+                WHERE acolyte_id = $2;
+                """
+        await conn.execute(psql, xp, self.acolyte_id)
+        self.level = self.get_level()
+        if self.level > old_level:
+            await ctx.respond(
+                f"{self.acolyte_name} levelled up to level {self.level}!")
+
 
     def get_attack(self):
         """Returns the acolyte's attack stat."""
