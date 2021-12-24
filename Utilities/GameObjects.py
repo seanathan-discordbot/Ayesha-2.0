@@ -393,6 +393,8 @@ class Acolyte:
         Calculates and returns the acolyte's crit stat
     get_hp()
         Calculates and returns the acolyte's HP stat
+    await add_duplicate()
+        Increases the acolyte's dupes value by 1
     """
     def __init__(self, record : asyncpg.Record = None):
         """
@@ -431,6 +433,7 @@ class Acolyte:
             self.level = 0
             self.dupes = 0
 
+    @staticmethod
     def get_acolyte_by_name(name : str):
         """
         Returns a dict of the general information of the acolyte.
@@ -496,6 +499,18 @@ class Acolyte:
             hp += self.dupes * 5
 
         return int(hp)
+
+    async def add_duplicate(self, conn : asyncpg.Connection):
+        """Increments the acolyte's duplicate value by 1"""
+        self.dupes += 1
+
+        psql = """
+                UPDATE acolytes
+                SET duplicate = duplicate + 1
+                WHERE acolyte_id = $1
+                """
+
+        await conn.execute(psql, self.acolyte_id)
 
 
 async def get_weapon_by_id(conn : asyncpg.Connection, item_id : int):
@@ -625,8 +640,40 @@ async def get_acolyte_by_id(conn : asyncpg.Connection, acolyte_id : int):
     psql = """
             SELECT acolyte_id, user_id, acolyte_name, xp, duplicate
             FROM acolytes
-            WHERE acolyte_id = $1
+            WHERE acolyte_id = $1;
             """
     acolyte_record = await conn.fetchrow(psql, acolyte_id)
 
     return Acolyte(acolyte_id)
+
+async def create_acolyte(conn : asyncpg.Connection, owner_id : int, 
+        acolyte : str):
+    """Adds a new acolyte with the given name to the passed player.
+    If the player already has this acolyte, increment their dupe count.
+    Returns the acolyte object in either case
+    """
+    psql = """
+            SELECT acolyte_id 
+            FROM acolytes 
+            WHERE user_id = $1 AND acolyte_name = $2;
+            """
+
+    acolyte_id = await conn.fetchval(psql, owner_id, acolyte)
+
+    if acolyte_id is not None: # Then increment duplicate count
+        aco_obj = get_acolyte_by_id(conn, acolyte_id)
+        aco_obj.add_duplicate(conn)
+        return aco_obj
+
+    else: # Then create a new acolyte and add it to their tavern
+        psql = """"
+                WITH rows AS (
+                    INSERT INTO acolytes (user_id, acolyte_name)
+                    VALUES ($1, $2)
+                    RETURNING acolyte_id
+                )
+                SELECT acolyte_id FROM rows;
+                """
+        acolyte_id = await conn.fetchval(psql, owner_id, acolyte)
+
+        return get_acolyte_by_id(conn, acolyte_id)
