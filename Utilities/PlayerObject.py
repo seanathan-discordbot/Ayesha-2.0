@@ -367,9 +367,12 @@ class Player:
         attack += self.equipped_item.attack
         attack += self.acolyte1.get_attack()
         attack += self.acolyte2.get_attack()
-        # TODO implement player class - weapon type bonus
+        if self.equipped_item.type in Vars.OCCUPATIONS['weapon_bonus']:
+            attack += 20
         attack += Vars.ORIGINS[self.origin]['atk_bonus']
-        # TODO implement brotherhood bonus
+        if self.assc.type == "Brotherhood":
+            lvl = self.assc.get_level()
+            attack += int(lvl * (lvl + 1) / 4)
         attack += Vars.OCCUPATIONS[self.occupation]['atk_bonus']
         attack = int(attack * 1.1) if self.occupation == "Soldier" else attack
         # TODO implement comptroller bonus
@@ -385,7 +388,8 @@ class Player:
         crit += self.acolyte1.get_crit()
         crit += self.acolyte2.get_crit()
         crit += Vars.ORIGINS[self.origin]['crit_bonus']
-        # TODO implement brotherhood bonus
+        if self.assc.type == "Brotherhood":
+            crit += self.assc.get_level()
         crit += Vars.OCCUPATIONS[self.occupation]['crit_bonus']
         # TODO implement comptroller bonus
 

@@ -3,6 +3,7 @@ import discord
 import asyncpg
 
 from Utilities import Checks, Vars
+from Utilities.PlayerObject import Player, get_player_by_id
 
 
 class Association:
@@ -44,10 +45,6 @@ class Association:
         Whether the association's base has been set by the leader
     lvl_req = int
         The minimum level for players to join via the join command
-
-    Methods
-    -------
-    
     """
     def __init__(self, record : asyncpg.Record = None): 
         """
@@ -74,7 +71,7 @@ class Association:
             self.is_empty = True
             self.id = None
             self.name = None
-            self.type = None
+            self.type = "None"
             self.xp = 0
             self.leader = None
             self.desc = None
@@ -180,9 +177,6 @@ class Association:
                 """
         await conn.execute(psql, self.id)
 
-    # TODO implement functionality for each association type
-    # TODO document
-
     async def set_leader(self, conn : asyncpg.Connection, leader_id : int):
         """Replaces the guild leader."""
         if self.is_empty:
@@ -260,6 +254,98 @@ class Association:
                 WHERE assc_id = $2;
                 """
         await conn.execute(psql, level, self.id)
+
+    # Since knowing an association's ID or name does not guarantee knowing
+    # its type, subclassing the different types is not advantageous.
+    # Each method will first check to see if the type is compatible.
+
+    # --- BROTHERHOOD METHODS ---
+    async def get_champions(self, conn : asyncpg.Connection) -> list(Player):
+        if self.type != "Brotherhood":
+            raise Checks.NotInSpecifiedAssociation("Brotherhood")
+
+        psql = """
+                SELECT champ1, champ2, champ3
+                FROM brotherhood_champions
+                WHERE assc_id = $1;
+                """
+        champs = await conn.fetchrow(psql, self.id)
+        champ_list = []
+        if champs['champ1'] is not None:
+            champ_list.append(get_player_by_id(conn, champs['champ1']))
+        if champs['champ2'] is not None:
+            champ_list.append(get_player_by_id(conn, champs['champ2']))
+        if champs['champ3'] is not None:
+            champ_list.append(get_player_by_id(conn, champs['champ3']))            
+
+        return champ_list
+
+    async def set_champion(self, conn : asyncpg.Connection, player_id : int, 
+            slot : int):
+        """Update the ID of a brotherhood champion. 
+        Slot must be an integer 1-3."""
+        if self.type != "Brotherhood":
+            raise Checks.NotInSpecifiedAssociation("Brotherhood")
+
+        player = await get_player_by_id(conn, player_id)
+        if player.assc.id != self.id:
+            raise Checks.PlayerNotInSpecifiedAssociation("Brotherhood")
+
+        current = self.get_champions(conn)
+        current_ids = [p.disc_id for p in current]
+        if player.id in current_ids:
+            raise Checks.PlayerAlreadyChampion
+
+        if slot == 1:
+            psql = """
+                    UPDATE brotherhood_champions
+                    SET champ1 = $1
+                    WHERE assc_id = $2;
+                    """
+        elif slot == 2:
+            psql = """
+                    UPDATE brotherhood_champions
+                    SET champ1 = $1
+                    WHERE assc_id = $2;
+                    """
+        elif slot == 3:
+            psql = """
+                    UPDATE brotherhood_champions
+                    SET champ1 = $1
+                    WHERE assc_id = $2;
+                    """
+        else:
+            raise discord.InvalidArgument
+
+        await conn.execute(psql, player.disc_id, self.id)
+
+    async def remove_champion(self, conn : asyncpg.Connection, slot : int):
+        """Remove the champion in the given slot, which is an int 1-3."""
+        if self.type != "Brotherhood":
+            raise Checks.NotInSpecifiedAssociation("Brotherhood")
+
+        if slot == 1:
+            psql = """
+                    UPDATE brotherhood_champions
+                    SET champ1 = NULL
+                    WHERE assc_id = $1;
+                    """
+        elif slot == 2:
+            psql = """
+                    UPDATE brotherhood_champions
+                    SET champ1 = NULL
+                    WHERE assc_id = $1;
+                    """
+        elif slot == 3:
+            psql = """
+                    UPDATE brotherhood_champions
+                    SET champ1 = NULL
+                    WHERE assc_id = $1;
+                    """
+        else:
+            raise discord.InvalidArgument
+
+        await conn.execute(psql, self.id)
 
 
 async def get_assc_by_id(conn : asyncpg.Connection, 

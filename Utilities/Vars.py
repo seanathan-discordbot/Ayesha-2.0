@@ -6,18 +6,63 @@ OCCUPATIONS = {
     'Soldier' : {
         'atk_bonus' : 0,
         'crit_bonus' : 0,
-        'hp_bonus' : 0
+        'hp_bonus' : 0,
+        'weapon_bonus' : ("Spear", "Sword")
     },
-    'Scribe' : {
+    'Blacksmith' : {
         'atk_bonus' : 0,
-        'crit_bonus' : 10,
-        'hp_bonus' : 0
+        'crit_bonus' : 0,
+        'hp_bonus' : 0,
+        'weapon_bonus' : ("Greatsword", "Gauntlets")
+    },
+    'Farmer' : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 0,
+        'hp_bonus' : 0,
+        'weapon_bonus' : ("Sling", "Falx")
+    },
+    'Hunter' : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 0,
+        'hp_bonus' : 0,
+        'weapon_bonus' : ("Bow", "Javelin")
+    },
+    'Merchant' : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 0,
+        'hp_bonus' : 0,
+        'weapon_bonus' : ("Dagger", "Mace")
+    },
+    'Traveler' : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 0,
+        'hp_bonus' : 0,
+        'weapon_bonus' : ("Staff", "Javelin")
     },
     'Leatherworker' : {
         'atk_bonus' : 0,
         'crit_bonus' : 0,
-        'hp_bonus' : 250
+        'hp_bonus' : 250,
+        'weapon_bonus' : ("Mace", "Axe")
     },
+    'Butcher' : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 0,
+        'hp_bonus' : 0,
+        'weapon_bonus' : ("Axe", "Dagger")
+    },
+    'Engineer' : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 0,
+        'hp_bonus' : 0,
+        'weapon_bonus' : ("Trebuchet", "Falx")
+    },
+    'Scribe' : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 10,
+        'hp_bonus' : 0,
+        'weapon_bonus' : ("Sword", "Dagger")
+    }
 }
 
 ORIGINS = {

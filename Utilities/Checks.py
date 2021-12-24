@@ -21,3 +21,14 @@ class InvalidAssociationID(Exception):
 
 class AssociationAtCapacity(Exception):
     pass
+
+class NotInSpecifiedAssociation(Exception):
+    def __init__(self, type : str):
+        self.type = type
+
+class PlayerNotInSpecifiedAssociation(Exception):
+    def __init__(self, type : str):
+        self.type = type
+
+class PlayerAlreadyChampion(Exception):
+    pass
