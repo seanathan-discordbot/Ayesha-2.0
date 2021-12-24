@@ -6,10 +6,21 @@ from Utilities import Checks, Vars
 
 
 class Association:
-    """The association (guild/brotherhood/college) object
+    """The association (guild/brotherhood/college) object. Changing the object
+    attributes are not permanent but siotable for cases in which temporary
+    changes can be advantageous in some commands. Generally, the async-methods
+    will make changes to the database.
+
+    It is convenient for the bot to assume that a player always is in an 
+    association, so this class can create empty objects by not passing a record
+    upon instantiation. If a command alters the object's database value, it will
+    first check the is_empty attribute to ensure that such a change is possible.
+    Changing an empty object will result in an EmptyObject Exception.
 
     Attributes
     ----------
+    is_empty : bool
+        Whether this object is a dummy object or not
     id : int
         The unique ID of the association
     name : str
@@ -47,6 +58,7 @@ class Association:
             Pass nothing to create an empty association
         """
         if record is not None:
+            self.is_empty = False
             self.id = record['assc_id']
             self.name = record['assc_name']
             self.type = record['ascc_type']
@@ -59,6 +71,7 @@ class Association:
             self.base_set = record['base_set']
             self.lvl_req = record['min_level']
         else:
+            self.is_empty = True
             self.id = None
             self.name = None
             self.type = None
@@ -83,6 +96,9 @@ class Association:
 
     async def get_member_count(self, conn : asyncpg.Connection):
         """Returns the amount of players in this association"""
+        if self.is_empty:
+            raise Checks.EmptyObject
+        
         psql = """
                 SELECT member_count
                 FROM guild_membercount
@@ -92,6 +108,9 @@ class Association:
 
     async def increase_xp(self, conn : asyncpg.Connection, xp : int):
         """Increase the association's xp by the given amount."""
+        if self.is_empty:
+            raise Checks.EmptyObject
+        
         self.xp += xp
 
         psql = """
@@ -104,6 +123,9 @@ class Association:
 
     async def set_description(self, conn : asyncpg.Connection, desc : str):
         """Set the description of the association. Max 256 characters."""
+        if self.is_empty:
+            raise Checks.EmptyObject
+        
         if len(desc) > 256:
             raise Checks.ExcessiveCharacterCount(256)
 
@@ -112,53 +134,122 @@ class Association:
         psql = """
                 UPDATE associations
                 SET assc_desc = $1
-                WHERE assc_id = $2
+                WHERE assc_id = $2;
                 """
 
         await conn.execute(psql, desc, self.id)
 
     async def set_icon(self, conn : asyncpg.Connection, icon : str):
+        if self.is_empty:
+            raise Checks.EmptyObject
+        
         """Set the icon of the association. Please give a valid link."""
         self.desc = icon
 
         psql = """
                 UPDATE associations
                 SET assc_icon = $1
-                WHERE assc_id = $2
+                WHERE assc_id = $2;
                 """
 
         await conn.execute(psql, icon, self.id)
 
     async def lock(self, conn : asyncpg.Connection):
+        if self.is_empty:
+            raise Checks.EmptyObject
+        
         """Set the lock-status of the association to closed."""
         self.join_status = "closed"
         psql = """
                 UPDATE associations 
                 SET join_status = 'closed' 
-                WHERE guild_id = $1
+                WHERE guild_id = $1;
                 """
         await conn.execute(psql, self.id)
 
     async def unlock(self, conn : asyncpg.Connection):
+        if self.is_empty:
+            raise Checks.EmptyObject
+        
         """Set the lock-status of the association to open."""
         self.join_status = "open"
         psql = """
                 UPDATE associations 
                 SET join_status = 'open' 
-                WHERE guild_id = $1
+                WHERE guild_id = $1;
                 """
         await conn.execute(psql, self.id)
 
-    # TODO implement destroy() and set_leader()
     # TODO implement join and leave commands for players
     # TODO implement functionality for each association type
     # TODO document
+
+    async def set_leader(self, conn : asyncpg.Connection, leader_id : int):
+        """Replaces the guild leader."""
+        if self.is_empty:
+            raise Checks.EmptyObject
+
+        psql1 = """
+                UPDATE players
+                SET guild_rank = 'Officer'
+                WHERE user_id = $1;
+                """
+        psql2 = """
+                UPDATE players
+                SET guild_rank = 'Leader'
+                WHERE user_id = $1;
+                """
+        psql3 = """
+                UPDATE associations
+                SET leader_id = $1
+                WHERE assc_id = $2;
+                """
+        await conn.execute(psql1, self.leader)
+        await conn.execute(psql2, leader_id)
+        await conn.execute(psql3, leader_id, self.id)        
+        
+        self.leader = leader_id
+
+    async def destroy(self, conn : asyncpg.Connection):
+        """Disbands the association.
+        Associations are not deleted, but set in such a way that there are no
+        members and cannot be joined.
+        """
+        if self.is_empty:
+            raise Checks.EmptyObject
+
+        psql1 = """
+                UPDATE associations
+                SET 
+                    leader_id = 767234703161294858,
+                    guild_desc = 'This association has been disbanded.'
+                    join_status = 'closed'
+                WHERE guild_id = $1;
+                """
+        psql2 = """
+                UPDATE players 
+                SET assc = NULL, guild_rank = NULL
+                WHERE assc = $1;
+                """
+
+        await conn.execute(psql1, self.id)
+        await conn.execute(psql2, self.id)
+
+        if self.type == "Brotherhood":
+            pass
+        elif self.type == "Guild":
+            pass
+
+        self = Association()
         
 
     async def set_assc_lvl_req(self, conn : asyncpg.Connection, level : int):
         """Sets the minimum level requirement for new members to join via
         the join command.
         """
+        if self.is_empty:
+            raise Checks.EmptyObject
+
         if level < 0 or level > 250:
             raise discord.InvalidArgument
 
