@@ -106,8 +106,10 @@ class Player:
             conn, self.acolyte2)
         self.assc = await AssociationObject.get_assc_by_id(conn, self.assc)
 
-    def get_level(self) -> int:
-        """Returns the player's level."""
+    def get_level(self, get_next = False) -> int:
+        """Returns the player's level.
+        Pass get_next as true to also get the xp needed to level up.
+        """
         def f(x):
             return int(20 * x**3 + 500)
         
@@ -123,7 +125,15 @@ class Player:
             while (self.xp >= g(level)):
                 level += 1
 
-        return level - 1
+        level = level - 1 if level > 0 else 0
+
+        if get_next:
+            if level >= 30:
+                return level, g(level+1) - self.xp
+            else:
+                return level, f(level+1) - self.xp
+        else:
+            return level
 
     async def check_xp_increase(self, conn : asyncpg.Connection, 
             ctx : discord.context, xp : int):
@@ -422,8 +432,8 @@ async def get_player_by_id(conn : asyncpg.Connection, user_id : int) -> Player:
     
     player_record = await conn.fetchrow(psql, user_id)
 
-    if player_record['num'] is None:
-        raise Checks.NoCharacter(user_id)
+    if player_record is None:
+        raise Checks.PlayerHasNoChar
 
     player = Player(player_record)
     await player._load_equips(conn)

@@ -7,13 +7,14 @@ class HasChar(commands.CheckFailure):
         self.user = user
         super().__init__(*args, **kwargs)
 
-class NoCharacter(Exception):
-    def __init__(self, user : int):
-        self.user = user
-
 class ExcessiveCharacterCount(Exception):
     def __init__(self, limit : int):
         self.limit = limit
+
+class PlayerHasNoChar(commands.MemberNotFound):
+    def __init__(self):
+        self.message = "Player has no char."
+        super().__init__(self.message)
 
 class EmptyObject(Exception):
     pass

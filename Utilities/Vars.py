@@ -62,6 +62,12 @@ OCCUPATIONS = {
         'crit_bonus' : 10,
         'hp_bonus' : 0,
         'weapon_bonus' : ("Sword", "Dagger")
+    },
+    None : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 0,
+        'hp_bonus' : 0,
+        'weapon_bonus' : []
     }
 }
 
@@ -101,6 +107,11 @@ ORIGINS = {
         'crit_bonus' : 0,
         'hp_bonus' : 25
     },
+    None : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 0,
+        'hp_bonus' : 0
+    }
 }
 
 RARITIES = {
