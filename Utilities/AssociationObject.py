@@ -57,10 +57,10 @@ class Association:
             self.is_empty = False
             self.id = record['assc_id']
             self.name = record['assc_name']
-            self.type = record['ascc_type']
+            self.type = record['assc_type']
             self.xp = record['assc_xp']
             self.leader = record['leader_id']
-            self.desc = record['desc']
+            self.desc = record['assc_desc']
             self.icon = record['assc_icon']
             self.join_status = record['join_status']
             self.base = record['base']

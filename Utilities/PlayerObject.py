@@ -1,7 +1,5 @@
-from asyncio.events import AbstractEventLoop
 import discord
 
-import asyncio
 import asyncpg
 
 from Utilities import Checks, ItemObject, Vars, AcolyteObject, AssociationObject
@@ -348,7 +346,8 @@ class Player:
         attack += self.equipped_item.attack
         attack += self.acolyte1.get_attack()
         attack += self.acolyte2.get_attack()
-        if self.equipped_item.type in Vars.OCCUPATIONS['weapon_bonus']:
+        valid_weapons = Vars.OCCUPATIONS[self.occupation]['weapon_bonus']
+        if self.equipped_item.type in valid_weapons:
             attack += 20
         attack += Vars.ORIGINS[self.origin]['atk_bonus']
         if self.assc.type == "Brotherhood":
@@ -422,6 +421,10 @@ async def get_player_by_id(conn : asyncpg.Connection, user_id : int) -> Player:
             """
     
     player_record = await conn.fetchrow(psql, user_id)
+
+    if player_record['num'] is None:
+        raise Checks.NoCharacter(user_id)
+
     player = Player(player_record)
     await player._load_equips(conn)
 

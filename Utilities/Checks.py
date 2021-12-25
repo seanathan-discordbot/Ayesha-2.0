@@ -7,6 +7,10 @@ class HasChar(commands.CheckFailure):
         self.user = user
         super().__init__(*args, **kwargs)
 
+class NoCharacter(Exception):
+    def __init__(self, user : int):
+        self.user = user
+
 class ExcessiveCharacterCount(Exception):
     def __init__(self, limit : int):
         self.limit = limit
