@@ -1,9 +1,7 @@
-from os import name
 import discord
-from discord.commands.commands import Option, SlashCommand
+from discord.commands.commands import Option
 
 from discord.ext import commands
-from discord.ext.commands.converter import MemberConverter
 
 from Utilities import Checks, Vars, PlayerObject, Analytics
 
@@ -117,30 +115,41 @@ class Profile(commands.Cog):
     async def other_profile(self, ctx, member: discord.Member):
         await self.view_profile(ctx, member)
 
+    # @commands.slash_command(guild_ids=[762118688567984151])
+    # async def gold(self, ctx):
+    #     """See how much gold you have."""
+    #     player = await PlayerObject.get_player_by_id(
+    #         await self.bot.db.acquire(),
+    #         ctx.author.id
+    #     )
+
+    #     await ctx.respond(f"You have `{player.gold}` gold.")
+
+    # @commands.slash_command(guild_ids=[762118688567984151])
+    # async def level(self, ctx):
+    #     """See your current, level, xp, and distance from levelling up."""
+    #     player = await PlayerObject.get_player_by_id(
+    #         await self.bot.db.acquire(),
+    #         ctx.author.id
+    #     )
+    #     level, dist = player.get_level(get_next=True)
+
+    #     embed = discord.Embed(color=Vars.ABLUE)
+    #     embed.add_field(name="Level", value=level)
+    #     embed.add_field(name="EXP", value=player.xp)
+    #     embed.add_field(name=f"EXP until Level {level+1}", value=dist)
+    #     await ctx.respond(embed=embed)
+
     @commands.slash_command(guild_ids=[762118688567984151])
-    async def gold(self, ctx):
-        """See how much gold you have."""
+    async def rename(self, ctx, *, 
+            name : Option(str, description="Your new name", required=True)):
+        """Change your character's name."""
         player = await PlayerObject.get_player_by_id(
             await self.bot.db.acquire(),
             ctx.author.id
         )
-
-        await ctx.respond(f"You have `{player.gold}` gold.")
-
-    @commands.slash_command(guild_ids=[762118688567984151])
-    async def level(self, ctx):
-        """See your current, level, xp, and distance from levelling up."""
-        player = await PlayerObject.get_player_by_id(
-            await self.bot.db.acquire(),
-            ctx.author.id
-        )
-        level, dist = player.get_level(get_next=True)
-
-        embed = discord.Embed(color=Vars.ABLUE)
-        embed.add_field(name="Level", value=level)
-        embed.add_field(name="EXP", value=player.xp)
-        embed.add_field(name=f"EXP until Level {level+1}", value=dist)
-        await ctx.respond(embed=embed)
+        await player.set_char_name(await self.bot.db.acquire(), name)
+        await ctx.respond(f"You changed your name to **{name}**.")
 
 
 def setup(bot):

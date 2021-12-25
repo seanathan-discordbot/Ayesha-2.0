@@ -39,6 +39,13 @@ class Error_Handler(commands.Cog):
                 await ctx.respond(message)
                 print_traceback = False
 
+            if isinstance(error.original, Checks.ExcessiveCharacterCount):
+                message = (f"Your response exceeded the character limit.\n"
+                            f"Please keep your response under `"
+                            f"{error.original.limit}` characters.")
+                await ctx.respond(message)
+                print_traceback = False
+
         # --- ARGUMENT ERRORS ---
         if isinstance(error, Checks.ExcessiveCharacterCount):
             message = (f"Your response exceeded the character limit.\nPlease "
