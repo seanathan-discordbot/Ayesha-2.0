@@ -3,7 +3,6 @@ import discord
 import asyncpg
 
 from Utilities import Checks, Vars
-from Utilities.PlayerObject import Player, get_player_by_id
 
 
 class Association:
@@ -260,9 +259,11 @@ class Association:
     # Each method will first check to see if the type is compatible.
 
     # --- BROTHERHOOD METHODS ---
-    async def get_champions(self, conn : asyncpg.Connection) -> list(Player):
+    async def get_champions(self, conn : asyncpg.Connection) -> list:
         if self.type != "Brotherhood":
             raise Checks.NotInSpecifiedAssociation("Brotherhood")
+
+        from Utilities.PlayerObject import get_player_by_id # evil emoji
 
         psql = """
                 SELECT champ1, champ2, champ3
@@ -286,6 +287,8 @@ class Association:
         Slot must be an integer 1-3."""
         if self.type != "Brotherhood":
             raise Checks.NotInSpecifiedAssociation("Brotherhood")
+
+        from Utilities.PlayerObject import get_player_by_id
 
         player = await get_player_by_id(conn, player_id)
         if player.assc.id != self.id:

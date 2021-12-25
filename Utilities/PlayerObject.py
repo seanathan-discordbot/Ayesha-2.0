@@ -4,8 +4,8 @@ import asyncpg
 
 from Utilities import Checks, ItemObject, Vars, AcolyteObject, AssociationObject
 from Utilities.ItemObject import Weapon
-from AcolyteObject import Acolyte
-from AssociationObject import Association
+from Utilities.AcolyteObject import Acolyte
+from Utilities.AssociationObject import Association
 
 
 class Player:
