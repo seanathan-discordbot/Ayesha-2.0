@@ -176,6 +176,20 @@ class Player:
         if self.acolyte2.acolyte_name is not None:
             await self.acolyte2.check_xp_increase(conn, ctx, a_xp)
 
+    async def set_char_name(self, conn : asyncpg.Connection, name : str):
+        """Sets the player's character name. Limit 32 characters."""
+        if len(name) > 32:
+            raise Checks.ExcessiveCharacterCount(limit=32)
+        
+        self.char_name = name
+
+        psql = """
+                UPDATE players
+                SET user_name = $1
+                WHERE user_id = $2;
+                """
+        await conn.execute(psql, name, self.disc_id)
+
     async def is_weapon_owner(self, conn : asyncpg.Connection, 
             item_id : int) -> bool:
         """Returns true/false depending on whether the item with the given 
