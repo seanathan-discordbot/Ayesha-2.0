@@ -75,24 +75,24 @@ class Ayesha(commands.AutoShardedBot):
 bot = Ayesha()
 
 # Cog-loading commands
-@bot.slash_command(guild_ids=[762118688567984151])
-@commands.check(bot.is_admin)
-async def reload(ctx, extension):
-    bot.unload_extension(f"cogs.{extension}")
-    bot.load_extension(f"cogs.{extension}")
-    await ctx.respond("Reloaded.")
+# @bot.slash_command(guild_ids=[762118688567984151])
+# @commands.check(bot.is_admin)
+# async def reload(ctx, extension):
+#     bot.unload_extension(f"cogs.{extension}")
+#     bot.load_extension(f"cogs.{extension}")
+#     await ctx.respond("Reloaded.")
 
-@bot.slash_command(guild_ids=[762118688567984151])
-@commands.check(bot.is_admin)
-async def load(ctx, extension):
-    bot.load_extension(f"cogs.{extension}")
-    await ctx.respond("Loaded.")
+# @bot.slash_command(guild_ids=[762118688567984151])
+# @commands.check(bot.is_admin)
+# async def load(ctx, extension):
+#     bot.load_extension(f"cogs.{extension}")
+#     await ctx.respond("Loaded.")
 
-@bot.slash_command(guild_ids=[762118688567984151])
-@commands.check(bot.is_admin)
-async def unload(ctx, extension):
-    bot.unload_extension(f"cogs.{extension}")
-    await ctx.respond("Unloaded.")
+# @bot.slash_command(guild_ids=[762118688567984151])
+# @commands.check(bot.is_admin)
+# async def unload(ctx, extension):
+#     bot.unload_extension(f"cogs.{extension}")
+#     await ctx.respond("Unloaded.")
 
 # Connect to database
 async def create_db_pool():
