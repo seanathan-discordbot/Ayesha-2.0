@@ -1,5 +1,7 @@
+from asyncio.events import AbstractEventLoop
 import discord
 
+import asyncio
 import asyncpg
 
 from Utilities import Checks, ItemObject, Vars, AcolyteObject, AssociationObject
@@ -61,39 +63,6 @@ class Player:
         The player's wealth in gravitas (alternate currency)
     daily_streak : int
         The amount of days in a row the player has used the `daily` command
-
-    Methods
-    -------
-    get_level()
-        Returns the player's level using its current xp value
-    check_xp_increase()
-        Increases the player's xp and checks for levelups.
-    await is_weapon_owner()
-        Returns a bool of whether the item with the ID passed is in the player's
-        inventory
-    await equip_item()
-        Equips the item with the passed ID to the player
-    await unequip_item()
-        Replaces the equipped_item with an empty weapon and nullifies the
-        equipped_item in the database
-    await is_acolyte_owner()
-        Returns a bool of whether the acolyte with the ID passed is in the 
-        player's tavern
-    await equip_acolyte()
-        Equips the acolyte with the passed ID to the player in the given slot
-    await unequip_acolyte()
-        Replaces the acolyte with an empty one and nullifies the acolyte in the
-        database in the slot passed
-    await give_gold()
-        Give the player the passed amount of gold.
-    await give_rubidics()
-        Give the player the passed amount of rubidics.
-    get_attack()
-        Give the player's attack stat
-    get_crit()
-        Give the player's crit stat
-    get_hp()
-        Give the player's HP stat
     """
     def __init__(self, record : asyncpg.Record):
         """
@@ -107,10 +76,10 @@ class Player:
         self.char_name = record['user_name']
         self.xp = record['xp']
         self.level = self.get_level()
-        self.equipped_item = ItemObject.get_weapon_by_id(record['equipped_item'])
-        self.acolyte1 = AcolyteObject.get_acolyte_by_id(record['acolyte1'])
-        self.acolyte2 = AcolyteObject.get_acolyte_by_id(record['acolyte2'])
-        self.assc = AssociationObject.get_assc_by_id(record['assc'])
+        self.equipped_item = record['equipped_item']
+        self.acolyte1 = record['acolyte1']
+        self.acolyte2 = record['acolyte2']
+        self.assc = record['assc']
         self.guild_rank = record['guild_rank']
         self.gold = record['gold']
         self.occupation = record['occupation']
@@ -126,6 +95,18 @@ class Player:
         self.destination = record['destination']
         self.gravitas = record['gravitas']
         self.daily_streak = record['daily_streak']
+
+    async def _load_equips(self, conn : asyncpg.Connection):
+        """Converts object variables from their IDs into the proper objects.
+        Run this upon instantiation or else >:(
+        """
+        self.equipped_item = await ItemObject.get_weapon_by_id(
+            conn, self.equipped_item)
+        self.acolyte1 = await AcolyteObject.get_acolyte_by_id(
+            conn, self.acolyte1)
+        self.acolyte2 = await AcolyteObject.get_acolyte_by_id(
+            conn, self.acolyte2)
+        self.assc = await AssociationObject.get_assc_by_id(conn, self.assc)
 
     def get_level(self) -> int:
         """Returns the player's level."""
@@ -441,20 +422,23 @@ async def get_player_by_id(conn : asyncpg.Connection, user_id : int) -> Player:
             """
     
     player_record = await conn.fetchrow(psql, user_id)
+    player = Player(player_record)
+    await player._load_equips(conn)
 
-    return Player(player_record)
+    return player
 
-async def create_character(conn : asyncpg.Connection, 
-        user_id : int, name : str) -> Player:
+async def create_character(conn : asyncpg.Connection, user_id : int, 
+        name : str) -> Player:
     """Creates and returns a profile for the user with the given Discord ID."""
-    psql = """
-            INSERT INTO players (user_id, user_name) VALUES ($1, $2);
-            INSERT INTO resources (user_id) VALUES ($1);
-            INSERT INTO strategy (user_id) VALUES ($1);
-            """
-    await conn.execute(psql, user_id, name)
+    psql1 = "INSERT INTO players (user_id, user_name) VALUES ($1, $2);"
+    psql2 = "INSERT INTO resources (user_id) VALUES ($1);"
+    psql3 = "INSERT INTO strategy (user_id) VALUES ($1);"
+    await conn.execute(psql1, user_id, name)
+    await conn.execute(psql2, user_id)
+    await conn.execute(psql3, user_id)
 
-    item = await ItemObject.create_weapon(conn, user_id, "Common", attack=20, crit=0, 
-                               weapon_name="Wooden Spear", weapon_type="Spear")
+    await ItemObject.create_weapon(
+        conn, user_id, "Common", attack=20, crit=0, weapon_name="Wooden Spear", 
+        weapon_type="Spear")
 
     return await get_player_by_id(conn, user_id)

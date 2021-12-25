@@ -63,7 +63,7 @@ class Weapon:
             self.weapon_id = record['item_id']
             self.owner_id = record['user_id']
             self.name = record['weapon_name']
-            self.type = record['type']
+            self.type = record['weapontype']
             self.rarity = record['rarity']
             self.attack = record['attack']
             self.crit = record['crit']
@@ -159,7 +159,7 @@ async def create_weapon(conn : asyncpg.Connection, user_id : int, rarity : str,
     if weapon_name is None:
         weapon_name = _get_random_name()
 
-    psql = """"
+    psql = """
             WITH rows AS (
                 INSERT INTO items 
                     (weapontype, user_id, attack, crit, weapon_name, rarity)
@@ -169,10 +169,10 @@ async def create_weapon(conn : asyncpg.Connection, user_id : int, rarity : str,
             SELECT item_id FROM rows;
             """
     
-    item_id = conn.fetchval(psql, weapon_type, user_id, attack, 
-                            crit, weapon_name, rarity)
+    item_id = await conn.fetchval(psql, weapon_type, user_id, attack, crit, 
+        weapon_name, rarity)
 
-    return get_weapon_by_id(conn, item_id)
+    return await get_weapon_by_id(conn, item_id)
 
 def _get_random_name() -> str:
     """Returns a str: random combination of words up to 20 characters."""
