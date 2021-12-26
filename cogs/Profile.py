@@ -3,7 +3,7 @@ from discord.commands.commands import Option
 
 from discord.ext import commands, pages
 
-from Utilities import Checks, Vars, PlayerObject, Analytics
+from Utilities import Checks, Vars, PlayerObject
 
 class ConfirmButton(discord.ui.View):
     def __init__(self):
@@ -39,11 +39,11 @@ class Profile(commands.Cog):
         await ctx.defer()
 
         # Load information
-        print("Loading Profile")
         profile = await PlayerObject.get_player_by_id(
             await self.bot.db.acquire(),
             player.id)
         level, dist = profile.get_level(get_next=True)
+        pack = await profile.get_backpack(await self.bot.db.acquire())
         # print("Loading ranks: gold")
         # gold_rank = Analytics.stringify_rank(
         #     await Analytics.get_gold_rank(
@@ -134,41 +134,48 @@ class Profile(commands.Cog):
             ),
             inline=True)
 
+        page3 = discord.Embed(            
+            title=f"Backpack: {profile.char_name}",
+            color=Vars.ABLUE
+        )
+        page3.set_thumbnail(url=player.avatar.url)
+        for resource in Vars.MATERIALS:
+            page3.add_field(name=resource, value=pack[resource.lower()])
+
         if profile.assc.is_empty:
-            embeds = [page1, page2]
+            embeds = [page1, page2, page3]
         else:
             # Print the player association as the last page
-            print("Loading assc info")
             assc_leader = await ctx.bot.fetch_user(profile.assc.leader)
             assc_members = await profile.assc.get_member_count(
                 await self.bot.db.acquire())
             assc_capacity = profile.assc.get_member_capacity()
             assc_level, progress = profile.assc.get_level(give_graphic=True)
 
-            page3 = discord.Embed(            
+            page4 = discord.Embed(            
                 title=f"{profile.assc.type}: {profile.assc.name}",
                 color=Vars.ABLUE
             )
-            page3.set_thumbnail(url=profile.assc.icon)
-            page3.add_field(name="Leader", value=assc_leader.mention)
-            page3.add_field(name="Members", 
+            page4.set_thumbnail(url=profile.assc.icon)
+            page4.add_field(name="Leader", value=assc_leader.mention)
+            page4.add_field(name="Members", 
                 value=f"{assc_members}/{assc_capacity}")
-            page3.add_field(name="Level", value=assc_level)
-            page3.add_field(name="EXP Progress", value=progress)
-            page3.add_field(name="Base", value=profile.assc.base)
+            page4.add_field(name="Level", value=assc_level)
+            page4.add_field(name="EXP Progress", value=progress)
+            page4.add_field(name="Base", value=profile.assc.base)
             if profile.assc.join_status != "open":
-                page3.add_field(name=
+                page4.add_field(name=
                     f"This {profile.assc.type} is closed to new members.",
                     value=profile.assc.desc,
                     inline=False)
             else:
-                page3.add_field(name=(
+                page4.add_field(name=(
                     f"This {profile.assc.type} is open to new members at or "
                     f"above level {profile.assc.lvl_req}."),
                     value=profile.assc.desc,
                     inline=False)
-            page3.set_footer(text=f"{profile.assc.type} ID: {profile.assc.id}")
-            embeds = [page1, page2, page3]
+            page4.set_footer(text=f"{profile.assc.type} ID: {profile.assc.id}")
+            embeds = [page1, page2, page3, page4]
 
         # Output pages
         paginator = pages.Paginator(pages=embeds, timeout=30)
