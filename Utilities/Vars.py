@@ -2,6 +2,9 @@ ACOLYTE_LIST_PATH = r'F:\OneDrive\Python_Projects\Ayesha_Rewrite\Assets\Acolyte_
 
 ABLUE =  0xBEDCF6
 
+MATERIALS = ["Fur", "Bone", "Iron", "Silver", "Wood", "Wheat", "Oat", "Reeds",
+             "Pine", "Moss", "Cacao"]
+
 OCCUPATIONS = {
     'Soldier' : {
         'atk_bonus' : 0,

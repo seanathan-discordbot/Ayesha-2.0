@@ -362,6 +362,19 @@ class Player:
 
         await conn.execute(psql, rubidics, self.disc_id)
 
+    async def get_backpack(self, conn : asyncpg.Connection) -> asyncpg.Record:
+        """Returns a dict containg the player's resource amounts. Keys are:
+        Wheat, Oat, Wood, Reeds, Pine, Moss, Iron, Cacao, Fur, Bone, Silver
+        """
+        psql = """
+                SELECT
+                    wheat, oat, wood, reeds, pine, moss, iron, cacao,
+                    fur, bone, silver
+                FROM resources
+                WHERE user_id = $1;
+                """
+        return await conn.fetchrow(psql, self.disc_id)
+
     def get_attack(self) -> int:
         """Returns the player's attack stat, calculated from all other sources.
         The value returned by this method is 'the final say' on the stat.
