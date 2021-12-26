@@ -13,7 +13,7 @@ async def get_xp_rank(conn : asyncpg.Connection, user_id : int) -> int:
             WHERE user_id = $1
             LIMIT 1;
             """
-    return await conn.fetchval(psql, user_id, timeout=1)
+    return await conn.fetchval(psql, user_id, timeout=0.5)
 
 async def xp_leaderboard(conn : asyncpg.Connection, 
         user_id : int, amount : int = 10):
@@ -38,7 +38,7 @@ async def get_gold_rank(conn : asyncpg.Connection, user_id : int) -> int:
             WHERE user_id = $1
             LIMIT 1;
             """
-    return await conn.fetchval(psql, user_id, timeout=1)
+    return await conn.fetchval(psql, user_id, timeout=0.5)
 
 async def get_gravitas_rank(conn : asyncpg.Connection, user_id : int) -> int:
     """Returns the rank in gravitas for the player given"""
@@ -53,7 +53,7 @@ async def get_gravitas_rank(conn : asyncpg.Connection, user_id : int) -> int:
             WHERE user_id = $1
             LIMIT 1;
             """
-    return await conn.fetchval(psql, user_id, timeout=1)
+    return await conn.fetchval(psql, user_id, timeout=0.5)
 
 async def get_bosswins_rank(conn : asyncpg.Connection, user_id : int) -> int:
     """Returns the rank in bosswins for the player given"""
@@ -68,7 +68,7 @@ async def get_bosswins_rank(conn : asyncpg.Connection, user_id : int) -> int:
             WHERE user_id = $1
             LIMIT 1;
             """
-    return await conn.fetchval(psql, user_id, timeout=1)
+    return await conn.fetchval(psql, user_id, timeout=0.5)
 
 async def get_pvpwins_rank(conn : asyncpg.Connection, user_id : int) -> int:
     """Returns the rank in pvpwins for the player given"""
@@ -83,7 +83,7 @@ async def get_pvpwins_rank(conn : asyncpg.Connection, user_id : int) -> int:
             WHERE user_id = $1
             LIMIT 1;
             """
-    return await conn.fetchval(psql, user_id, timeout=1)
+    return await conn.fetchval(psql, user_id, timeout=0.5)
 
 def stringify_rank(rank : int) -> str:
     """Converts the rank into a str. eg Rank 1 --> 1st"""

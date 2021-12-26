@@ -80,9 +80,17 @@ class Association:
             self.base_set = True
             self.lvl_req = 0
 
-    def get_level(self) -> int:
+    def get_level(self, give_graphic = False) -> int:
         """Returns the level of the guild. Each level is 1,000,000 xp."""
-        return int(self.xp / 1000000) if int(self.xp / 1000000) < 10 else 10
+        level = int(self.xp / 1000000) if int(self.xp / 1000000) < 10 else 10
+
+        if give_graphic:
+            dashes = ["".join(["▬"]*i) for i in range(10)]
+            progress = int((self.xp % 1000000) / 100000)
+            graphic = dashes[progress]+'◆'+dashes[9-progress]
+            return level, graphic
+        else:
+            return level
 
     def get_member_capacity(self) -> int:
         """Returns the member capacity of the association. 
