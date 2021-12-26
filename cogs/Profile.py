@@ -1,7 +1,7 @@
 import discord
 from discord.commands.commands import Option
 
-from discord.ext import commands
+from discord.ext import commands, pages
 
 from Utilities import Checks, Vars, PlayerObject, Analytics
 
@@ -115,6 +115,126 @@ class Profile(commands.Cog):
     async def other_profile(self, ctx, member: discord.Member):
         await self.view_profile(ctx, member)
 
+    @commands.slash_command(guild_ids=[762118688567984151])
+    async def new_profile(self, ctx):
+        """View your profile (New Version)."""
+        await ctx.defer()
+
+        # Load information
+        player = ctx.author
+        profile = await PlayerObject.get_player_by_id(
+            await self.bot.db.acquire(),
+            player.id)
+        level, dist = profile.get_level(get_next=True)
+        gold_rank = Analytics.stringify_rank(
+            await Analytics.get_gold_rank(
+                await self.bot.db.acquire(), player.id)
+        )
+        gravitas_rank = Analytics.stringify_rank(
+            await Analytics.get_gravitas_rank(
+                await self.bot.db.acquire(), player.id)
+        )
+        xp_rank = Analytics.stringify_rank(
+            await Analytics.get_xp_rank(
+                await self.bot.db.acquire(), player.id)
+        )
+        boss_rank = Analytics.stringify_rank(
+            await Analytics.get_bosswins_rank(
+                await self.bot.db.acquire(), player.id)
+        )
+        pvp_rank = Analytics.stringify_rank(
+            await Analytics.get_pvpwins_rank(
+                await self.bot.db.acquire(), player.id)
+        )
+
+        # Create pages
+        page1 = discord.Embed(            
+            title=f"Character Information: {profile.char_name}",
+            color=Vars.ABLUE
+        )
+        page1.set_thumbnail(url=player.avatar.url)
+        page1.add_field(name="Experience",
+            value=(
+                f"Level: `{level}`\n"
+                f"EXP: `{profile.xp}` (`{xp_rank}`)\n"
+                f"To Next Level: `{dist}`"),
+            inline=True)
+        page1.add_field(name="Wealth",
+            value=(
+                f"Gold: `{profile.gold}` (`{gold_rank}`)\n"
+                f"Gravitas: `{profile.gravitas}` (`{gravitas_rank}`)"),
+            inline=True)
+        page1.add_field(name="Lore",
+            value=(
+                f"Occupation: `{profile.occupation}`\n"
+                f"Origin: `{profile.origin}`\n"
+                f"Location: `{profile.location}`\n"
+                f"Association: `{profile.assc.name}` "
+                f"(ID: `{profile.assc.id}`)"),
+            inline=False)
+
+        page2 = discord.Embed(            
+            title=f"Combat Loadout: {profile.char_name}",
+            color=Vars.ABLUE
+        )
+        page2.set_thumbnail(url=player.avatar.url)
+        page2.add_field(name="General",
+            value=(
+                f"Attack: `{profile.get_attack()}`\n"
+                f"Crit Chance: `{profile.get_crit()}`\n"
+                f"Hit Points: `{profile.get_hp()}`"),
+            inline=True)
+        page2.add_field(name="Reputation",
+            value=(
+                f"Bosses Defeated: `{profile.boss_wins}` (`{boss_rank}`)\n"
+                f"Pvp Wins: `{profile.pvp_wins}` (`{pvp_rank}`)\n"),
+            inline=True)
+        page2.add_field(name=f"Equips",
+            value=(
+                f"{profile.equipped_item.type}: {profile.equipped_item.name} "
+                f"({profile.equipped_item.rarity}, `"
+                f"{profile.equipped_item.attack}` ATK, `"
+                f"{profile.equipped_item.crit}` CRIT)"
+            ),
+            inline=False)
+        page2.add_field(name="Acolyte",
+            value=(
+                f"{profile.acolyte1.acolyte_name} (`"
+                f"{profile.acolyte1.gen_dict['Rarity']}⭐`)"
+            ),
+            inline=True)
+        page2.add_field(name="Acolyte",
+            value=(
+                f"{profile.acolyte2.acolyte_name} (`"
+                f"{profile.acolyte2.gen_dict['Rarity']}⭐`)"
+            ),
+            inline=True)
+
+        # page3 = discord.Embed(
+        #     title=f"{player.display_name}'s Profile: {profile.char_name}",
+        #     color=Vars.ABLUE)
+        # page3.set_thumbnail(url=player.avatar.url)
+        # page3.add_field(
+        #     name="Party",
+        #     value=(
+        #         f"Item: `{profile.equipped_item.name} "
+        #         f"({profile.equipped_item.rarity})`\nAcolyte: "
+        #         f"`{profile.acolyte1.acolyte_name} ("
+        #         f"{profile.acolyte1.gen_dict['Rarity']}⭐)`\nAcolyte: "
+        #         f"`{profile.acolyte2.acolyte_name} ("
+        #         f"{profile.acolyte2.gen_dict['Rarity']}⭐)`"),
+        #         inline=True)
+
+        # Output pages
+        paginator = pages.Paginator(pages=[page1, page2], timeout=30)
+        paginator.customize_button("next", button_label=">", button_style=discord.ButtonStyle.green)
+        paginator.customize_button("prev", button_label="<", button_style=discord.ButtonStyle.green)
+        paginator.customize_button("first", button_label="<<", button_style=discord.ButtonStyle.blurple)
+        paginator.customize_button("last", button_label=">>", button_style=discord.ButtonStyle.blurple)
+        await paginator.send(ctx, ephemeral=False)
+
+        
+
     # @commands.slash_command(guild_ids=[762118688567984151])
     # async def gold(self, ctx):
     #     """See how much gold you have."""
@@ -150,6 +270,9 @@ class Profile(commands.Cog):
         )
         await player.set_char_name(await self.bot.db.acquire(), name)
         await ctx.respond(f"You changed your name to **{name}**.")
+
+    # TODO: Add tutorial; this should probably go last
+
 
 
 def setup(bot):
