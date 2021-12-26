@@ -72,6 +72,11 @@ OCCUPATIONS = {
 }
 
 ORIGINS = {
+    'Aramithea' : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 0,
+        'hp_bonus' : 0
+    },
     'Riverburn' : {
         'atk_bonus' : 5,
         'crit_bonus' : 0,
@@ -85,6 +90,11 @@ ORIGINS = {
     'Mythic Forest' : {
         'atk_bonus' : 0,
         'crit_bonus' : 2,
+        'hp_bonus' : 0
+    },
+    'Sunset' : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 0,
         'hp_bonus' : 0
     },
     'Lunaris' : {

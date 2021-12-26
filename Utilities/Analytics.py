@@ -13,7 +13,7 @@ async def get_xp_rank(conn : asyncpg.Connection, user_id : int) -> int:
             WHERE user_id = $1
             LIMIT 1;
             """
-    return await conn.fetchval(psql, user_id)
+    return await conn.fetchval(psql, user_id, timeout=1)
 
 async def xp_leaderboard(conn : asyncpg.Connection, 
         user_id : int, amount : int = 10):
@@ -38,7 +38,7 @@ async def get_gold_rank(conn : asyncpg.Connection, user_id : int) -> int:
             WHERE user_id = $1
             LIMIT 1;
             """
-    return await conn.fetchval(psql, user_id)
+    return await conn.fetchval(psql, user_id, timeout=1)
 
 async def get_gravitas_rank(conn : asyncpg.Connection, user_id : int) -> int:
     """Returns the rank in gravitas for the player given"""
@@ -53,7 +53,7 @@ async def get_gravitas_rank(conn : asyncpg.Connection, user_id : int) -> int:
             WHERE user_id = $1
             LIMIT 1;
             """
-    return await conn.fetchval(psql, user_id)
+    return await conn.fetchval(psql, user_id, timeout=1)
 
 async def get_bosswins_rank(conn : asyncpg.Connection, user_id : int) -> int:
     """Returns the rank in bosswins for the player given"""
@@ -68,7 +68,7 @@ async def get_bosswins_rank(conn : asyncpg.Connection, user_id : int) -> int:
             WHERE user_id = $1
             LIMIT 1;
             """
-    return await conn.fetchval(psql, user_id)
+    return await conn.fetchval(psql, user_id, timeout=1)
 
 async def get_pvpwins_rank(conn : asyncpg.Connection, user_id : int) -> int:
     """Returns the rank in pvpwins for the player given"""
@@ -83,4 +83,24 @@ async def get_pvpwins_rank(conn : asyncpg.Connection, user_id : int) -> int:
             WHERE user_id = $1
             LIMIT 1;
             """
-    return await conn.fetchval(psql, user_id)
+    return await conn.fetchval(psql, user_id, timeout=1)
+
+def stringify_rank(rank : int) -> str:
+    """Converts the rank into a str. eg Rank 1 --> 1st"""
+    if rank is None:
+        return ">100th"
+
+    output = str(rank)
+
+    if output[-2:] in ("11", "12", "13"):
+        output += "th"
+    elif output[-1] == '1':
+        output += "st"
+    elif output[-1] == '2':
+        output += "nd"
+    elif output[-1] == '3':
+        output += "rd"
+    else:
+        output += "th"
+
+    return output
