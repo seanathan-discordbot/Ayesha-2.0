@@ -56,45 +56,68 @@ class Items(commands.Cog):
             order : Option(str, description="Order by ATK or CRIT",
                 default="attack", 
                 choices=[
-                    OptionChoice(name="attack"), OptionChoice(name="crit")]
-                ),
+                    OptionChoice(name="attack"), 
+                    OptionChoice(name="crit")]),
             rarity : Option(str, description="Get only a specific rarity",
-                choices=[OptionChoice(name="Legendary"), 
-                    OptionChoice(name="Epic"), OptionChoice(name="Rare"),
-                    OptionChoice(name="Uncommon"), OptionChoice(name="Common")])
-    ):
+                choices=[OptionChoice(name=r) for r in Vars.RARITIES.keys()],
+                required=False),
+            weapontype : Option(str, 
+                description="Get only a specific weapon type",
+                choices=[OptionChoice(name=t) for t in Vars.WEAPON_TYPES],
+                required=False)):
         """View your inventory."""
         await ctx.defer()
 
-        # Get equipped item to put at top of list
-        psql1 = """
-                WITH thing AS (
-                    SELECT equipped_item
-                    FROM players
-                    WHERE user_id = $1
-                )
-                SELECT items.item_id, items.weapontype, items.user_id, 
-                    items.attack, items.crit, items.weapon_name, items.rarity
-                FROM items
-                INNER JOIN thing ON items.item_id = thing.equipped_item;
-                """
-        psql2 = f"""
-                SELECT item_id, weapontype, user_id, 
-                    attack, crit, weapon_name, rarity
-                FROM items
-                WHERE user_id = $1 AND rarity = $2
-                ORDER BY {order} DESC;
-                """
-
         async with self.bot.db.acquire() as conn:
-            inventory = []
+            # Get equipped item to put at top of list
+            psql1 = """
+                    WITH thing AS (
+                        SELECT equipped_item
+                        FROM players
+                        WHERE user_id = $1
+                    )
+                    SELECT items.item_id, items.weapontype, items.user_id, 
+                        items.attack, items.crit, items.weapon_name, 
+                        items.rarity
+                    FROM items
+                    INNER JOIN thing ON items.item_id = thing.equipped_item;
+                    """
+            psql2 = """
+                    SELECT item_id, weapontype, user_id, 
+                        attack, crit, weapon_name, rarity
+                    FROM items
+                    WHERE user_id = $1
+                    """
+
+            if rarity is not None and weapontype is not None:
+                psql2 += f""" 
+                            AND rarity = $2 AND weapontype = $3
+                            ORDER BY {order} DESC;
+                            """
+                inv = await conn.fetch(psql2, ctx.author.id, rarity, weapontype)
+            elif rarity is not None and weapontype is None:
+                psql2 += f""" 
+                            AND rarity = $2
+                            ORDER BY {order} DESC;
+                            """
+                inv = await conn.fetch(psql2, ctx.author.id, rarity)
+            elif rarity is None and weapontype is not None:
+                psql2 += f"""
+                            AND weapontype = $2
+                            ORDER BY {order} DESC;
+                            """
+                inv = await conn.fetch(psql2, ctx.author.id, weapontype)
+            else:
+                psql2 += f" ORDER BY {order} DESC;"
+                inv = await conn.fetch(psql2, ctx.author.id)
+
             equip = await conn.fetchrow(psql1, ctx.author.id)
             if equip is not None:
                 got_eq = True
             else:
                 got_eq = False
-            inv = await conn.fetch(psql2, ctx.author.id, rarity)
 
+        inventory = [] # Allows me to put equip and rest of items in one thing
         for record in inv:
             inventory.append(record)
 
@@ -138,6 +161,49 @@ class Items(commands.Cog):
             else: # Unequip current item
                 await player.unequip_item(conn)
                 await ctx.respond("Unequipped your item.")
+
+    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.check(Checks.HasChar)
+    async def merge(self, ctx, item : Option(int, 
+                description="The ID of the item you want to strengthen."),
+            fodder : Option(int, 
+                description="The ID of the item you want to destroy.")):
+        """Merge an item into another to boost its ATK by 1."""
+        await ctx.defer() # I hate how I have to use this a lot
+        
+        async with self.bot.db.acquire() as conn:
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+
+            # Make sure players owns these items
+            a = await player.is_weapon_owner(conn, item)
+            b = await player.is_weapon_owner(conn, fodder)
+            if not a or not b:
+                raise Checks.NotWeaponOwner
+            
+            # Make sure fodder is not the equipped item
+            if fodder == player.equipped_item.weapon_id:
+                return await ctx.respond(
+                    "You can't use your equipped item as fodder!")
+
+            # Load weapons and make sure they are merge eligible
+            # Same weapontype, and fodder at least 15 ATK less than item
+            item_w = await ItemObject.get_weapon_by_id(conn, item)
+            fodder_w = await ItemObject.get_weapon_by_id(conn, fodder)
+
+            if item_w.type != fodder_w.type:
+                return await ctx.respond(
+                    "These items must have the same weapontype to be merged.")
+            
+            if fodder_w.attack < item_w.attack - 15:
+                return await ctx.respond((
+                    "The fodder item must have at least 15 less ATK than the "
+                    "item being upgraded."))
+
+            await ctx.respond("Merge would be ok but I need to do tax rates to continue lol")
+
+            # Calculate the cost of the merge
+            # TODO implement tax rates
+            
 
 
 def setup(bot):
