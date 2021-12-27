@@ -35,7 +35,7 @@ class Error_Handler(commands.Cog):
         if isinstance(error, ApplicationCommandInvokeError):
             if isinstance(error.original, Checks.PlayerHasNoChar):
                 message = ("This player does not have a character. "
-                           "Ask them to make one \:)")
+                           "Use the `/start` command to make one :)")
                 await ctx.respond(message)
                 print_traceback = False
 
@@ -43,6 +43,11 @@ class Error_Handler(commands.Cog):
                 message = (f"Your response exceeded the character limit.\n"
                             f"Please keep your response under `"
                             f"{error.original.limit}` characters.")
+                await ctx.respond(message)
+                print_traceback = False
+
+            if isinstance(error.original, Checks.NotWeaponOwner):
+                message = f"You do not own a weapon with this ID."
                 await ctx.respond(message)
                 print_traceback = False
 
