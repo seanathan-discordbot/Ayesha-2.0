@@ -98,12 +98,16 @@ class Player:
         """Converts object variables from their IDs into the proper objects.
         Run this upon instantiation or else >:(
         """
+        print("--- Loading item")
         self.equipped_item = await ItemObject.get_weapon_by_id(
             conn, self.equipped_item)
+        print("--- Loading Acolyte1")
         self.acolyte1 = await AcolyteObject.get_acolyte_by_id(
             conn, self.acolyte1)
+        print("--- Loading Acolyte2")
         self.acolyte2 = await AcolyteObject.get_acolyte_by_id(
             conn, self.acolyte2)
+        print("--- Loading Association")
         self.assc = await AssociationObject.get_assc_by_id(conn, self.assc)
 
     def get_level(self, get_next = False) -> int:
@@ -199,16 +203,16 @@ class Player:
                 SELECT item_id FROM items
                 WHERE user_id = $1 AND item_id = $2;
                 """
-        val = await conn.fetchval(self.disc_id, item_id)
+        val = await conn.fetchval(psql, self.disc_id, item_id)
 
         return val is not None
 
     async def equip_item(self, conn : asyncpg.Connection, item_id : int):
         """Equips an item on the player."""
-        if not self.is_weapon_owner(conn, item_id):
+        if not await self.is_weapon_owner(conn, item_id):
             raise Checks.NotWeaponOwner
 
-        self.equipped_item = ItemObject.get_weapon_by_id(conn, item_id)
+        self.equipped_item = await ItemObject.get_weapon_by_id(conn, item_id)
 
         psql = """
                 UPDATE players 
@@ -457,12 +461,15 @@ async def get_player_by_id(conn : asyncpg.Connection, user_id : int) -> Player:
             WHERE user_id = $1;
             """
     
+    print("Fetching record")
     player_record = await conn.fetchrow(psql, user_id)
 
     if player_record is None:
         raise Checks.PlayerHasNoChar
 
+    print("Creating profile")
     player = Player(player_record)
+    print("Loading equipment")
     await player._load_equips(conn)
 
     return player

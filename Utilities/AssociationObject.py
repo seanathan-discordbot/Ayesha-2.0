@@ -369,8 +369,10 @@ async def get_assc_by_id(conn : asyncpg.Connection,
             FROM associations
             WHERE assc_id = $1;
             """
+    print("Fetching ASSOCIATION record")
     assc_record = await conn.fetchrow(psql, assc_id)
 
+    print("Loading Association")
     return Association(assc_record)
 
 async def get_assc_by_name(conn : asyncpg.Connection, 
