@@ -38,146 +38,123 @@ class Profile(commands.Cog):
         """Loads and prints the player's profile."""
         await ctx.defer()
 
-        # Load information
-        profile = await PlayerObject.get_player_by_id(
-            await self.bot.db.acquire(),
-            player.id)
-        level, dist = profile.get_level(get_next=True)
-        pack = await profile.get_backpack(await self.bot.db.acquire())
-        # print("Loading ranks: gold")
-        # gold_rank = Analytics.stringify_rank(
-        #     await Analytics.get_gold_rank(
-        #         await self.bot.db.acquire(), player.id)
-        # )
-        # print("Loading ranks: gravitas")
-        # gravitas_rank = Analytics.stringify_rank(
-        #     await Analytics.get_gravitas_rank(
-        #         await self.bot.db.acquire(), player.id)
-        # )
-        # print("Loading ranks: xp")
-        # xp_rank = Analytics.stringify_rank(
-        #     await Analytics.get_xp_rank(
-        #         await self.bot.db.acquire(), player.id)
-        # )
-        # print("Loading ranks: pve")
-        # boss_rank = Analytics.stringify_rank(
-        #     await Analytics.get_bosswins_rank(
-        #         await self.bot.db.acquire(), player.id)
-        # )
-        # print("Loading ranks: pvp")
-        # pvp_rank = Analytics.stringify_rank(
-        #     await Analytics.get_pvpwins_rank(
-        #         await self.bot.db.acquire(), player.id)
-        # )
-        # print("Ranks loaded")
+        async with self.bot.db.acquire() as conn:
+            # Load information
+            print("Loading profile.")
+            profile = await PlayerObject.get_player_by_id(conn, player.id)
+            print("Calculating level")
+            level, dist = profile.get_level(get_next=True)
+            print("Getting resources")
+            pack = await profile.get_backpack(conn)
 
-        # Create pages
-        page1 = discord.Embed(            
-            title=f"Character Information: {profile.char_name}",
-            color=Vars.ABLUE
-        )
-        page1.set_thumbnail(url=player.avatar.url)
-        page1.add_field(name="Experience",
-            value=(
-                f"Level: `{level}`\n"
-                f"EXP: `{profile.xp}`\n"
-                f"To Next Level: `{dist}`"),
-            inline=True)
-        page1.add_field(name="Wealth",
-            value=(
-                f"Gold: `{profile.gold}`\n"
-                f"Gravitas: `{profile.gravitas}`"),
-            inline=True)
-        page1.add_field(name="Lore",
-            value=(
-                f"Occupation: `{profile.occupation}`\n"
-                f"Origin: `{profile.origin}`\n"
-                f"Location: `{profile.location}`\n"
-                f"Association: `{profile.assc.name}` "
-                f"(ID: `{profile.assc.id}`)"),
-            inline=False)
-
-        page2 = discord.Embed(            
-            title=f"Combat Loadout: {profile.char_name}",
-            color=Vars.ABLUE
-        )
-        page2.set_thumbnail(url=player.avatar.url)
-        page2.add_field(name="General",
-            value=(
-                f"Attack: `{profile.get_attack()}`\n"
-                f"Crit Chance: `{profile.get_crit()}`\n"
-                f"Hit Points: `{profile.get_hp()}`"),
-            inline=True)
-        page2.add_field(name="Reputation",
-            value=(
-                f"Bosses Defeated: `{profile.boss_wins}`\n"
-                f"Pvp Wins: `{profile.pvp_wins}`\n"),
-            inline=True)
-        page2.add_field(name=f"Equips",
-            value=(
-                f"{profile.equipped_item.type}: {profile.equipped_item.name} "
-                f"({profile.equipped_item.rarity}, `"
-                f"{profile.equipped_item.attack}` ATK, `"
-                f"{profile.equipped_item.crit}` CRIT)"
-            ),
-            inline=False)
-        page2.add_field(name="Acolyte",
-            value=(
-                f"{profile.acolyte1.acolyte_name} (`"
-                f"{profile.acolyte1.gen_dict['Rarity']}⭐`)"
-            ),
-            inline=True)
-        page2.add_field(name="Acolyte",
-            value=(
-                f"{profile.acolyte2.acolyte_name} (`"
-                f"{profile.acolyte2.gen_dict['Rarity']}⭐`)"
-            ),
-            inline=True)
-
-        page3 = discord.Embed(            
-            title=f"Backpack: {profile.char_name}",
-            color=Vars.ABLUE
-        )
-        page3.set_thumbnail(url=player.avatar.url)
-        for resource in Vars.MATERIALS:
-            page3.add_field(name=resource, value=pack[resource.lower()])
-
-        if profile.assc.is_empty:
-            embeds = [page1, page2, page3]
-        else:
-            # Print the player association as the last page
-            assc_leader = await ctx.bot.fetch_user(profile.assc.leader)
-            assc_members = await profile.assc.get_member_count(
-                await self.bot.db.acquire())
-            assc_capacity = profile.assc.get_member_capacity()
-            assc_level, progress = profile.assc.get_level(give_graphic=True)
-
-            page4 = discord.Embed(            
-                title=f"{profile.assc.type}: {profile.assc.name}",
+            # Create pages
+            print("Creating embeds")
+            page1 = discord.Embed(            
+                title=f"Character Information: {profile.char_name}",
                 color=Vars.ABLUE
             )
-            page4.set_thumbnail(url=profile.assc.icon)
-            page4.add_field(name="Leader", value=assc_leader.mention)
-            page4.add_field(name="Members", 
-                value=f"{assc_members}/{assc_capacity}")
-            page4.add_field(name="Level", value=assc_level)
-            page4.add_field(name="EXP Progress", value=progress)
-            page4.add_field(name="Base", value=profile.assc.base)
-            if profile.assc.join_status != "open":
-                page4.add_field(name=
-                    f"This {profile.assc.type} is closed to new members.",
-                    value=profile.assc.desc,
-                    inline=False)
+            page1.set_thumbnail(url=player.avatar.url)
+            page1.add_field(name="Experience",
+                value=(
+                    f"Level: `{level}`\n"
+                    f"EXP: `{profile.xp}`\n"
+                    f"To Next Level: `{dist}`"),
+                inline=True)
+            page1.add_field(name="Wealth",
+                value=(
+                    f"Gold: `{profile.gold}`\n"
+                    f"Gravitas: `{profile.gravitas}`"),
+                inline=True)
+            page1.add_field(name="Lore",
+                value=(
+                    f"Occupation: `{profile.occupation}`\n"
+                    f"Origin: `{profile.origin}`\n"
+                    f"Location: `{profile.location}`\n"
+                    f"Association: `{profile.assc.name}` "
+                    f"(ID: `{profile.assc.id}`)"),
+                inline=False)
+
+            page2 = discord.Embed(            
+                title=f"Combat Loadout: {profile.char_name}",
+                color=Vars.ABLUE
+            )
+            page2.set_thumbnail(url=player.avatar.url)
+            page2.add_field(name="General",
+                value=(
+                    f"Attack: `{profile.get_attack()}`\n"
+                    f"Crit Chance: `{profile.get_crit()}`\n"
+                    f"Hit Points: `{profile.get_hp()}`"),
+                inline=True)
+            page2.add_field(name="Reputation",
+                value=(
+                    f"Bosses Defeated: `{profile.boss_wins}`\n"
+                    f"Pvp Wins: `{profile.pvp_wins}`\n"),
+                inline=True)
+            page2.add_field(name=f"Equips",
+                value=(
+                    f"{profile.equipped_item.type}: {profile.equipped_item.name} "
+                    f"({profile.equipped_item.rarity}, `"
+                    f"{profile.equipped_item.attack}` ATK, `"
+                    f"{profile.equipped_item.crit}` CRIT)"
+                ),
+                inline=False)
+            page2.add_field(name="Acolyte",
+                value=(
+                    f"{profile.acolyte1.acolyte_name} (`"
+                    f"{profile.acolyte1.gen_dict['Rarity']}⭐`)"
+                ),
+                inline=True)
+            page2.add_field(name="Acolyte",
+                value=(
+                    f"{profile.acolyte2.acolyte_name} (`"
+                    f"{profile.acolyte2.gen_dict['Rarity']}⭐`)"
+                ),
+                inline=True)
+
+            page3 = discord.Embed(            
+                title=f"Backpack: {profile.char_name}",
+                color=Vars.ABLUE
+            )
+            page3.set_thumbnail(url=player.avatar.url)
+            for resource in Vars.MATERIALS:
+                page3.add_field(name=resource, value=pack[resource.lower()])
+
+            if profile.assc.is_empty:
+                embeds = [page1, page2, page3]
             else:
-                page4.add_field(name=(
-                    f"This {profile.assc.type} is open to new members at or "
-                    f"above level {profile.assc.lvl_req}."),
-                    value=profile.assc.desc,
-                    inline=False)
-            page4.set_footer(text=f"{profile.assc.type} ID: {profile.assc.id}")
-            embeds = [page1, page2, page3, page4]
+                # Print the player association as the last page
+                assc_leader = await ctx.bot.fetch_user(profile.assc.leader)
+                assc_members = await profile.assc.get_member_count(conn)
+                assc_capacity = profile.assc.get_member_capacity()
+                assc_level, progress = profile.assc.get_level(give_graphic=True)
+
+                page4 = discord.Embed(            
+                    title=f"{profile.assc.type}: {profile.assc.name}",
+                    color=Vars.ABLUE
+                )
+                page4.set_thumbnail(url=profile.assc.icon)
+                page4.add_field(name="Leader", value=assc_leader.mention)
+                page4.add_field(name="Members", 
+                    value=f"{assc_members}/{assc_capacity}")
+                page4.add_field(name="Level", value=assc_level)
+                page4.add_field(name="EXP Progress", value=progress)
+                page4.add_field(name="Base", value=profile.assc.base)
+                if profile.assc.join_status != "open":
+                    page4.add_field(name=
+                        f"This {profile.assc.type} is closed to new members.",
+                        value=profile.assc.desc,
+                        inline=False)
+                else:
+                    page4.add_field(name=(
+                        f"This {profile.assc.type} is open to new members at or "
+                        f"above level {profile.assc.lvl_req}."),
+                        value=profile.assc.desc,
+                        inline=False)
+                page4.set_footer(text=f"{profile.assc.type} ID: {profile.assc.id}")
+                embeds = [page1, page2, page3, page4]
 
         # Output pages
+        print("Paginating")
         paginator = pages.Paginator(pages=embeds, timeout=30)
         paginator.customize_button("next", button_label=">", 
             button_style=discord.ButtonStyle.green)
@@ -214,12 +191,9 @@ class Profile(commands.Cog):
         if view.value is None:
             await ctx.respond("Timed out.")
         elif view.value:
-            await PlayerObject.create_character(
-                await self.bot.db.acquire(),
-                ctx.author.id,
-                name
-            )
-            await ctx.respond(f"Started the game: {name}")
+            async with self.bot.db.acquire() as conn:
+                await PlayerObject.create_character(conn, ctx.author.id, name)
+                await ctx.respond(f"Started the game: {name}")
         else:
             await ctx.respond(f"You cancelled :(")
         await msg.delete_original_message()
@@ -237,12 +211,13 @@ class Profile(commands.Cog):
     async def rename(self, ctx, *, 
             name : Option(str, description="Your new name", required=True)):
         """Change your character's name."""
-        player = await PlayerObject.get_player_by_id(
-            await self.bot.db.acquire(),
-            ctx.author.id
-        )
-        await player.set_char_name(await self.bot.db.acquire(), name)
-        await ctx.respond(f"You changed your name to **{name}**.")
+        async with self.bot.db.acquire() as conn:
+            player = await PlayerObject.get_player_by_id(
+                conn,
+                ctx.author.id
+            )
+            await player.set_char_name(conn, name)
+            await ctx.respond(f"You changed your name to **{name}**.")
 
     # TODO: Add tutorial; this should probably go last
 
