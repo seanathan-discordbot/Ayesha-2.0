@@ -2,8 +2,9 @@ import discord
 from discord.commands.commands import Option
 
 from discord.ext import commands, pages
+from discord.ext.commands import converter
 
-from Utilities import Checks, Vars, PlayerObject
+from Utilities import Checks, Vars, Analytics, PlayerObject
 
 class ConfirmButton(discord.ui.View):
     def __init__(self):
@@ -46,7 +47,18 @@ class Profile(commands.Cog):
             level, dist = profile.get_level(get_next=True)
             print("Getting resources")
             pack = await profile.get_backpack(conn)
-
+            print("Getting ranks")
+            gold_rank = Analytics.stringify_rank(
+                await Analytics.get_gold_rank(conn, player.id))
+            gravitas_rank = Analytics.stringify_rank(
+                await Analytics.get_gravitas_rank(conn, player.id))
+            xp_rank = Analytics.stringify_rank(
+                await Analytics.get_xp_rank(conn, player.id))
+            pve_rank = Analytics.stringify_rank(
+                await Analytics.get_bosswins_rank(conn, player.id))
+            pvp_rank = Analytics.stringify_rank(
+                await Analytics.get_pvpwins_rank(conn, player.id))
+            
             # Create pages
             print("Creating embeds")
             page1 = discord.Embed(            
@@ -57,13 +69,13 @@ class Profile(commands.Cog):
             page1.add_field(name="Experience",
                 value=(
                     f"Level: `{level}`\n"
-                    f"EXP: `{profile.xp}`\n"
+                    f"EXP: `{profile.xp}` (`{xp_rank}`)\n"
                     f"To Next Level: `{dist}`"),
                 inline=True)
             page1.add_field(name="Wealth",
                 value=(
-                    f"Gold: `{profile.gold}`\n"
-                    f"Gravitas: `{profile.gravitas}`"),
+                    f"Gold: `{profile.gold}` (`{gold_rank}`)\n"
+                    f"Gravitas: `{profile.gravitas}` (`{gravitas_rank}`)"),
                 inline=True)
             page1.add_field(name="Lore",
                 value=(
@@ -87,8 +99,8 @@ class Profile(commands.Cog):
                 inline=True)
             page2.add_field(name="Reputation",
                 value=(
-                    f"Bosses Defeated: `{profile.boss_wins}`\n"
-                    f"Pvp Wins: `{profile.pvp_wins}`\n"),
+                    f"Bosses Defeated: `{profile.boss_wins}` (`{pve_rank}`)\n"
+                    f"Pvp Wins: `{profile.pvp_wins}` (`{pvp_rank}`)\n"),
                 inline=True)
             page2.add_field(name=f"Equips",
                 value=(
@@ -199,9 +211,15 @@ class Profile(commands.Cog):
         await msg.delete_original_message()
 
     @commands.slash_command(name="profile", guild_ids=[762118688567984151])
-    async def self_profile(self, ctx):
+    async def self_profile(self, ctx, player : Option(discord.Member,
+                description="Another player whose profile you want to see",
+                required=False,
+                converter=commands.MemberConverter())):
         """View your profile."""
-        await self.view_profile(ctx, ctx.author)
+        if player is not None:
+            await self.view_profile(ctx, player)
+        else:
+            await self.view_profile(ctx, ctx.author)
 
     @commands.user_command(name="View Profile", guild_ids=[762118688567984151])
     async def other_profile(self, ctx, member: discord.Member):
