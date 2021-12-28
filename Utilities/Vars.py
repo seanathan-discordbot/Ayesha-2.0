@@ -336,31 +336,41 @@ RARITIES = {
         'low_atk' : 10,
         'high_atk' : 30,
         'low_crit' : 0,
-        'high_crit' : 5
+        'high_crit' : 5,
+        'low_gold' : 1,
+        'high_gold' : 20
     },
     'Uncommon' : {
         'low_atk' : 30,
         'high_atk' : 60,
         'low_crit' : 0,
-        'high_crit' : 5
+        'high_crit' : 5,
+        'low_gold' : 15,
+        'high_gold' : 30
     },
     'Rare' : {
         'low_atk' : 45,
         'high_atk' : 90,
         'low_crit' : 0,
-        'high_crit' : 10
+        'high_crit' : 10,
+        'low_gold' : 75,
+        'high_gold' : 150
     },
     'Epic' : {
         'low_atk' : 75,
         'high_atk' : 120,
         'low_crit' : 0,
-        'high_crit' : 15
+        'high_crit' : 15,
+        'low_gold' : 400,
+        'high_gold' : 700
     },
     'Legendary' : {
         'low_atk' : 100,
         'high_atk' : 150,
         'low_crit' : 5,
-        'high_crit' : 20
+        'high_crit' : 20,
+        'low_gold' : 2000,
+        'high_gold' : 3000
     }
 }
 

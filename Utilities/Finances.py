@@ -1,5 +1,7 @@
 import asyncpg
 
+from Utilities import PlayerObject
+
 async def get_tax_rate(conn : asyncpg.Connection) -> float:
     """Returns the current bot-wide tax rate."""
     psql = """
@@ -59,6 +61,7 @@ async def calc_cost_with_tax_rate(conn : asyncpg.Connection,
     return {
         'subtotal' : subtotal,
         'total' : subtotal + tax_amount,
+        'payout' : subtotal - tax_amount,
         'tax_rate' : tax_rate,
         'tax_amount' : tax_amount
     }
@@ -72,3 +75,15 @@ async def log_transaction(conn : asyncpg.Connection, user_id : int,
             VALUES ($1, $2, $3, $4);
             """
     await conn.execute(psql, user_id, subtotal, tax_amount, tax_rate)
+
+def apply_sale_bonuses(gold : int, player : PlayerObject.Player) -> int:
+    """Adjusts the gold a player would receive in a sale based off any bonuses
+    such as guild, occupation, etc.
+    """
+    sale_bonus = 1
+    if player.occupation == "Merchant":
+        sale_bonus += .5
+    if player.assc.type == "Guild":
+        sale_bonus += .5 + (.1 * player.assc.get_level())
+    # TODO: Implement comptroller bonuses
+    return int(gold * sale_bonus)

@@ -106,7 +106,7 @@ class Weapon:
         
         psql = "DELETE FROM items WHERE item_id = $1"
         await conn.execute(psql, self.weapon_id)
-        self = Weapon()
+        # self = Weapon() # remove this its getting in my way
 
 
 class Armor:
