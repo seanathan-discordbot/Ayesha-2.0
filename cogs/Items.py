@@ -3,7 +3,7 @@ from discord.commands.commands import Option, OptionChoice
 
 from discord.ext import commands, pages
 
-from Utilities import Checks, Vars, PlayerObject, ItemObject
+from Utilities import Checks, Vars, PlayerObject, ItemObject, Finances
 
 class Items(commands.Cog):
     """View and manipulate your inventory"""
@@ -199,11 +199,27 @@ class Items(commands.Cog):
                     "The fodder item must have at least 15 less ATK than the "
                     "item being upgraded."))
 
-            await ctx.respond("Merge would be ok but I need to do tax rates to continue lol")
-
             # Calculate the cost of the merge
-            # TODO implement tax rates
+            cost_info = await Finances.calc_cost_with_tax_rate(
+                conn, 10000, player.origin)
+            if cost_info['total'] > player.gold:
+                return await ctx.respond((
+                    f"You need at least `{cost_info['total']}` gold to perform "
+                    f"this operation. You currently have `{player.gold}` "
+                    f"gold."))
             
+            # Perform the merge
+            await item_w.set_attack(conn, item_w.attack+1)
+            await fodder_w.destroy(conn)
+            await player.give_gold(conn, cost_info['total']*-1)
+            await Finances.log_transaction(conn, player.disc_id, 
+                cost_info['subtotal'], cost_info['tax_amount'], 
+                cost_info['tax_rate'])
+
+        await ctx.respond((
+            f"You buffed your **{item_w.name}** to `{item_w.attack}` ATK.\n"
+            f"This cost you `10000` gold, with an additional "
+            f"`{cost_info['tax_amount']}` in taxes."))
 
 
 def setup(bot):
