@@ -75,6 +75,10 @@ class Player:
         self.xp = record['xp']
         self.level = self.get_level()
         self.equipped_item = record['equipped_item']
+        self.helmet = record['helmet']
+        self.bodypiece = record['bodypiece']
+        self.boots = record['boots']
+        self.accessory = record['accessory']
         self.acolyte1 = record['acolyte1']
         self.acolyte2 = record['acolyte2']
         self.assc = record['assc']
@@ -98,16 +102,15 @@ class Player:
         """Converts object variables from their IDs into the proper objects.
         Run this upon instantiation or else >:(
         """
-        print("--- Loading item")
         self.equipped_item = await ItemObject.get_weapon_by_id(
             conn, self.equipped_item)
-        print("--- Loading Acolyte1")
+        self.helmet = await ItemObject.get_armor_by_id(conn, self.helmet)
+        self.bodypiece = await ItemObject.get_armor_by_id(conn, self.bodypiece)
+        self.boots = await ItemObject.get_armor_by_id(conn, self.boots)
         self.acolyte1 = await AcolyteObject.get_acolyte_by_id(
             conn, self.acolyte1)
-        print("--- Loading Acolyte2")
         self.acolyte2 = await AcolyteObject.get_acolyte_by_id(
             conn, self.acolyte2)
-        print("--- Loading Association")
         self.assc = await AssociationObject.get_assc_by_id(conn, self.assc)
 
     def get_level(self, get_next = False) -> int:
@@ -434,31 +437,37 @@ async def get_player_by_id(conn : asyncpg.Connection, user_id : int) -> Player:
     """Return a player object of the player with the given Discord ID."""
     psql = """
             SELECT 
-                num,
-                user_id,
-                user_name,
-                xp,
-                equipped_item,
-                acolyte1,
-                acolyte2,
-                assc,
-                guild_rank,
-                gold,
-                occupation,
-                origin,
-                loc,
-                pvpwins,
-                pvpfights,
-                bosswins,
-                bossfights,
-                rubidics,
-                pitycounter,
-                adventure,
-                destination,
-                gravitas,
-                daily_streak
+                players.num,
+                players.user_id,
+                players.user_name,
+                players.xp,
+                players.equipped_item,
+                players.acolyte1,
+                players.acolyte2,
+                players.assc,
+                players.guild_rank,
+                players.gold,
+                players.occupation,
+                players.origin,
+                players.loc,
+                players.pvpwins,
+                players.pvpfights,
+                players.bosswins,
+                players.bossfights,
+                players.rubidics,
+                players.pitycounter,
+                players.adventure,
+                players.destination,
+                players.gravitas,
+                players.daily_streak,
+                equips.helmet,
+                equips.bodypiece,
+                equips.boots,
+                equips.accessory
             FROM players
-            WHERE user_id = $1;
+            INNER JOIN equips
+                ON players.user_id = equips.user_id
+            WHERE players.user_id = $1;
             """
     
     print("Fetching record")
@@ -480,9 +489,11 @@ async def create_character(conn : asyncpg.Connection, user_id : int,
     psql1 = "INSERT INTO players (user_id, user_name) VALUES ($1, $2);"
     psql2 = "INSERT INTO resources (user_id) VALUES ($1);"
     psql3 = "INSERT INTO strategy (user_id) VALUES ($1);"
+    psql4 = "INSERT INTO equips (user_id) VALUES ($1);"
     await conn.execute(psql1, user_id, name)
     await conn.execute(psql2, user_id)
     await conn.execute(psql3, user_id)
+    await conn.execute(psql4, user_id)
 
     await ItemObject.create_weapon(
         conn, user_id, "Common", attack=20, crit=0, weapon_name="Wooden Spear", 
