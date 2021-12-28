@@ -107,6 +107,8 @@ class Player:
         self.helmet = await ItemObject.get_armor_by_id(conn, self.helmet)
         self.bodypiece = await ItemObject.get_armor_by_id(conn, self.bodypiece)
         self.boots = await ItemObject.get_armor_by_id(conn, self.boots)
+        self.accessory = await ItemObject.get_accessory_by_id(
+            conn, self.accessory)
         self.acolyte1 = await AcolyteObject.get_acolyte_by_id(
             conn, self.acolyte1)
         self.acolyte2 = await AcolyteObject.get_acolyte_by_id(
@@ -430,7 +432,13 @@ class Player:
         hp += Vars.OCCUPATIONS[self.occupation]['hp_bonus']
         # TODO implement comptroller bonus
 
-        return hp        
+        return hp
+
+    def get_defense(self) -> int:
+        """Returns the player's DEF stat, calculated from all other sources.
+        The value returned by this method is 'the final say` on the stat.
+        """   
+        return self.helmet.defense + self.bodypiece.defense + self.boots.defense
 
 
 async def get_player_by_id(conn : asyncpg.Connection, user_id : int) -> Player:

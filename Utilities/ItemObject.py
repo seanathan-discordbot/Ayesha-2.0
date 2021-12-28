@@ -108,6 +108,7 @@ class Weapon:
         await conn.execute(psql, self.weapon_id)
         self = Weapon()
 
+
 class Armor:
     """An armor object. Changing the object attributes are not permanent; to
     change a weapon's info, use the set-methods, which commit any changes
@@ -122,6 +123,20 @@ class Armor:
 
     Attributes
     ----------
+    is_empty : bool
+        Whether this object is a dummy object or not
+    id : int
+        The unique ID of the armor piece
+    type : str
+        The material this armor is made of (determing damage reduction)
+    slot : str
+        Whether this armor is a helmet, bodypiece, or boots
+    owner_id : int
+        The Discord ID of this piece's owner
+    name : str
+        A string combining type and slot for printing
+    defense : int
+        The damage reduction percentage of this armor piece
     """
     def __init__(self, record : asyncpg.Record = None):
         """
@@ -147,6 +162,51 @@ class Armor:
             self.owner_id = None
             self.name = "No Armor"
             self.defense = 0
+
+
+class Accessory:
+    """An accessory object. Changing the object attributes are not permanent; to
+    change a weapon's info, use the set-methods, which commit any changes
+    to the object into the database. Unlike other game entities, accessories
+    are relatively unchanged by gameplay.
+
+    It is convenient for the bot to assume that a player always has an accessory
+    equipped, so this class can also create empty objects by not passing
+    a record upon instantiation. If a command alters the object's database
+    values, it should first check the is_empty attribute to ensure such a change
+    is possible. Changing an empty object will result in an EmptyObject error.
+
+    Attributes
+    ----------
+    is_empty : bool
+        Whether this object is a dummy object or not
+    id : int
+        This accessory's unique ID
+    type : str 
+        The material this accessory is made of (determing bonus magnitude)
+    name : str
+        A name for printing
+    owner_id : int
+        The Discord ID of the player who owns this accessory
+    prefix : str
+        The accessory's prefix, determining bonus
+    """
+    def __init__(self, record : asyncpg.Record = None):
+        if record is not None:
+            self.is_empty = False
+            self.id = record['accessory_id']
+            self.type = record['accessory_type']
+            self.name = (f"{record['prefix']} {self.type} "
+                         f"{record['accessory_name']}")
+            self.owner_id = record['user_id']
+            self.prefix = record['prefix']
+        else:
+            self.is_empty = True
+            self.id = None
+            self.type = "No Type"
+            self.name = "No Accessory"
+            self.owner_id = None
+            self.prefix = "None"
 
 
 async def get_weapon_by_id(conn : asyncpg.Connection, item_id : int) -> Weapon:
@@ -235,6 +295,42 @@ async def create_armor(conn : asyncpg.Connection, user_id : int, type : str,
             """
     armor_id = await conn.fetchval(psql, material, type, user_id)
     return await get_armor_by_id(conn, armor_id)
+
+async def get_accessory_by_id(conn : asyncpg.Connection, 
+        accessory_id : int) -> Accessory:
+    """Return the accessory object of the piece with the given ID"""
+    psql = """
+            SELECT accessory_id, accessory_type, accessory_name, user_id, prefix
+            FROM accessories
+            WHERE accessory_id = $1;
+            """
+    accessory_record = await conn.fetchrow(psql, accessory_id)
+    return Accessory(accessory_record)
+
+async def create_accessory(conn : asyncpg.Connection, user_id : int, 
+        type : str, prefix : str) -> Accessory:
+    """Creates an accessory with the specified information and returns it."""
+    if prefix not in Vars.ACCESSORY_BONUS.keys():
+        raise Checks.InvalidAccessoryPrefix
+
+    if type not in Vars.ACCESSORY_BONUS[prefix].keys():
+        raise Checks.InvalidAccessoryMaterial
+
+    name = random.choice(
+        ["Necklace", "Pendant", "Earring", "Belt", "Ring", "Bracelet", 
+         "Anklet", "Locket", "Lavaliere", "Pin", "Ribbon"])
+
+    psql = """
+            WITH rows AS (
+                INSERT INTO accessories 
+                    (accessory_type, accessory_name, user_id, prefix)
+                VALUES ($1, $2, $3, $4)
+                RETURNING accessory_id
+            )
+            SELECT accessory_id FROM rows;
+            """
+    accessory_id = await conn.fetchval(psql, type, name, user_id, prefix)
+    return await get_accessory_by_id(accessory_id)
 
 def _get_random_name() -> str:
     """Returns a str: random combination of words up to 20 characters."""

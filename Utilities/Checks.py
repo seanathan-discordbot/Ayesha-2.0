@@ -31,6 +31,12 @@ class InvalidArmorType(Exception):
 class InvalidArmorMaterial(Exception):
     pass
 
+class InvalidAccessoryPrefix(Exception):
+    pass
+
+class InvalidAccessoryMaterial(Exception):
+    pass
+
 class NotAcolyteOwner(Exception):
     pass
 
