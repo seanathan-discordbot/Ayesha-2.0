@@ -69,7 +69,6 @@ async def log_transaction(conn : asyncpg.Connection, user_id : int,
     psql = """
             INSERT INTO tax_transactions
                 (user_id, before_tax, tax_amount, tax_rate)
-            VALUES ($1, $2, $3, $4),
-            user_id, subtotal, tax_amount, tax_rate
+            VALUES ($1, $2, $3, $4);
             """
     await conn.execute(psql, user_id, subtotal, tax_amount, tax_rate)

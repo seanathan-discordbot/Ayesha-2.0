@@ -96,7 +96,7 @@ class Weapon:
         
         self.attack = attack
 
-        psql = "UPDATE items SET attack = $1 WHERE item_id $2;"
+        psql = "UPDATE items SET attack = $1 WHERE item_id = $2;"
         await conn.execute(psql, attack, self.weapon_id)
 
     async def destroy(self, conn : asyncpg.Connection):
