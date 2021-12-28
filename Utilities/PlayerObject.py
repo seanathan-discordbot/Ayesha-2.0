@@ -1,7 +1,5 @@
-from asyncio.events import AbstractEventLoop
 import discord
 
-import asyncio
 import asyncpg
 
 from Utilities import Checks, ItemObject, Vars, AcolyteObject, AssociationObject
@@ -100,16 +98,22 @@ class Player:
         """Converts object variables from their IDs into the proper objects.
         Run this upon instantiation or else >:(
         """
+        print("--- Loading item")
         self.equipped_item = await ItemObject.get_weapon_by_id(
             conn, self.equipped_item)
+        print("--- Loading Acolyte1")
         self.acolyte1 = await AcolyteObject.get_acolyte_by_id(
             conn, self.acolyte1)
+        print("--- Loading Acolyte2")
         self.acolyte2 = await AcolyteObject.get_acolyte_by_id(
             conn, self.acolyte2)
+        print("--- Loading Association")
         self.assc = await AssociationObject.get_assc_by_id(conn, self.assc)
 
-    def get_level(self) -> int:
-        """Returns the player's level."""
+    def get_level(self, get_next = False) -> int:
+        """Returns the player's level.
+        Pass get_next as true to also get the xp needed to level up.
+        """
         def f(x):
             return int(20 * x**3 + 500)
         
@@ -125,7 +129,15 @@ class Player:
             while (self.xp >= g(level)):
                 level += 1
 
-        return level - 1
+        level = level - 1 if level > 0 else 0
+
+        if get_next:
+            if level >= 30:
+                return level, g(level+1) - self.xp
+            else:
+                return level, f(level+1) - self.xp
+        else:
+            return level
 
     async def check_xp_increase(self, conn : asyncpg.Connection, 
             ctx : discord.context, xp : int):
@@ -168,6 +180,20 @@ class Player:
         if self.acolyte2.acolyte_name is not None:
             await self.acolyte2.check_xp_increase(conn, ctx, a_xp)
 
+    async def set_char_name(self, conn : asyncpg.Connection, name : str):
+        """Sets the player's character name. Limit 32 characters."""
+        if len(name) > 32:
+            raise Checks.ExcessiveCharacterCount(limit=32)
+        
+        self.char_name = name
+
+        psql = """
+                UPDATE players
+                SET user_name = $1
+                WHERE user_id = $2;
+                """
+        await conn.execute(psql, name, self.disc_id)
+
     async def is_weapon_owner(self, conn : asyncpg.Connection, 
             item_id : int) -> bool:
         """Returns true/false depending on whether the item with the given 
@@ -177,16 +203,16 @@ class Player:
                 SELECT item_id FROM items
                 WHERE user_id = $1 AND item_id = $2;
                 """
-        val = await conn.fetchval(self.disc_id, item_id)
+        val = await conn.fetchval(psql, self.disc_id, item_id)
 
         return val is not None
 
     async def equip_item(self, conn : asyncpg.Connection, item_id : int):
         """Equips an item on the player."""
-        if not self.is_weapon_owner(conn, item_id):
+        if not await self.is_weapon_owner(conn, item_id):
             raise Checks.NotWeaponOwner
 
-        self.equipped_item = ItemObject.get_weapon_by_id(conn, item_id)
+        self.equipped_item = await ItemObject.get_weapon_by_id(conn, item_id)
 
         psql = """
                 UPDATE players 
@@ -340,6 +366,19 @@ class Player:
 
         await conn.execute(psql, rubidics, self.disc_id)
 
+    async def get_backpack(self, conn : asyncpg.Connection) -> asyncpg.Record:
+        """Returns a dict containg the player's resource amounts. Keys are:
+        Wheat, Oat, Wood, Reeds, Pine, Moss, Iron, Cacao, Fur, Bone, Silver
+        """
+        psql = """
+                SELECT
+                    wheat, oat, wood, reeds, pine, moss, iron, cacao,
+                    fur, bone, silver
+                FROM resources
+                WHERE user_id = $1;
+                """
+        return await conn.fetchrow(psql, self.disc_id)
+
     def get_attack(self) -> int:
         """Returns the player's attack stat, calculated from all other sources.
         The value returned by this method is 'the final say' on the stat.
@@ -348,7 +387,8 @@ class Player:
         attack += self.equipped_item.attack
         attack += self.acolyte1.get_attack()
         attack += self.acolyte2.get_attack()
-        if self.equipped_item.type in Vars.OCCUPATIONS['weapon_bonus']:
+        valid_weapons = Vars.OCCUPATIONS[self.occupation]['weapon_bonus']
+        if self.equipped_item.type in valid_weapons:
             attack += 20
         attack += Vars.ORIGINS[self.origin]['atk_bonus']
         if self.assc.type == "Brotherhood":
@@ -421,8 +461,15 @@ async def get_player_by_id(conn : asyncpg.Connection, user_id : int) -> Player:
             WHERE user_id = $1;
             """
     
+    print("Fetching record")
     player_record = await conn.fetchrow(psql, user_id)
+
+    if player_record is None:
+        raise Checks.PlayerHasNoChar
+
+    print("Creating profile")
     player = Player(player_record)
+    print("Loading equipment")
     await player._load_equips(conn)
 
     return player

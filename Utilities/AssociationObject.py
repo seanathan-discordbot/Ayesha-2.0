@@ -57,10 +57,10 @@ class Association:
             self.is_empty = False
             self.id = record['assc_id']
             self.name = record['assc_name']
-            self.type = record['ascc_type']
+            self.type = record['assc_type']
             self.xp = record['assc_xp']
             self.leader = record['leader_id']
-            self.desc = record['desc']
+            self.desc = record['assc_desc']
             self.icon = record['assc_icon']
             self.join_status = record['join_status']
             self.base = record['base']
@@ -80,9 +80,17 @@ class Association:
             self.base_set = True
             self.lvl_req = 0
 
-    def get_level(self) -> int:
+    def get_level(self, give_graphic = False) -> int:
         """Returns the level of the guild. Each level is 1,000,000 xp."""
-        return int(self.xp / 1000000) if int(self.xp / 1000000) < 10 else 10
+        level = int(self.xp / 1000000) if int(self.xp / 1000000) < 10 else 10
+
+        if give_graphic:
+            dashes = ["".join(["▬"]*i) for i in range(10)]
+            progress = int((self.xp % 1000000) / 100000)
+            graphic = dashes[progress]+'◆'+dashes[9-progress]
+            return level, graphic
+        else:
+            return level
 
     def get_member_capacity(self) -> int:
         """Returns the member capacity of the association. 
@@ -361,8 +369,10 @@ async def get_assc_by_id(conn : asyncpg.Connection,
             FROM associations
             WHERE assc_id = $1;
             """
+    print("Fetching ASSOCIATION record")
     assc_record = await conn.fetchrow(psql, assc_id)
 
+    print("Loading Association")
     return Association(assc_record)
 
 async def get_assc_by_name(conn : asyncpg.Connection, 

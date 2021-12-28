@@ -2,6 +2,9 @@ ACOLYTE_LIST_PATH = r'F:\OneDrive\Python_Projects\Ayesha_Rewrite\Assets\Acolyte_
 
 ABLUE =  0xBEDCF6
 
+MATERIALS = ["Fur", "Bone", "Iron", "Silver", "Wood", "Wheat", "Oat", "Reeds",
+             "Pine", "Moss", "Cacao"]
+
 OCCUPATIONS = {
     'Soldier' : {
         'atk_bonus' : 0,
@@ -62,10 +65,21 @@ OCCUPATIONS = {
         'crit_bonus' : 10,
         'hp_bonus' : 0,
         'weapon_bonus' : ("Sword", "Dagger")
+    },
+    None : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 0,
+        'hp_bonus' : 0,
+        'weapon_bonus' : []
     }
 }
 
 ORIGINS = {
+    'Aramithea' : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 0,
+        'hp_bonus' : 0
+    },
     'Riverburn' : {
         'atk_bonus' : 5,
         'crit_bonus' : 0,
@@ -79,6 +93,11 @@ ORIGINS = {
     'Mythic Forest' : {
         'atk_bonus' : 0,
         'crit_bonus' : 2,
+        'hp_bonus' : 0
+    },
+    'Sunset' : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 0,
         'hp_bonus' : 0
     },
     'Lunaris' : {
@@ -101,6 +120,11 @@ ORIGINS = {
         'crit_bonus' : 0,
         'hp_bonus' : 25
     },
+    None : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 0,
+        'hp_bonus' : 0
+    }
 }
 
 RARITIES = {
