@@ -22,6 +22,21 @@ class EmptyObject(Exception):
 class NotWeaponOwner(Exception):
     pass
 
+class InvalidWeaponType(Exception):
+    pass
+
+class InvalidArmorType(Exception):
+    pass
+
+class InvalidArmorMaterial(Exception):
+    pass
+
+class InvalidAccessoryPrefix(Exception):
+    pass
+
+class InvalidAccessoryMaterial(Exception):
+    pass
+
 class NotAcolyteOwner(Exception):
     pass
 

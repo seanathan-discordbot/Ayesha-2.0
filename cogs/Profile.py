@@ -94,8 +94,9 @@ class Profile(commands.Cog):
             page2.add_field(name="General",
                 value=(
                     f"Attack: `{profile.get_attack()}`\n"
-                    f"Crit Chance: `{profile.get_crit()}`\n"
-                    f"Hit Points: `{profile.get_hp()}`"),
+                    f"Crit Chance: `{profile.get_crit()}%`\n"
+                    f"Hit Points: `{profile.get_hp()}`\n"
+                    f"Defense: `{profile.get_defense()}%`"),
                 inline=True)
             page2.add_field(name="Reputation",
                 value=(
@@ -108,6 +109,15 @@ class Profile(commands.Cog):
                     f"({profile.equipped_item.rarity}, `"
                     f"{profile.equipped_item.attack}` ATK, `"
                     f"{profile.equipped_item.crit}` CRIT)"
+                    f"\n"
+                    f"{profile.helmet.name} (`{profile.helmet.defense}` DEF)"
+                    f"\n"
+                    f"{profile.bodypiece.name} (`{profile.bodypiece.defense}` "
+                    f"DEF)"
+                    f"\n"
+                    f"{profile.boots.name} (`{profile.boots.defense}` DEF)"
+                    f"\n"
+                    f"Accessory: {profile.accessory.name}"
                 ),
                 inline=False)
             page2.add_field(name="Acolyte",
