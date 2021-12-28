@@ -3,6 +3,8 @@ from discord.commands.commands import Option, OptionChoice
 
 from discord.ext import commands, pages
 
+import random
+
 from Utilities import Checks, Vars, PlayerObject, ItemObject, Finances
 
 class Items(commands.Cog):
@@ -220,6 +222,82 @@ class Items(commands.Cog):
             f"You buffed your **{item_w.name}** to `{item_w.attack}` ATK.\n"
             f"This cost you `10000` gold, with an additional "
             f"`{cost_info['tax_amount']}` in taxes."))
+
+    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.check(Checks.HasChar)
+    async def sell(self, ctx, 
+            item_id : Option(int, 
+                description="The ID of the item you want to sell",
+                required=False),
+            rarity : Option(str,
+                description="The rarity of the items you want to sell",
+                choices=[OptionChoice(name=r) for r in Vars.RARITIES.keys()],
+                required=False)
+            ):
+        """Sell an item (pass ID), or sell multiple items of some rarity."""
+        async with self.bot.db.acquire() as conn:
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+
+            if item_id is not None: # If they pass both, only sell the item ID
+                # See if this is an eligible sale
+                if player.equipped_item.weapon_id == item_id:
+                    return await ctx.respond(
+                        "Don't sell your equipped item!")
+                if not await player.is_weapon_owner(conn, item_id):
+                    raise Checks.NotWeaponOwner
+                item = await ItemObject.get_weapon_by_id(conn, item_id)
+
+                # Make the sale
+                gold = random.randint(a=Vars.RARITIES[item.rarity]['low_gold'], 
+                    b=Vars.RARITIES[item.rarity]['high_gold'])
+                gold = Finances.apply_sale_bonuses(gold, player)
+                cost_info = await Finances.calc_cost_with_tax_rate(
+                    conn, gold, player.origin)
+                await player.give_gold(conn, cost_info['payout'])
+                await Finances.log_transaction(conn, player.disc_id, 
+                    cost_info['subtotal'], cost_info['tax_amount'], 
+                    cost_info['tax_rate'])
+                await item.destroy(conn)
+                await ctx.respond((
+                    f"You sold your `{item_id}: {item.name}` and made a "
+                    f"`{cost_info['payout']}` gold profit.\n"
+                    f"You paid `{cost_info['tax_amount']}` in taxes."))
+
+            elif rarity is not None: 
+                psql = """
+                        WITH deleted AS (
+                            DELETE FROM items
+                            WHERE user_id = $1 AND item_id NOT IN ($2)
+                                AND rarity = $3
+                            RETURNING item_id
+                        )
+                        SELECT COUNT(*)
+                        FROM deleted;
+                        """
+                # This is an enormous optimization from the old version :)
+                amount_sold = await conn.fetchval(psql, player.disc_id, 
+                    player.equipped_item.weapon_id, rarity)
+
+                if amount_sold == 0:
+                    return await ctx.respond(
+                        "You have no items of this rarity to sell!")
+
+                subtotal = random.randint(a=Vars.RARITIES[rarity]['low_gold'], 
+                    b=Vars.RARITIES[rarity]['high_gold'])
+                subtotal *= amount_sold
+                cost_info = await Finances.calc_cost_with_tax_rate(
+                    conn, subtotal, player.origin)
+                await player.give_gold(conn, cost_info["payout"])
+                await Finances.log_transaction(conn, player.disc_id, 
+                    cost_info['subtotal'], cost_info['tax_amount'], 
+                    cost_info['tax_rate'])
+                await ctx.respond((
+                    f"You sold all {amount_sold} of your {rarity.lower()} "
+                    f"items for a profit of `{cost_info['payout']}` gold.\n"
+                    f"You paid `{cost_info['tax_amount']}` in taxes."))
+
+            else: # Then they passed nothing bruh
+                await ctx.respond("You didn't pass anything to sell.")
 
 
 def setup(bot):
