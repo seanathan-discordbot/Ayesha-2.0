@@ -1,7 +1,5 @@
-from asyncio.events import AbstractEventLoop
 import discord
 
-import asyncio
 import asyncpg
 
 from Utilities import Checks, ItemObject, Vars, AcolyteObject, AssociationObject
@@ -77,6 +75,10 @@ class Player:
         self.xp = record['xp']
         self.level = self.get_level()
         self.equipped_item = record['equipped_item']
+        self.helmet = record['helmet']
+        self.bodypiece = record['bodypiece']
+        self.boots = record['boots']
+        self.accessory = record['accessory']
         self.acolyte1 = record['acolyte1']
         self.acolyte2 = record['acolyte2']
         self.assc = record['assc']
@@ -102,14 +104,19 @@ class Player:
         """
         self.equipped_item = await ItemObject.get_weapon_by_id(
             conn, self.equipped_item)
+        self.helmet = await ItemObject.get_armor_by_id(conn, self.helmet)
+        self.bodypiece = await ItemObject.get_armor_by_id(conn, self.bodypiece)
+        self.boots = await ItemObject.get_armor_by_id(conn, self.boots)
         self.acolyte1 = await AcolyteObject.get_acolyte_by_id(
             conn, self.acolyte1)
         self.acolyte2 = await AcolyteObject.get_acolyte_by_id(
             conn, self.acolyte2)
         self.assc = await AssociationObject.get_assc_by_id(conn, self.assc)
 
-    def get_level(self) -> int:
-        """Returns the player's level."""
+    def get_level(self, get_next = False) -> int:
+        """Returns the player's level.
+        Pass get_next as true to also get the xp needed to level up.
+        """
         def f(x):
             return int(20 * x**3 + 500)
         
@@ -125,7 +132,15 @@ class Player:
             while (self.xp >= g(level)):
                 level += 1
 
-        return level - 1
+        level = level - 1 if level > 0 else 0
+
+        if get_next:
+            if level >= 30:
+                return level, g(level+1) - self.xp
+            else:
+                return level, f(level+1) - self.xp
+        else:
+            return level
 
     async def check_xp_increase(self, conn : asyncpg.Connection, 
             ctx : discord.context, xp : int):
@@ -168,6 +183,20 @@ class Player:
         if self.acolyte2.acolyte_name is not None:
             await self.acolyte2.check_xp_increase(conn, ctx, a_xp)
 
+    async def set_char_name(self, conn : asyncpg.Connection, name : str):
+        """Sets the player's character name. Limit 32 characters."""
+        if len(name) > 32:
+            raise Checks.ExcessiveCharacterCount(limit=32)
+        
+        self.char_name = name
+
+        psql = """
+                UPDATE players
+                SET user_name = $1
+                WHERE user_id = $2;
+                """
+        await conn.execute(psql, name, self.disc_id)
+
     async def is_weapon_owner(self, conn : asyncpg.Connection, 
             item_id : int) -> bool:
         """Returns true/false depending on whether the item with the given 
@@ -177,16 +206,16 @@ class Player:
                 SELECT item_id FROM items
                 WHERE user_id = $1 AND item_id = $2;
                 """
-        val = await conn.fetchval(self.disc_id, item_id)
+        val = await conn.fetchval(psql, self.disc_id, item_id)
 
         return val is not None
 
     async def equip_item(self, conn : asyncpg.Connection, item_id : int):
         """Equips an item on the player."""
-        if not self.is_weapon_owner(conn, item_id):
+        if not await self.is_weapon_owner(conn, item_id):
             raise Checks.NotWeaponOwner
 
-        self.equipped_item = ItemObject.get_weapon_by_id(conn, item_id)
+        self.equipped_item = await ItemObject.get_weapon_by_id(conn, item_id)
 
         psql = """
                 UPDATE players 
@@ -340,6 +369,19 @@ class Player:
 
         await conn.execute(psql, rubidics, self.disc_id)
 
+    async def get_backpack(self, conn : asyncpg.Connection) -> asyncpg.Record:
+        """Returns a dict containg the player's resource amounts. Keys are:
+        Wheat, Oat, Wood, Reeds, Pine, Moss, Iron, Cacao, Fur, Bone, Silver
+        """
+        psql = """
+                SELECT
+                    wheat, oat, wood, reeds, pine, moss, iron, cacao,
+                    fur, bone, silver
+                FROM resources
+                WHERE user_id = $1;
+                """
+        return await conn.fetchrow(psql, self.disc_id)
+
     def get_attack(self) -> int:
         """Returns the player's attack stat, calculated from all other sources.
         The value returned by this method is 'the final say' on the stat.
@@ -348,7 +390,8 @@ class Player:
         attack += self.equipped_item.attack
         attack += self.acolyte1.get_attack()
         attack += self.acolyte2.get_attack()
-        if self.equipped_item.type in Vars.OCCUPATIONS['weapon_bonus']:
+        valid_weapons = Vars.OCCUPATIONS[self.occupation]['weapon_bonus']
+        if self.equipped_item.type in valid_weapons:
             attack += 20
         attack += Vars.ORIGINS[self.origin]['atk_bonus']
         if self.assc.type == "Brotherhood":
@@ -394,35 +437,48 @@ async def get_player_by_id(conn : asyncpg.Connection, user_id : int) -> Player:
     """Return a player object of the player with the given Discord ID."""
     psql = """
             SELECT 
-                num,
-                user_id,
-                user_name,
-                xp,
-                equipped_item,
-                acolyte1,
-                acolyte2,
-                assc,
-                guild_rank,
-                gold,
-                occupation,
-                origin,
-                loc,
-                pvpwins,
-                pvpfights,
-                bosswins,
-                bossfights,
-                rubidics,
-                pitycounter,
-                adventure,
-                destination,
-                gravitas,
-                daily_streak
+                players.num,
+                players.user_id,
+                players.user_name,
+                players.xp,
+                players.equipped_item,
+                players.acolyte1,
+                players.acolyte2,
+                players.assc,
+                players.guild_rank,
+                players.gold,
+                players.occupation,
+                players.origin,
+                players.loc,
+                players.pvpwins,
+                players.pvpfights,
+                players.bosswins,
+                players.bossfights,
+                players.rubidics,
+                players.pitycounter,
+                players.adventure,
+                players.destination,
+                players.gravitas,
+                players.daily_streak,
+                equips.helmet,
+                equips.bodypiece,
+                equips.boots,
+                equips.accessory
             FROM players
-            WHERE user_id = $1;
+            INNER JOIN equips
+                ON players.user_id = equips.user_id
+            WHERE players.user_id = $1;
             """
     
+    print("Fetching record")
     player_record = await conn.fetchrow(psql, user_id)
+
+    if player_record is None:
+        raise Checks.PlayerHasNoChar
+
+    print("Creating profile")
     player = Player(player_record)
+    print("Loading equipment")
     await player._load_equips(conn)
 
     return player
@@ -433,9 +489,11 @@ async def create_character(conn : asyncpg.Connection, user_id : int,
     psql1 = "INSERT INTO players (user_id, user_name) VALUES ($1, $2);"
     psql2 = "INSERT INTO resources (user_id) VALUES ($1);"
     psql3 = "INSERT INTO strategy (user_id) VALUES ($1);"
+    psql4 = "INSERT INTO equips (user_id) VALUES ($1);"
     await conn.execute(psql1, user_id, name)
     await conn.execute(psql2, user_id)
     await conn.execute(psql3, user_id)
+    await conn.execute(psql4, user_id)
 
     await ItemObject.create_weapon(
         conn, user_id, "Common", attack=20, crit=0, weapon_name="Wooden Spear", 

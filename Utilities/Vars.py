@@ -2,6 +2,60 @@ ACOLYTE_LIST_PATH = r'F:\OneDrive\Python_Projects\Ayesha_Rewrite\Assets\Acolyte_
 
 ABLUE =  0xBEDCF6
 
+ARMOR_DEFENSE = {
+    'Helmet' : {
+        'Cloth' : 1,
+        'Wood' : 2,
+        'Silk' : 3,
+        'Leather' : 5,
+        'Gambeson' : 6,
+        'Wolfskin' : 7,
+        'Bearskin' : 8,
+        'Bronze' : 7,
+        'Ceramic Plate' : 10,
+        'Chainmail' : 11,
+        'Iron' : 12,
+        'Steel' : 15,
+        'Mysterious' : 16,
+        'Dragonscale' : 17
+    },
+    'Bodypiece' : {
+        'Cloth' : 3,
+        'Wood' : 5,
+        'Silk' : 7,
+        'Leather' : 8,
+        'Gambeson' : 10,
+        'Wolfskin' : 12,
+        'Bearskin' : 13,
+        'Bronze' : 12,
+        'Ceramic Plate' : 14,
+        'Chainmail' : 15,
+        'Iron' : 16,
+        'Steel' : 18,
+        'Mysterious' : 20,
+        'Dragonscale' : 22
+    },
+    'Boots' : {
+        'Cloth' : 1,
+        'Wood' : 1,
+        'Silk' : 1,
+        'Leather' : 3,
+        'Gambeson' : 5,
+        'Wolfskin' : 5,
+        'Bearskin' : 5,
+        'Bronze' : 7,
+        'Ceramic Plate' : 1,
+        'Chainmail' : 8,
+        'Iron' : 10,
+        'Steel' : 12,
+        'Mysterious' : 15,
+        'Dragonscale' : 18
+    },
+}
+
+MATERIALS = ["Fur", "Bone", "Iron", "Silver", "Wood", "Wheat", "Oat", "Reeds",
+             "Pine", "Moss", "Cacao"]
+
 OCCUPATIONS = {
     'Soldier' : {
         'atk_bonus' : 0,
@@ -62,10 +116,21 @@ OCCUPATIONS = {
         'crit_bonus' : 10,
         'hp_bonus' : 0,
         'weapon_bonus' : ("Sword", "Dagger")
+    },
+    None : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 0,
+        'hp_bonus' : 0,
+        'weapon_bonus' : []
     }
 }
 
 ORIGINS = {
+    'Aramithea' : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 0,
+        'hp_bonus' : 0
+    },
     'Riverburn' : {
         'atk_bonus' : 5,
         'crit_bonus' : 0,
@@ -79,6 +144,11 @@ ORIGINS = {
     'Mythic Forest' : {
         'atk_bonus' : 0,
         'crit_bonus' : 2,
+        'hp_bonus' : 0
+    },
+    'Sunset' : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 0,
         'hp_bonus' : 0
     },
     'Lunaris' : {
@@ -101,6 +171,11 @@ ORIGINS = {
         'crit_bonus' : 0,
         'hp_bonus' : 25
     },
+    None : {
+        'atk_bonus' : 0,
+        'crit_bonus' : 0,
+        'hp_bonus' : 0
+    }
 }
 
 RARITIES = {

@@ -38,19 +38,8 @@ class Weapon:
         The attack stat of the weapon
     crit : int
         The crit probability of the weapon
-
-    Methods
-    -------
-    await set_owner()
-        Change the owner of the weapon to the given ID.
-    await set_name()
-        Change the name of the weapon to the given string.
-    await set_attack()
-        Change the attack of the weapon to the given attack.
-    await destroy()
-        Deletes this item from the database.
     """
-    def __init__(self, record : asyncpg.Connection = None):
+    def __init__(self, record : asyncpg.Record = None):
         """
         Parameters
         ----------
@@ -119,6 +108,46 @@ class Weapon:
         await conn.execute(psql, self.weapon_id)
         self = Weapon()
 
+class Armor:
+    """An armor object. Changing the object attributes are not permanent; to
+    change a weapon's info, use the set-methods, which commit any changes
+    to the object into the database. Unlike other game entities, armor
+    is relatively unchanged by gameplay.
+
+    It is convenient for the bot to assume that a player always has armor
+    equipped, so this class can also create empty objects by not passing
+    a record upon instantiation. If a command alters the object's database
+    values, it should first check the is_empty attribute to ensure such a change
+    is possible. Changing an empty object will result in an EmptyObject error.
+
+    Attributes
+    ----------
+    """
+    def __init__(self, record : asyncpg.Record = None):
+        """
+        Parameters
+        ----------
+        Optional[record] : asyncpg.Record
+            A record containing information from the armor table
+            Pass nothing to create an empty weapon
+        """
+        if record is not None:
+            self.is_empty = False
+            self.id = record['armor_id']
+            self.type = record['armor_type']
+            self.slot = record['armor_slot']
+            self.owner_id = record['user_id']
+            self.name = f"{self.type} {self.type}"
+            self.defense = Vars.ARMOR_DEFENSE[self.slot][self.type]
+        else:
+            self.is_empty = True
+            self.id = None
+            self.type = "No Type"
+            self.slot = "No Slot"
+            self.owner_id = None
+            self.name = "No Armor"
+            self.defense = 0
+
 
 async def get_weapon_by_id(conn : asyncpg.Connection, item_id : int) -> Weapon:
     """Return a weapon object of the item with the given ID."""
@@ -159,6 +188,9 @@ async def create_weapon(conn : asyncpg.Connection, user_id : int, rarity : str,
     if weapon_name is None:
         weapon_name = _get_random_name()
 
+    if weapon_type not in Vars.WEAPON_TYPES:
+        raise Checks.InvalidWeaponType
+
     psql = """
             WITH rows AS (
                 INSERT INTO items 
@@ -173,6 +205,36 @@ async def create_weapon(conn : asyncpg.Connection, user_id : int, rarity : str,
         weapon_name, rarity)
 
     return await get_weapon_by_id(conn, item_id)
+
+async def get_armor_by_id(conn : asyncpg.Connection, armor_id : int) -> Armor:
+    """Return the armor object of the piece with the given ID"""
+    psql = """
+            SELECT armor_id, armor_type, armor_slot, user_id
+            FROM armor
+            WHERE armor_id = $1;
+            """
+    armor_record = await conn.fetchrow(psql, armor_id)
+    return Armor(armor_record)
+
+async def create_armor(conn : asyncpg.Connection, user_id : int, type : str,
+        material : str) -> Armor:
+    """Creates an armorpiece with the specified information and returns it."""
+    if type not in Vars.ARMOR_DEFENSE.keys():
+        raise Checks.InvalidArmorType
+
+    if material not in Vars.ARMOR_DEFENSE[type].keys():
+        raise Checks.InvalidArmorMaterial
+
+    psql = """
+            WITH rows AS (
+                INSERT INTO armor (armor_type, armor_slot, user_id)
+                VALUES ($1, $2, $3)
+                RETURNING armor_id
+            )
+            SELECT armor_id FROM rows;
+            """
+    armor_id = await conn.fetchval(psql, material, type, user_id)
+    return await get_armor_by_id(conn, armor_id)
 
 def _get_random_name() -> str:
     """Returns a str: random combination of words up to 20 characters."""

@@ -11,10 +11,24 @@ class ExcessiveCharacterCount(Exception):
     def __init__(self, limit : int):
         self.limit = limit
 
+class PlayerHasNoChar(commands.MemberNotFound):
+    def __init__(self):
+        self.message = "Player has no char."
+        super().__init__(self.message)
+
 class EmptyObject(Exception):
     pass
 
 class NotWeaponOwner(Exception):
+    pass
+
+class InvalidWeaponType(Exception):
+    pass
+
+class InvalidArmorType(Exception):
+    pass
+
+class InvalidArmorMaterial(Exception):
     pass
 
 class NotAcolyteOwner(Exception):
