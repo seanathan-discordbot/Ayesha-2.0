@@ -236,6 +236,7 @@ class Profile(commands.Cog):
         await self.view_profile(ctx, member)
 
     @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.check(Checks.HasChar)
     async def rename(self, ctx, *, 
             name : Option(str, description="Your new name", required=True)):
         """Change your character's name."""

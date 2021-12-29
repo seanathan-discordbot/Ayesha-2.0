@@ -32,7 +32,9 @@ class Error_Handler(commands.Cog):
             await ctx.respond(message)
             print_traceback = False
 
+        # --- COMMAND ERRORS ---
         if isinstance(error, ApplicationCommandInvokeError):
+            # --- ARGUMENT ERRORS ---
             if isinstance(error.original, Checks.PlayerHasNoChar):
                 message = ("This player does not have a character. "
                            "Use the `/start` command to make one :)")
@@ -46,6 +48,16 @@ class Error_Handler(commands.Cog):
                 await ctx.respond(message)
                 print_traceback = False
 
+            if isinstance(error.original, Checks.NotEnoughGold):
+                message = (
+                    f"You do not have enough gold to complete "
+                    f"this transaction. You need `{error.original.diff}` "
+                    f"more gold to do so."
+                )
+                await ctx.respond(message)
+                print_traceback = False
+
+            # --- OWNERSHIP ---
             if isinstance(error.original, Checks.NotWeaponOwner):
                 message = f"You do not own a weapon with this ID."
                 await ctx.respond(message)
