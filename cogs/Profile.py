@@ -1,10 +1,10 @@
 import discord
-from discord.commands.commands import Option
+from discord.commands.commands import Option, OptionChoice
 
 from discord.ext import commands, pages
 from discord.ext.commands import converter
 
-from Utilities import Checks, Vars, Analytics, PlayerObject
+from Utilities import Checks, ItemObject, Vars, Analytics, PlayerObject
 
 class ConfirmButton(discord.ui.View):
     def __init__(self):
@@ -238,15 +238,34 @@ class Profile(commands.Cog):
     @commands.slash_command(guild_ids=[762118688567984151])
     @commands.check(Checks.HasChar)
     async def rename(self, ctx, *, 
-            name : Option(str, description="Your new name", required=True)):
-        """Change your character's name."""
+            target : Option(str,
+                description="Rename either your character or weapon",
+                choices=[
+                    OptionChoice(name="Rename Character"),
+                    OptionChoice(name="Rename Weapon")],
+                default=""),
+            name : Option(str, description="The new name.", required=True),
+            weapon : Option(int, 
+                description="Put the ID of the weapon you are renaming",
+                required=False)):
+        """Change your character's or weapon's name."""
         async with self.bot.db.acquire() as conn:
-            player = await PlayerObject.get_player_by_id(
-                conn,
-                ctx.author.id
-            )
-            await player.set_char_name(conn, name)
-            await ctx.respond(f"You changed your name to **{name}**.")
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+            if target == "Rename Character":
+                await player.set_char_name(conn, name)
+                await ctx.respond(f"You changed your name to **{name}**.")
+            else:
+                if weapon is None:
+                    return await ctx.respond(
+                        "You didn't supply a weapon ID to rename!")
+                if not await player.is_weapon_owner(conn, weapon):
+                    raise Checks.NotWeaponOwner
+                item = await ItemObject.get_weapon_by_id(conn, weapon)
+                old_name = item.name
+                await item.set_name(conn, name)
+                await ctx.respond((
+                    f"You renamed `{item.weapon_id}`: {old_name} to "
+                    f"{item.name}."))
 
     # TODO: Add tutorial; this should probably go last
 

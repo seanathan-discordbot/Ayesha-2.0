@@ -397,12 +397,7 @@ class Items(commands.Cog):
             else:
                 await ctx.respond("They declined your offer.")
             await msg.delete_original_message()
-
-                
-
             
-                
-
 
 def setup(bot):
     bot.add_cog(Items(bot))
