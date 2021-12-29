@@ -75,7 +75,7 @@ class Items(commands.Cog):
     
     # COMMANDS
     @commands.slash_command(guild_ids=[762118688567984151])
-    @commands.check(Checks.HasChar)
+    @commands.check(Checks.is_player)
     async def inventory(self, ctx,
             order : Option(str, description="Order by ATK or CRIT",
                 default="ID", 
@@ -174,7 +174,7 @@ class Items(commands.Cog):
             await paginator.send(ctx, ephemeral=False)
 
     @commands.slash_command(guild_ids=[762118688567984151])
-    @commands.check(Checks.HasChar)
+    @commands.check(Checks.is_player)
     async def equip(self, ctx, item : Option(int, 
             description="The ID of the item you want to equip.",
             required=False)):
@@ -195,7 +195,7 @@ class Items(commands.Cog):
                 await ctx.respond("Unequipped your item.")
 
     @commands.slash_command(guild_ids=[762118688567984151])
-    @commands.check(Checks.HasChar)
+    @commands.check(Checks.is_player)
     async def merge(self, ctx, item : Option(int, 
                 description="The ID of the item you want to strengthen."),
             fodder : Option(int, 
@@ -257,7 +257,7 @@ class Items(commands.Cog):
             f"`{cost_info['tax_amount']}` in taxes."))
 
     @commands.slash_command(guild_ids=[762118688567984151])
-    @commands.check(Checks.HasChar)
+    @commands.check(Checks.is_player)
     async def sell(self, ctx, 
             item_id : Option(int, 
                 description="The ID of the item you want to sell",
@@ -333,7 +333,7 @@ class Items(commands.Cog):
                 await ctx.respond("You didn't pass anything to sell.")
 
     @commands.slash_command(guild_ids=[762118688567984151])
-    @commands.check(Checks.HasChar)
+    @commands.check(Checks.is_player)
     async def offer(self, ctx,
             player : Option(discord.Member,
                 description="The player you want to give something to",
