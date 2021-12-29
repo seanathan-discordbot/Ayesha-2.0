@@ -45,6 +45,12 @@ class Error_Handler(commands.Cog):
             await ctx.respond(message)
             print_traceback = False
 
+        if isinstance(error, Checks.CurrentlyTraveling):
+            message = ("You are currently on an adventure. "
+                        "Do `/arrive` to complete it!")
+            await ctx.respond(message)
+            print_traceback = False
+
         # --- COMMAND ERRORS ---
         if isinstance(error, ApplicationCommandInvokeError):
             # --- ARGUMENT ERRORS ---
