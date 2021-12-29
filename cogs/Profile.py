@@ -4,6 +4,9 @@ from discord.commands.commands import Option, OptionChoice
 from discord.ext import commands, pages
 from discord.ext.commands import converter
 
+import asyncio
+import schedule
+
 from Utilities import Checks, ItemObject, Vars, Analytics, PlayerObject
 
 class ConfirmButton(discord.ui.View):
@@ -28,6 +31,164 @@ class Profile(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+
+        async def update_gravitas():
+            # Decay all player's gravitas
+            # Formula: https://i.imgur.com/jMFS3Ch.png
+            psql1 = """
+                    UPDATE players
+                    SET gravitas = gravitas - (gravitas / 5)
+                    WHERE gravitas < 500
+                        AND loc NOT IN ('Aramithea', 'Riverburn', 'Thenuille');
+                    """
+            psql2 = """
+                    UPDATE players
+                    SET gravitas = gravitas + 100 - (2 * gravitas / 5)
+                    WHERE gravitas >= 500 AND gravitas < 1000
+                        AND loc NOT IN ('Aramithea', 'Riverburn', 'Thenuille');
+                    """
+            psql3 = """
+                    UPDATE players
+                    SET gravitas = gravitas + 500 - (4 * gravitas / 5)
+                    WHERE gravitas >= 1000
+                        AND loc NOT IN ('Aramithea', 'Riverburn', 'Thenuille');
+                    """
+            psql4 = """
+                    UPDATE players
+                    SET gravitas = gravitas - (gravitas / 10)
+                    WHERE gravitas < 500
+                        AND loc IN ('Aramithea', 'Riverburn', 'Thenuille');
+                    """
+            psql5 = """
+                    UPDATE players
+                    SET gravitas = gravitas + 50 - (gravitas / 5)
+                    WHERE gravitas >= 500 AND gravitas < 1000
+                        AND loc IN ('Aramithea', 'Riverburn', 'Thenuille');
+                    """
+            psql6 = """
+                    UPDATE players
+                    SET gravitas = gravitas + 650 - (4 * gravitas / 5)
+                    WHERE gravitas >= 1000
+                        AND loc IN ('Aramithea', 'Riverburn', 'Thenuille');
+                    """
+            # APPLY GRAVITAS PASSIVE INCOME
+            # Class Bonuses: Farmer 4; Soldier, Scribe 1
+            psql7 = """
+                    UPDATE players 
+                    SET gravitas = gravitas + 4
+                    WHERE occupation = 'Farmer';
+                    """
+            psql8 = """
+                    UPDATE players
+                    SET gravitas = gravitas + 1
+                    WHERE occupation IN ('Soldier', 'Scribe');
+                    """
+            # Origin Bonuses: Aramithea 5, Cities 3, Some 1
+            psql9 = """
+                    UPDATE players
+                    SET gravitas = gravitas + 5
+                    WHERE origin = 'Aramithea';
+                    """
+            psqla = """
+                    UPDATE players
+                    SET gravitas = gravitas + 3
+                    WHERE origin IN ('Riverburn', 'Thenuille');
+                    """
+            psqlb = """
+                    UPDATE players
+                    SET gravitas = gravitas + 1
+                    WHERE origin IN ('Mythic Forest', 'Lunaris', 'Crumidia');
+                    """
+            # College Members get 7
+            psqlc = """
+                    WITH colleges AS (
+                        SELECT DISTINCT players.assc
+                        FROM players
+                        INNER JOIN associations
+                            ON players.assc = associations.assc_id
+                        WHERE associations.assc_type = 'College'
+                    )
+                    UPDATE players
+                    SET gravitas = gravitas + 7
+                    WHERE assc IN (SELECT assc FROM colleges);
+                    """
+            # Acolyte Bonuses: Ajar, Duchess 2
+            psqld = """
+                    WITH ajar_users AS (
+                        WITH acolyte1 AS (
+                            SELECT players.user_id
+                            FROM players
+                            INNER JOIN acolytes
+                                ON players.acolyte1 = acolytes.acolyte_id
+                            WHERE acolytes.acolyte_name = 'Ajar'
+                        ),
+                        acolyte2 AS (
+                            SELECT players.user_id
+                            FROM players
+                            INNER JOIN acolytes
+                                ON players.acolyte2 = acolytes.acolyte_id
+                            WHERE acolytes.acolyte_name = 'Ajar'
+                        )
+                        SELECT * FROM acolyte1
+                        UNION
+                        SELECT * FROM acolyte2
+                    )
+                    UPDATE players
+                    SET gravitas = gravitas + 2
+                    WHERE user_id IN (SELECT user_id FROM ajar_users);
+                    """
+            psqle = """
+                    WITH duchess_users AS (
+                        WITH acolyte1 AS (
+                            SELECT players.user_id
+                            FROM players
+                            INNER JOIN acolytes
+                                ON players.acolyte1 = acolytes.acolyte_id
+                            WHERE acolytes.acolyte_name = 'Duchess'
+                        ),
+                        acolyte2 AS (
+                            SELECT players.user_id
+                            FROM players
+                            INNER JOIN acolytes
+                                ON players.acolyte2 = acolytes.acolyte_id
+                            WHERE acolytes.acolyte_name = 'Duchess'
+                        )
+                        SELECT * FROM acolyte1
+                        UNION
+                        SELECT * FROM acolyte2
+                    )
+                    UPDATE players
+                    SET gravitas = gravitas + 2
+                    WHERE user_id IN (SELECT user_id FROM duchess_users);
+                    """
+            async with self.bot.db.acquire() as conn:
+                await conn.execute(psql1)
+                await conn.execute(psql2)
+                await conn.execute(psql3)
+                await conn.execute(psql4)
+                await conn.execute(psql5)
+                await conn.execute(psql6)
+                await conn.execute(psql7)
+                await conn.execute(psql8)
+                await conn.execute(psql9)
+                await conn.execute(psqla)
+                await conn.execute(psqlb)
+                await conn.execute(psqlc)
+                await conn.execute(psqld)
+                await conn.execute(psqle)
+
+        def run_gravitas_func():
+            asyncio.run_coroutine_threadsafe(update_gravitas(), self.bot.loop)
+
+        async def schedule_gravitas_updates():
+            gravitas_scheduler = schedule.Scheduler()
+            gravitas_scheduler.every().day.at("12:00").do(run_gravitas_func)
+            while True:
+                gravitas_scheduler.run_pending()
+                await asyncio.sleep(gravitas_scheduler.idle_seconds)
+
+        asyncio.ensure_future(schedule_gravitas_updates())
+
 
     # EVENTS
     @commands.Cog.listener()
