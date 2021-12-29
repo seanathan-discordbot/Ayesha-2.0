@@ -1,6 +1,7 @@
 import discord
 
 import asyncpg
+from discord import user
 
 from Utilities import Checks, ItemObject, Vars, AcolyteObject, AssociationObject
 from Utilities.ItemObject import Weapon
@@ -383,6 +384,23 @@ class Player:
                 WHERE user_id = $1;
                 """
         return await conn.fetchrow(psql, self.disc_id)
+
+    async def set_adventure(self, conn : asyncpg.Connection, adventure : int,
+            destination : str, user_id : int):
+        """Sets the player's adventure and destination.
+
+        Adventure should be an integer (time.time()). If travelling, destination
+        is the desired destination, and adventure is the time of adventure
+        completion.
+        If expedition, adventure should be the start time of the adventure and
+        destination reads "EXPEDITION"
+        """
+        psql = """
+                UPDATE players
+                SET adventure = $1, destination = $2
+                WHERE user_id = $3;
+                """
+        await conn.execute(psql, adventure, destination, user_id)
 
     def get_attack(self) -> int:
         """Returns the player's attack stat, calculated from all other sources.
