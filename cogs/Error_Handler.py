@@ -3,6 +3,7 @@ from discord.commands.errors import ApplicationCommandInvokeError
 from discord.ext import commands
 
 import sys
+import time
 import traceback
 
 from discord.ui.item import Item
@@ -46,8 +47,18 @@ class Error_Handler(commands.Cog):
             print_traceback = False
 
         if isinstance(error, Checks.CurrentlyTraveling):
-            message = ("You are currently on an adventure. "
-                        "Do `/arrive` to complete it!")
+            if error.dest == "EXPEDITION":
+                diff = int(time.time() - error.adv)
+                days = int(diff / 86400)
+                days = f"0{days}" if days < 10 else str(days)
+                less_than_day = diff % 86400
+                duration = time.strftime("%H:%M:%S", time.gmtime(less_than_day))
+                message = (
+                    f"You are currently on an expedition. You have been on "
+                    f"this expedition for `{days}:{duration}`. To return "
+                    f"from your expedition, use the `/arrive` command.")
+            else:
+                message = (f"You are currently traveling to {error.dest}.")
             await ctx.respond(message)
             print_traceback = False
 
