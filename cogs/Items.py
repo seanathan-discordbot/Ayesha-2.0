@@ -78,10 +78,12 @@ class Items(commands.Cog):
     @commands.check(Checks.HasChar)
     async def inventory(self, ctx,
             order : Option(str, description="Order by ATK or CRIT",
-                default="attack", 
+                default="ID", 
                 choices=[
                     OptionChoice(name="attack"), 
-                    OptionChoice(name="crit")]),
+                    OptionChoice(name="crit"),
+                    OptionChoice(name="ID")],
+                required=False),
             rarity : Option(str, description="Get only a specific rarity",
                 choices=[OptionChoice(name=r) for r in Vars.RARITIES.keys()],
                 required=False),
@@ -114,25 +116,31 @@ class Items(commands.Cog):
                     """
 
             if rarity is not None and weapontype is not None:
-                psql2 += f""" 
-                            AND rarity = $2 AND weapontype = $3
-                            ORDER BY {order} DESC;
-                            """
+                psql2 += f" AND rarity = $2 AND weapontype = $3 "
+                if order == "ID":
+                    psql2 += "ORDER BY item_id;"
+                else:
+                    psql2 += f"ORDER BY {order} DESC;"
                 inv = await conn.fetch(psql2, ctx.author.id, rarity, weapontype)
             elif rarity is not None and weapontype is None:
-                psql2 += f""" 
-                            AND rarity = $2
-                            ORDER BY {order} DESC;
-                            """
+                psql2 += f" AND rarity = $2 "
+                if order == "ID":
+                    psql2 += "ORDER BY item_id;"
+                else:
+                    psql2 += f"ORDER BY {order} DESC;"
                 inv = await conn.fetch(psql2, ctx.author.id, rarity)
             elif rarity is None and weapontype is not None:
-                psql2 += f"""
-                            AND weapontype = $2
-                            ORDER BY {order} DESC;
-                            """
+                psql2 += f"AND weapontype = $2"
+                if order == "ID":
+                    psql2 += "ORDER BY item_id;"
+                else:
+                    psql2 += f"ORDER BY {order} DESC;"
                 inv = await conn.fetch(psql2, ctx.author.id, weapontype)
             else:
-                psql2 += f" ORDER BY {order} DESC;"
+                if order == "ID":
+                    psql2 += "ORDER BY item_id;"
+                else:
+                    psql2 += f"ORDER BY {order} DESC;"
                 inv = await conn.fetch(psql2, ctx.author.id)
 
             equip = await conn.fetchrow(psql1, ctx.author.id)
@@ -193,6 +201,9 @@ class Items(commands.Cog):
             fodder : Option(int, 
                 description="The ID of the item you want to destroy.")):
         """Merge an item into another to boost its ATK by 1."""
+        if item == fodder:
+            return await ctx.respond("You cannot merge an item with itself.")
+        
         await ctx.defer() # I hate how I have to use this a lot
         
         async with self.bot.db.acquire() as conn:
@@ -397,7 +408,7 @@ class Items(commands.Cog):
             else:
                 await ctx.respond("They declined your offer.")
             await msg.delete_original_message()
-            
+
 
 def setup(bot):
     bot.add_cog(Items(bot))
