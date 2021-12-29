@@ -113,3 +113,16 @@ async def is_not_travelling(ctx):
     if result is None:
         return True
     raise CurrentlyTraveling
+
+async def is_travelling(ctx):
+    async with ctx.bot.db.acquire() as conn:
+        psql = """
+                SELECT adventure
+                FROM players
+                WHERE user_id = $1;
+                """
+        result = await conn.fetchval(psql, ctx.author.id)
+
+    if result is None:
+        raise NotCurrentlyTraveling
+    return True

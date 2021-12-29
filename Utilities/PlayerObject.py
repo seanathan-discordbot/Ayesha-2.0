@@ -166,15 +166,15 @@ class Player:
             gold = self.level * 500
             rubidics = int(self.level / 30) + 1
 
-            self.give_gold(conn, gold)
-            self.give_rubidics(conn, rubidics)
+            await self.give_gold(conn, gold)
+            await self.give_rubidics(conn, rubidics)
 
             embed = discord.Embed(
                 title = f"You have levelled up to level {self.level}!",
                 color = Vars.ABLUE)
             embed.add_field(
                 name = f"{self.char_name}, you gained some rewards",
-                value = f"**Gold:** {gold}\n**Rubidics:**{rubidics}")
+                value = f"**Gold:** {gold}\n**Rubidics:** {rubidics}")
 
             await ctx.respond(embed=embed)
 
@@ -385,8 +385,19 @@ class Player:
                 """
         return await conn.fetchrow(psql, self.disc_id)
 
+    async def set_location(self, conn : asyncpg.Connection, location : str):
+        """Sets the player's location"""
+        self.location = location
+
+        psql = """
+                UPDATE players
+                SET loc = $1
+                WHERE user_id = $2;
+                """
+        await conn.execute(psql, location, self.disc_id)
+
     async def set_adventure(self, conn : asyncpg.Connection, adventure : int,
-            destination : str, user_id : int):
+            destination : str):
         """Sets the player's adventure and destination.
 
         Adventure should be an integer (time.time()). If travelling, destination
@@ -395,12 +406,15 @@ class Player:
         If expedition, adventure should be the start time of the adventure and
         destination reads "EXPEDITION"
         """
+        self.adventure = adventure
+        self.destination = destination
+
         psql = """
                 UPDATE players
                 SET adventure = $1, destination = $2
                 WHERE user_id = $3;
                 """
-        await conn.execute(psql, adventure, destination, user_id)
+        await conn.execute(psql, adventure, destination, self.disc_id)
 
     def get_attack(self) -> int:
         """Returns the player's attack stat, calculated from all other sources.
