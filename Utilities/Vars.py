@@ -374,6 +374,8 @@ RARITIES = {
     }
 }
 
+# These are valid map locations. When using with travel, pass the player's
+# current location, then Destinations[destination], to get adventure length
 TRAVEL_LOCATIONS = {
     'Aramithea' : {
         'Biome' : 'City', 

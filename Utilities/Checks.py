@@ -7,6 +7,14 @@ class HasChar(commands.CheckFailure):
         self.user = user
         super().__init__(*args, **kwargs)
 
+class CurrentlyTraveling(commands.CheckFailure):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+class NotCurrentlyTraveling(commands.CheckFailure):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
 class ExcessiveCharacterCount(Exception):
     def __init__(self, limit : int):
         self.limit = limit
@@ -79,3 +87,29 @@ async def not_player(ctx):
         return True
     raise HasChar(ctx.author, 
         message='Player has a character and failed not_player check.')
+
+async def is_player(ctx):
+    async with ctx.bot.db.acquire() as conn:
+        psql = """
+                SELECT user_id
+                FROM players
+                WHERE user_id = $1;
+                """
+        result = await conn.fetchval(psql, ctx.author.id)
+
+    if result is None:
+        raise PlayerHasNoChar
+    return True
+
+async def is_not_travelling(ctx):
+    async with ctx.bot.db.acquire() as conn:
+        psql = """
+                SELECT adventure
+                FROM players
+                WHERE user_id = $1;
+                """
+        result = await conn.fetchval(psql, ctx.author.id)
+
+    if result is None:
+        return True
+    raise CurrentlyTraveling
