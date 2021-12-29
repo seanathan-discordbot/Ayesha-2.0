@@ -51,6 +51,12 @@ class Error_Handler(commands.Cog):
             await ctx.respond(message)
             print_traceback = False
 
+        if isinstance(error, Checks.NotCurrentlyTraveling):
+            message = ("You are not travelling at the moment. "
+                        "Begin one with `/travel`!")
+            await ctx.respond(message)
+            print_traceback = False
+
         # --- COMMAND ERRORS ---
         if isinstance(error, ApplicationCommandInvokeError):
             # --- ARGUMENT ERRORS ---
