@@ -15,3 +15,4 @@ Ayesha is currently being rewritten using pycord after the discontinuation of di
 - [pycord](https://pypi.org/project/py-cord/) v.2.0.0a4
 - [asyncpg](https://pypi.org/project/asyncpg/) v.0.25.0
 - [coolname](https://pypi.org/project/coolname/) v.1.1.0
+- [schedule](https://pypi.org/project/schedule/) v.1.1.0
