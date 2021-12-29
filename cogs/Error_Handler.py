@@ -23,12 +23,25 @@ class Error_Handler(commands.Cog):
     # --- ERROR HANDLER ---
     @commands.Cog.listener()
     async def on_application_command_error(self, ctx, error):
+        """The error handler for the bot.
+        
+        Apparently any errors raised during the actual command body will
+        result in an ApplicationCommandInvokeError, hence the nested-if.
+        Check failures can go straight into the handler body much like the
+        Ayesha-1.0 error handler.
+        """
         print_traceback = True
 
         # --- CHARACTER RELATED ---
         if isinstance(error, Checks.HasChar):
             message = (f"You already have a character.\nFor help, read the "
                        f"`/tutorial` or go to the `/support` server.")
+            await ctx.respond(message)
+            print_traceback = False
+
+        if isinstance(error, Checks.PlayerHasNoChar):
+            message = ("This player does not have a character. "
+                        "Use the `/start` command to make one :)")
             await ctx.respond(message)
             print_traceback = False
 
