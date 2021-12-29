@@ -60,6 +60,10 @@ class PlayerNotInSpecifiedAssociation(Exception):
 class PlayerAlreadyChampion(Exception):
     pass
 
+class NotEnoughGold(Exception):
+    def __init__(self, needed : int, current : int):
+        self.diff = needed - current
+
 # --- NOW FOR THE ACTUAL CHECKS :) ---
 
 async def not_player(ctx):
