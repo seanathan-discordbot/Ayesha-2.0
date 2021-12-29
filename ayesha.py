@@ -52,7 +52,9 @@ class Ayesha(commands.AutoShardedBot):
         # Load Cogs
         self.init_cogs = (
             "cogs.Profile",
-            "cogs.Error_Handler"
+            "cogs.Error_Handler",
+            "cogs.Items",
+            "cogs.Travel"
         )
 
         for cog in self.init_cogs:
