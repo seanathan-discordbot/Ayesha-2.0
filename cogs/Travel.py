@@ -2,8 +2,7 @@ from os import name
 import discord
 from discord.commands.commands import Option, OptionChoice
 
-from discord.ext import commands, pages
-from discord.ext.commands import BucketType, cooldown
+from discord.ext import commands
 
 import random
 import time
@@ -424,8 +423,57 @@ class Travel(commands.Cog):
                         f"You caught a {result}! You sould your prize for "
                         f"`{gold}` gold."))
             
-            
+    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_player)
+    async def upgrade(self, ctx, 
+            weapon_id : Option(int, 
+                name="weapon",
+                description="The ID of the weapon you are upgrading"),
+            iter : Option(int,
+                name="iterations",
+                description="The amount of times to upgrade this weapon",
+                required=False,
+                min_value=1,
+                max_value=15,
+                default=1)):
+        """Upgrade a weapon's ATK stat. Costs 8*ATK iron and 35*ATK gold."""
+        async with self.bot.db.acquire() as conn:
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+            if player.location not in ("Aramithea", "Riverburn", "Thenuille"):
+                return await ctx.respond(
+                    "You can only upgrade items in an urban center!")
 
+            # Make sure player actually owns this weapon
+            if not await player.is_weapon_owner(conn, weapon_id):
+                raise Checks.NotWeaponOwner
+            
+            # Is item eligible for an upgrade?
+            weapon = await ItemObject.get_weapon_by_id(conn, weapon_id)
+            if weapon.rarity == "Common" and weapon.attack + iter > 50:
+                return await ctx.respond(
+                    "Common weapons can only have a maximum ATK of `50`.")
+            elif weapon.rarity == "Uncommon" and weapon.attack + iter > 75:
+                return await ctx.respond(
+                    "Uncommon weapons can only have a maximum ATK of `75`.")
+            elif weapon.rarity == "Rare" and weapon.attack + iter > 100:
+                return await ctx.respond(
+                    "Rare weapons can only have a maximum ATK of `100`.")
+            elif weapon.rarity == "Epic" and weapon.attack + iter > 125:
+                return await ctx.respond(
+                    "Epic weapons can only have a maximum ATK of `125`.")
+            elif weapon.rarity == "Legendary" and weapon.attack + iter > 160:
+                return await ctx.respond(
+                    "Legendary weapons can only be upgraded to `160` ATK. "
+                    "Use the `/merge` command to progress further.")
+
+            # Calculate the costs of such an operation
+            iron_cost, gold_cost = 0, 0
+            for i in range(iter):
+                iron_cost += 8 * (weapon.attack + i)
+                gold_cost += 35 * (weapon.attack + i)
+            verb = "time" if iter == 1 else "times"
+
+            await ctx.respond(f"Upgrading this item {iter} {verb} will cost {iron_cost} iron and {gold_cost} gold.")
 
 def setup(bot):
     bot.add_cog(Travel(bot))
