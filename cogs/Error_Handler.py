@@ -84,6 +84,16 @@ class Error_Handler(commands.Cog):
                 await ctx.respond(message)
                 print_traceback = False
 
+            if isinstance(error.original, Checks.NotEnoughResources):
+                message = (
+                    f"You do not have enough **{error.original.resource}** to "
+                    f"complete this transaction. You need "
+                    f"`{error.original.diff}` more "
+                    f"**{error.original.resource}** to do so."
+                )
+                await ctx.respond(message)
+                print_traceback = False
+
             if isinstance(error.original, Checks.NotEnoughGold):
                 message = (
                     f"You do not have enough gold to complete "

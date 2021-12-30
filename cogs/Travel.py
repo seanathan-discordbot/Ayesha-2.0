@@ -473,6 +473,12 @@ class Travel(commands.Cog):
                 gold_cost += 35 * (weapon.attack + i)
             verb = "time" if iter == 1 else "times"
 
+            if player.gold < gold_cost:
+                raise Checks.NotEnoughGold(gold_cost, player.gold)
+            if player.resources["iron"] < iron_cost:
+                raise Checks.NotEnoughResources(
+                    "iron", iron_cost, player.resources["iron"])
+
             await ctx.respond(f"Upgrading this item {iter} {verb} will cost {iron_cost} iron and {gold_cost} gold.")
 
 def setup(bot):
