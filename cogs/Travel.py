@@ -1,3 +1,4 @@
+from os import name
 import discord
 from discord.commands.commands import Option, OptionChoice
 
@@ -170,7 +171,94 @@ class Travel(commands.Cog):
                 
 
             else: # End the expedition, nothing really matters for this one
-                await ctx.respond("Expedition ended (WIP)")
+                # Calculate what to give
+                elapsed = int(time.time() - player.adventure)
+                hours = 168 if elapsed > 604800 else elapsed / 3600
+
+                if hours < 1: # 100 gold/hr, 50 xp/hr, no gravitas
+                    gold = int(hours * 100)
+                    xp = int(hours * 50)
+                    mats = random.randint(5, 10)
+                    gravitas = 0
+                    gravitas_decay = .01
+                elif hours < 6: # 125 gold/hr, 55 xp/hr, no gravitas
+                    gold = int(hours * 125)
+                    xp = int(hours * 55)
+                    mats = int(hours * 10)
+                    gravitas = 0
+                    gravitas_decay = .05
+                elif hours < 24: # 150 gold/hr, 60 xp/hr, 1/6 gravitas/hr
+                    gold = int(hours * 150)
+                    xp = int(hours * 60)
+                    mats = int(hours * 15)
+                    gravitas = int(hours / 6)
+                    gravitas_decay = .1
+                elif hours < 72: # 175 gold/hr, 70 xp/hr, 1/4 gravitas/hr
+                    gold = int(hours * 175)
+                    xp = int(hours * 70)
+                    mats = int(hours * 20)
+                    gravitas = int(hours / 4)
+                    gravitas_decay = .15
+                elif hours < 144: # 200 gold/hr, 85 xp/hr, 1/3 gravitas/hr
+                    gold = int(hours * 200)
+                    xp = int(hours * 85)
+                    mats = int(hours * 25)
+                    gravitas = int(hours / 3)
+                    gravitas_decay = .2
+                else: # 250 gold/hr, 100 xp/hr, 1/2 gravitas/hr
+                    gold = int(hours * 250)
+                    xp = int(hours * 100)
+                    mats = int(hours * 30)
+                    gravitas = int(hours / 2)
+                    gravitas_decay = .25
+
+                # Create the embed to send
+                embed = discord.Embed(title="Expedition Complete!", 
+                    color=Vars.ABLUE)
+                embed.set_thumbnail(url=ctx.author.avatar.url)
+                e_message = (
+                    f"While on your journey, you gained these resources:\n"
+                    f"Gold: `{gold}`\n"
+                    f"EXP: `{xp}`\n")
+
+                # Give player the goods
+                await player.give_gold(conn, gold)
+                if player.location in ("Aramithea", "Riverburn", "Thenuille"):
+                    resource = random.choice(['fur', 'bone'])
+                    mats = int(mats/4)
+                    e_name = "You returned from your urban expedition"
+                    e_message += (
+                        f"Your campaign increased your gravitas by "
+                        f"`{gravitas}`.\n")
+                else:
+                    gravitas = player.gravitas * gravitas_decay * -1
+                    e_name = "You returned from your expedition"
+                    e_message += (
+                        f"Your gravitas decreased by `{gravitas*-1}` while "
+                        f"in the wilderness.\n")
+                    if player.location == "Mythic Forest":
+                        resource = "wood"
+                    elif player.location in ("Fernheim", "Croire"):
+                        resource = "wheat"
+                    elif player.location in ("Sunset Prairie", "Glakelys"):
+                        resource = "oat"
+                    elif player.location == "Thanderlans":
+                        resource = "reeds"
+                    elif player.location == "Russe":
+                        resource = random.choice(["pine", "moss"])
+                    elif player.location == "Crumidia":
+                        resource = "silver"
+                    else: # Kucre, and any bugs I miss lol
+                        resource = "cacao"
+
+                e_message += f"You gained `{mats}` {resource}.\n"
+                # TODO: Implement Traveler getting acolyte bonus
+                await player.give_resource(conn, resource, mats)
+                await player.give_gravitas(conn, gravitas)
+                await player.set_adventure(conn, None, None)
+                embed.add_field(name=e_name, value=e_message)
+                await ctx.respond(embed=embed)
+                await player.check_xp_increase(conn, ctx, xp)
 
 
 def setup(bot):
