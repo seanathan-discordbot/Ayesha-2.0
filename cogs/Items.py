@@ -354,7 +354,7 @@ class Items(commands.Cog):
             player_char = await PlayerObject.get_player_by_id(conn, player.id)
 
             if gold is None and item_id is None:
-                await ctx.respond(
+                return await ctx.respond(
                     "Pass either a gold value or weapon ID to offer.")
 
             # Check for valid input
