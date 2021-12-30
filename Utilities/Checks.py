@@ -8,7 +8,9 @@ class HasChar(commands.CheckFailure):
         super().__init__(*args, **kwargs)
 
 class CurrentlyTraveling(commands.CheckFailure):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, adv, dest, *args, **kwargs):
+        self.adv = adv
+        self.dest = dest
         super().__init__(*args, **kwargs)
 
 class NotCurrentlyTraveling(commands.CheckFailure):
@@ -45,6 +47,10 @@ class InvalidAccessoryPrefix(Exception):
 class InvalidAccessoryMaterial(Exception):
     pass
 
+class InvalidResource(Exception):
+    def __init__(self, resource : str):
+        self.resource = resource
+
 class NotAcolyteOwner(Exception):
     pass
 
@@ -71,6 +77,11 @@ class PlayerAlreadyChampion(Exception):
 class NotEnoughGold(Exception):
     def __init__(self, needed : int, current : int):
         self.diff = needed - current
+
+class NotEnoughResources(NotEnoughGold):
+    def __init__(self, resource : str, needed : int, current : int):
+        self.resource = resource
+        super().__init__(needed, current)
 
 # --- NOW FOR THE ACTUAL CHECKS :) ---
 
@@ -104,15 +115,15 @@ async def is_player(ctx):
 async def is_not_travelling(ctx):
     async with ctx.bot.db.acquire() as conn:
         psql = """
-                SELECT adventure
+                SELECT adventure, destination
                 FROM players
                 WHERE user_id = $1;
                 """
-        result = await conn.fetchval(psql, ctx.author.id)
+        result = await conn.fetchrow(psql, ctx.author.id)
 
     if result is None:
         return True
-    raise CurrentlyTraveling
+    raise CurrentlyTraveling(result['adventure'], result['destination'])
 
 async def is_travelling(ctx):
     async with ctx.bot.db.acquire() as conn:

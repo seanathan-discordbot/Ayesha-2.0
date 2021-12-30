@@ -60,6 +60,8 @@ class Player:
         The destination of the player's adventure on the map
     gravitas : int
         The player's wealth in gravitas (alternate currency)
+    resources : dict
+        A dictionary containing the player's resources
     daily_streak : int
         The amount of days in a row the player has used the `daily` command
     """
@@ -97,6 +99,7 @@ class Player:
         self.adventure = record['adventure']
         self.destination = record['destination']
         self.gravitas = record['gravitas']
+        self.resources = None
         self.daily_streak = record['daily_streak']
 
     async def _load_equips(self, conn : asyncpg.Connection):
@@ -115,6 +118,7 @@ class Player:
         self.acolyte2 = await AcolyteObject.get_acolyte_by_id(
             conn, self.acolyte2)
         self.assc = await AssociationObject.get_assc_by_id(conn, self.assc)
+        self.resources = dict(await self.get_backpack(conn))
 
     def get_level(self, get_next = False) -> int:
         """Returns the player's level.
@@ -372,6 +376,38 @@ class Player:
 
         await conn.execute(psql, rubidics, self.disc_id)
 
+    async def give_gravitas(self, conn : asyncpg.Connection, gravitas : int):
+        """Gives the player the passed amount of gravitas."""
+        if gravitas < 0 and gravitas*-1 > self.gravitas:
+            gravitas = self.gravitas * -1
+
+        self.gravitas += gravitas
+
+        psql = """
+                UPDATE players
+                SET gravitas = gravitas + $1
+                WHERE user_id = $2;
+                """
+        await conn.execute(psql, gravitas, self.disc_id)
+
+    async def give_resource(self, conn : asyncpg.Connection, resource : str, 
+            amount : int):
+        """Give a resource to the player."""
+        try:
+            if amount < 0 and amount*-1 > self.resources[resource]:
+                raise Checks.NotEnoughResources(resource, 
+                    amount*-1 - self.resources[resource], 
+                    self.resources[resource])
+        except KeyError:
+            raise Checks.InvalidResource
+
+        psql = f"""
+                UPDATE resources
+                SET {resource} = {resource} + $1
+                WHERE user_id = $2;
+                """
+        await conn.execute(psql, amount, self.disc_id)
+
     async def get_backpack(self, conn : asyncpg.Connection) -> asyncpg.Record:
         """Returns a dict containg the player's resource amounts. Keys are:
         Wheat, Oat, Wood, Reeds, Pine, Moss, Iron, Cacao, Fur, Bone, Silver
@@ -510,15 +546,12 @@ async def get_player_by_id(conn : asyncpg.Connection, user_id : int) -> Player:
             WHERE players.user_id = $1;
             """
     
-    print("Fetching record")
     player_record = await conn.fetchrow(psql, user_id)
 
     if player_record is None:
         raise Checks.PlayerHasNoChar
 
-    print("Creating profile")
     player = Player(player_record)
-    print("Loading equipment")
     await player._load_equips(conn)
 
     return player
