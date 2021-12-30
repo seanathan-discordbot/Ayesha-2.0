@@ -3,6 +3,7 @@ import discord
 from discord.commands.commands import Option, OptionChoice
 
 from discord.ext import commands, pages
+from discord.ext.commands import BucketType, cooldown
 
 import random
 import time
@@ -46,11 +47,15 @@ class Travel(commands.Cog):
     async def travel(self, ctx, 
             type : Option(str, 
                 description="The type of adventure you will go on",
-                choices = [OptionChoice("Travel"), OptionChoice("Expedition")],
+                choices = [OptionChoice("Travel Somewhere New"), 
+                    OptionChoice("Go on an Expedition")],
                 default="Travel"),
             destination : Option(str,
                 description="The part of the map you are travelling to",
-                choices = [OptionChoice(name=t) 
+                choices = [
+                    OptionChoice(
+                        name=f"{t} ({Vars.TRAVEL_LOCATIONS[t]['Biome']})",
+                        value=t) 
                     for t in Vars.TRAVEL_LOCATIONS.keys()],
                 required=False
             )):
@@ -58,7 +63,7 @@ class Travel(commands.Cog):
         async with self.bot.db.acquire() as conn:
             player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
 
-            if type == "Travel":
+            if type == "Travel Somewhere New":
                 # Make sure traveling is a valid option
                 if destination is None:
                     return await ctx.respond(
@@ -259,6 +264,167 @@ class Travel(commands.Cog):
                 embed.add_field(name=e_name, value=e_message)
                 await ctx.respond(embed=embed)
                 await player.check_xp_increase(conn, ctx, xp)
+
+    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_player)
+    async def work(self, ctx, 
+            workplace : Option(str,
+                description="What type of work you want to do",
+                choices=[
+                    OptionChoice(name="Smalltown Gig"),
+                    OptionChoice(name="Hunting Trip"),
+                    OptionChoice(name="Mining Shift"),
+                    OptionChoice(name="Foraging Party"),
+                    OptionChoice(name="Fishing Getaway")
+                ])):
+        """Get a short gig to make some quick money or get resources."""
+        async with self.bot.db.acquire() as conn:
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+            location_biome = Vars.TRAVEL_LOCATIONS[player.location]['Biome']
+            result = random.choices(("success", "critical success", "failure"),
+                (60, 10, 30))[0]
+            if result == "success":
+                bonus = 1 # Bonus will add all possible bonuses into one
+            elif result == "critical success":
+                bonus = 1.5
+            else:
+                bonus = .5
+            # TODO: Implement Brotherhood Map Control Bonus
+
+            if workplace == "Smalltown Gig":
+                employer = random.choice((
+                    "blacksmith", "cartographer's study", "library", "manor",
+                    "doctor's office", "carpenter's studio", "art studio",
+                    "farm", "general goods store", "bar", "tailor", "mill"))
+                income = random.randint(20, 40) # No cooldowns so low income :/
+                await player.give_gold(conn, income)
+                await ctx.respond((f"You did a job at a nearby {employer} and "
+                    f"made `{income}` gold."))
+
+            elif workplace == "Hunting Trip":
+                if location_biome not in ("Grassland", "Forest", "Taiga"):
+                    return await ctx.respond((
+                        f"You cannot hunt at **{player.location}**. Please "
+                        f"move to a grassland, forest, or taiga."))
+                
+                if player.occupation == "Hunter":
+                    bonus += 1
+                if player.equipped_item.type == "Bow":
+                    bonus += 1
+                elif player.equipped_item.type == "Gauntlets":
+                    bonus -= .5
+                elif player.equipped_item.type == "Sling":
+                    bonus += .5
+                elif player.equipped_item.type == "Javelin":
+                    bonus += .25
+
+                income = int(random.randint(1, 10) * bonus)
+                fur = int(random.randint(3, 8) * bonus)
+                bone = int(random.randint(2, 6) * bonus)
+                await player.give_gold(conn, income)
+                await player.give_resource(conn, "fur", fur)
+                await player.give_resource(conn, "bone", bone)
+                await ctx.respond((
+                    f"Your hunting trip was a {result}! You got `{income}` "
+                    f"gold, `{fur}` fur, and `{bone}` bones."))
+
+            elif workplace == "Mining Shift":
+                if location_biome != "Hills":
+                    return await ctx.respond((
+                        f"You cannot mine at **{player.location}**. Please "
+                        f"move to a hilly region."))
+
+                if player.occupation == "Blacksmith":
+                    bonus += 1
+                if player.equipped_item.type == "Dagger":
+                    bonus -= .25
+                elif player.equipped_item.type in ("Bow", "Sling"):
+                    bonus -= .5
+                elif player.equipped_item.type == "Trebuchet":
+                    bonus += 1
+                elif player.equipped_item.type in ("Greatsword", "Axe", "Mace"):
+                    bonus += .25
+
+                income = int(random.randint(1,10) * bonus)
+                iron = int(random.randint(7, 12) * bonus)
+                silver = int(random.randint(2, 8) * bonus)
+                await player.give_gold(conn, income)
+                await player.give_resource(conn, "iron", iron)
+                await player.give_resource(conn, "silver", silver)
+                await ctx.respond((
+                    f"Your mining expedition was a {result}! You got "
+                    f"`{income}` gold, `{iron}` iron, and `{silver}` silver."))
+
+            elif workplace == "Foraging Party":
+                if location_biome in ("City", "Town"):
+                    return await ctx.respond((
+                        f"You foraged in **{player.location}** and found "
+                        f"nothing but trash. Get outside of an urban area!"))
+                elif player.location in ("Fernheim", "Croire"):
+                    res = "wheat"
+                    amount = random.randint(5, 12)
+                elif player.location in ("Sunset Prairie", "Glakelys"):
+                    res = "oat"
+                    amount = random.randint(2, 6)
+                elif location_biome == "Forest":
+                    res = "wood"
+                    amount = random.randint(3, 10)
+                elif location_biome == "Marsh":
+                    res = "reeds"
+                    amount = random.randint(12, 24)
+                elif location_biome == "Taiga":
+                    res = random.choices(["pine", "moss"], [2, 1])[0]
+                    amount = random.randint(9, 13)
+                elif location_biome == "Hills":
+                    res = "iron"
+                    amount = random.randint(7, 12)
+                elif location_biome == "Jungle":
+                    res = "cacao"
+                    amount = random.randint(2, 4)
+
+                if player.occupation == "Traveller":
+                    bonus += 1
+                if player.equipped_item.type == "Dagger":
+                    bonus += .1
+
+                await player.give_resource(conn, res, int(amount * bonus))
+                await ctx.respond((
+                    f"You received `{amount}` {res} while foraging in "
+                    f"**{player.location}**."))
+
+            elif workplace == "Fishing Getaway":
+                if player.location == "Thenuille":
+                    result = random.choices(
+                        ['🐟','🐠','🐡','🦈','🦦','nothing'], 
+                        [45, 25, 6, 3, 1, 20])[0]
+                else:
+                    result = random.choices(
+                        ['🐟','🐠','🐡','nothing'], 
+                        [40, 15, 5, 40])[0]
+                
+                if result == "nothing":
+                    await ctx.respond("You waited but did not catch anything.")
+                elif result == '🦦':
+                    await player.give_gold(conn, 1000)
+                    await ctx.respond(
+                        f"You caught {result}? It gave you a gold coin before "
+                        f"jumping back into the water.")
+                else:
+                    if result == '🐟':
+                        gold = random.randint(3, 9)
+                    elif result == '🐠':
+                        gold = random.randint(9, 18)
+                    elif result == '🐡':
+                        gold = random.randint(6, 15)
+                    elif result == '🦈':
+                        gold = random.randint(300, 400)
+                    
+                    await player.give_gold(conn, gold)
+                    await ctx.respond((
+                        f"You caught a {result}! You sould your prize for "
+                        f"`{gold}` gold."))
+            
+            
 
 
 def setup(bot):
