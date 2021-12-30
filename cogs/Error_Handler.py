@@ -93,6 +93,10 @@ class Error_Handler(commands.Cog):
                 await ctx.respond(message)
                 print_traceback = False
 
+            if isinstance(error.original, Checks.InvalidResource):
+                await ctx.respond("Ping Aramythia for this error lol")
+                print(f"Resource {error.original.resource} DNE.")
+
             # --- OWNERSHIP ---
             if isinstance(error.original, Checks.NotWeaponOwner):
                 message = f"You do not own a weapon with this ID."
