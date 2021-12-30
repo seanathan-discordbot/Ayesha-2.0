@@ -78,9 +78,10 @@ class NotEnoughGold(Exception):
     def __init__(self, needed : int, current : int):
         self.diff = needed - current
 
-class NotEnoughResources(NotEnoughGold):
+class NotEnoughResources(Exception):
     def __init__(self, resource : str, needed : int, current : int):
         self.resource = resource
+        self.diff = needed - current
         super().__init__(needed, current)
 
 # --- NOW FOR THE ACTUAL CHECKS :) ---
