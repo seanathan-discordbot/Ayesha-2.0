@@ -121,7 +121,7 @@ async def is_not_travelling(ctx):
                 """
         result = await conn.fetchrow(psql, ctx.author.id)
 
-    if result is None:
+    if result['adventure'] is None:
         return True
     raise CurrentlyTraveling(result['adventure'], result['destination'])
 
