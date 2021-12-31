@@ -344,7 +344,7 @@ class Items(commands.Cog):
             gold : Option(int,
                 description="The gold you are offering",
                 required=False,
-                min_value=1),
+                min_value=0),
             item_id : Option(int,
                 description="The ID of the weapon you are offering",
                 required=False)):
@@ -356,6 +356,9 @@ class Items(commands.Cog):
             if gold is None and item_id is None:
                 return await ctx.respond(
                     "Pass either a gold value or weapon ID to offer.")
+
+            if item_id is None:
+                price = 0 # Don't let them pay for gold
 
             # Check for valid input
             if player_char.gold < price:
@@ -396,14 +399,18 @@ class Items(commands.Cog):
             if view.value is None:
                 await ctx.respond("Timed out.")
             elif view.value:
+                if not item.is_empty:
+                    # Prevent scams (where item is sold by other command)
+                    if not author.is_weapon_owner(conn, item.weapon_id):
+                        return await ctx.respond(
+                            "Trade cancelled since item was altered.")
+                    await item.set_owner(conn, player_char.disc_id)
                 if gold is not None:
                     await player_char.give_gold(conn, gold - price)
                     await author.give_gold(conn, price - gold)
                 else:
                     await player_char.give_gold(conn, price*-1)
                     await author.give_gold(conn, price)
-                if not item.is_empty:
-                    await item.set_owner(conn, player_char.disc_id)
                 await ctx.respond("They accepted the offer.")
             else:
                 await ctx.respond("They declined your offer.")
