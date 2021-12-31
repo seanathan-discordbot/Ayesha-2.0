@@ -75,7 +75,7 @@ class Items(commands.Cog):
     
     # COMMANDS
     @commands.slash_command(guild_ids=[762118688567984151])
-    @commands.check(Checks.HasChar)
+    @commands.check(Checks.is_player)
     async def inventory(self, ctx,
             order : Option(str, description="Order by ATK or CRIT",
                 default="ID", 
@@ -174,7 +174,7 @@ class Items(commands.Cog):
             await paginator.send(ctx, ephemeral=False)
 
     @commands.slash_command(guild_ids=[762118688567984151])
-    @commands.check(Checks.HasChar)
+    @commands.check(Checks.is_player)
     async def equip(self, ctx, item : Option(int, 
             description="The ID of the item you want to equip.",
             required=False)):
@@ -195,7 +195,7 @@ class Items(commands.Cog):
                 await ctx.respond("Unequipped your item.")
 
     @commands.slash_command(guild_ids=[762118688567984151])
-    @commands.check(Checks.HasChar)
+    @commands.check(Checks.is_player)
     async def merge(self, ctx, item : Option(int, 
                 description="The ID of the item you want to strengthen."),
             fodder : Option(int, 
@@ -257,7 +257,7 @@ class Items(commands.Cog):
             f"`{cost_info['tax_amount']}` in taxes."))
 
     @commands.slash_command(guild_ids=[762118688567984151])
-    @commands.check(Checks.HasChar)
+    @commands.check(Checks.is_player)
     async def sell(self, ctx, 
             item_id : Option(int, 
                 description="The ID of the item you want to sell",
@@ -333,7 +333,7 @@ class Items(commands.Cog):
                 await ctx.respond("You didn't pass anything to sell.")
 
     @commands.slash_command(guild_ids=[762118688567984151])
-    @commands.check(Checks.HasChar)
+    @commands.check(Checks.is_player)
     async def offer(self, ctx,
             player : Option(discord.Member,
                 description="The player you want to give something to",
@@ -344,7 +344,7 @@ class Items(commands.Cog):
             gold : Option(int,
                 description="The gold you are offering",
                 required=False,
-                min_value=1),
+                min_value=0),
             item_id : Option(int,
                 description="The ID of the weapon you are offering",
                 required=False)):
@@ -354,8 +354,11 @@ class Items(commands.Cog):
             player_char = await PlayerObject.get_player_by_id(conn, player.id)
 
             if gold is None and item_id is None:
-                await ctx.respond(
+                return await ctx.respond(
                     "Pass either a gold value or weapon ID to offer.")
+
+            if item_id is None:
+                price = 0 # Don't let them pay for gold
 
             # Check for valid input
             if player_char.gold < price:
@@ -391,23 +394,25 @@ class Items(commands.Cog):
 
             # Send player the offer
             view = OfferView(target=player)
+            self.bot.trading_players[ctx.author.id] = 0
             msg = await ctx.respond(content=message, view=view)
             await view.wait()
             if view.value is None:
                 await ctx.respond("Timed out.")
             elif view.value:
+                if not item.is_empty:
+                    await item.set_owner(conn, player_char.disc_id)
                 if gold is not None:
                     await player_char.give_gold(conn, gold - price)
                     await author.give_gold(conn, price - gold)
                 else:
                     await player_char.give_gold(conn, price*-1)
                     await author.give_gold(conn, price)
-                if not item.is_empty:
-                    await item.set_owner(conn, player_char.disc_id)
                 await ctx.respond("They accepted the offer.")
             else:
                 await ctx.respond("They declined your offer.")
             await msg.delete_original_message()
+            self.bot.trading_players.pop(ctx.author.id)
 
 
 def setup(bot):

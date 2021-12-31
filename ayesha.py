@@ -42,7 +42,8 @@ class Ayesha(commands.AutoShardedBot):
     """Ayesha bot class with added properties"""
 
     def __init__(self):
-        self.recent_voters = []
+        self.recent_voters = {}
+        self.trading_players = {}
 
         super().__init__(
             command_prefix = "$",
@@ -52,7 +53,9 @@ class Ayesha(commands.AutoShardedBot):
         # Load Cogs
         self.init_cogs = (
             "cogs.Profile",
-            "cogs.Error_Handler"
+            "cogs.Error_Handler",
+            "cogs.Items",
+            "cogs.Travel"
         )
 
         for cog in self.init_cogs:
@@ -71,6 +74,13 @@ class Ayesha(commands.AutoShardedBot):
         self.loop.create_task(self.change_presence(activity=discord.Game(gp)))
 
         print("Ayesha is online.")
+
+    async def on_interaction(self, interaction):
+        if interaction.user.id in self.trading_players:
+            return await interaction.response.send_message(
+                f"Finish your trade first.")
+
+        return await super().on_interaction(interaction)
 
 bot = Ayesha()
 

@@ -374,6 +374,227 @@ RARITIES = {
     }
 }
 
+# These are valid map locations. When using with travel, pass the player's
+# current location, then Destinations[destination], to get adventure length
+TRAVEL_LOCATIONS = {
+    'Aramithea' : {
+        'Biome' : 'City', 
+        'Drops' : 'You can `upgrade` your weapons here.',
+        'Destinations' : {
+            'Aramithea' : 0,
+            'Mythic Forest' : 1800,
+            'Thenuille' : 1800,
+            'Fernheim' : 1800,
+            'Sunset Prairie' : 1800,
+            'Riverburn' : 1800,
+            'Thanderlans' : 3600,
+            'Glakelys' : 3600,
+            'Russe' : 7200,
+            'Croire' : 7200,
+            'Crumidia' : 10800,
+            'Kucre' : 10800
+        }
+    },
+    'Mythic Forest' : {
+        'Biome' : 'Forest',
+        'Drops' : 'You can `hunt` and `forage` here for `fur`, `bone`, and `wood`.',
+        'Destinations' : {
+            'Aramithea' : 1800,
+            'Mythic Forest' : 0,
+            'Thenuille' : 1800,
+            'Fernheim' : 3600,
+            'Sunset Prairie' : 1800,
+            'Riverburn' : 3600,
+            'Thanderlans' : 7200,
+            'Glakelys' : 7200,
+            'Russe' : 10800,
+            'Croire' : 10800,
+            'Crumidia' : 10800,
+            'Kucre' : 7200
+        }
+    }, 
+    'Thenuille' : {
+        'Biome' : 'Town', 
+        'Drops' : 'You can `upgrade` your weapons here and `fish`.',
+        'Destinations' : {
+            'Aramithea' : 1800,
+            'Mythic Forest' : 1800,
+            'Thenuille' : 0,
+            'Fernheim' : 1800,
+            'Sunset Prairie' : 1800,
+            'Riverburn' : 1800,
+            'Thanderlans' : 3600,
+            'Glakelys' : 3600,
+            'Russe' : 10800,
+            'Croire' : 7200,
+            'Crumidia' : 10800,
+            'Kucre' : 10800
+        }
+    },
+    'Fernheim' : {
+        'Biome' : 'Grassland', 
+        'Drops' : 'You can `hunt` and `forage` here for `fur`, `bone`, and `wheat`.',
+        'Destinations' : {
+            'Aramithea' : 1800,
+            'Mythic Forest' : 3600,
+            'Thenuille' : 1800,
+            'Fernheim' : 0,
+            'Sunset Prairie' : 1800,
+            'Riverburn' : 1800,
+            'Thanderlans' : 3600,
+            'Glakelys' : 3600,
+            'Russe' : 10800,
+            'Croire' : 7200,
+            'Crumidia' : 10800,
+            'Kucre' : 14400
+        }
+    },
+    'Sunset Prairie' : {
+        'Biome' : 'Grassland', 
+        'Drops' : 'You can `hunt` and `forage` here for `fur`, `bone`, and `oats`.',
+        'Destinations' : {
+            'Aramithea' : 0,
+            'Mythic Forest' : 0,
+            'Thenuille' : 0,
+            'Fernheim' : 0,
+            'Sunset Prairie' : 0,
+            'Riverburn' : 0,
+            'Thanderlans' : 0,
+            'Glakelys' : 0,
+            'Russe' : 0,
+            'Croire' : 0,
+            'Crumidia' : 0,
+            'Kucre' : 14400
+        }
+    },
+    'Riverburn' : {
+        'Biome' : 'City', 
+        'Drops' : 'You can `upgrade` your weapons here.',
+        'Destinations' : {
+            'Aramithea' : 1800,
+            'Mythic Forest' : 3600,
+            'Thenuille' : 1800,
+            'Fernheim' : 1800,
+            'Sunset Prairie' : 3600,
+            'Riverburn' : 0,
+            'Thanderlans' : 3600,
+            'Glakelys' : 1800,
+            'Russe' : 9000,
+            'Croire' : 7200,
+            'Crumidia' : 9000,
+            'Kucre' : 14400
+        }
+    },
+    'Thanderlans' : {
+        'Biome' : 'Marsh', 
+        'Drops' : 'You can `forage` here for `reeds`.',
+        'Destinations' : {
+            'Aramithea' : 3600,
+            'Mythic Forest' : 7200,
+            'Thenuille' : 3600,
+            'Fernheim' : 3600,
+            'Sunset Prairie' : 9000,
+            'Riverburn' : 3600,
+            'Thanderlans' : 0,
+            'Glakelys' : 1800,
+            'Russe' : 3600,
+            'Croire' : 1800,
+            'Crumidia' : 7200,
+            'Kucre' : 10800
+        }
+    },
+    'Glakelys' : {
+        'Biome' : 'Grassland', 
+        'Drops' : 'You can `hunt` and `forage` here for `fur`, `bone`, and `oats`.',
+        'Destinations' : {
+            'Aramithea' : 3600,
+            'Mythic Forest' : 7200,
+            'Thenuille' : 3600,
+            'Fernheim' : 3600,
+            'Sunset Prairie' : 7200,
+            'Riverburn' : 1800,
+            'Thanderlans' : 1800,
+            'Glakelys' : 0,
+            'Russe' : 7200,
+            'Croire' : 7200,
+            'Crumidia' : 7200,
+            'Kucre' : 10800
+        }
+    },
+    'Russe' : {
+        'Biome' : 'Taiga', 
+        'Drops' : 'You can `hunt` and `forage` here for `fur`, `bone`, `pine`, and `moss`.',
+        'Destinations' : {
+            'Aramithea' : 7200,
+            'Mythic Forest' : 10800,
+            'Thenuille' : 7200,
+            'Fernheim' : 7200,
+            'Sunset Prairie' : 10800,
+            'Riverburn' : 7200,
+            'Thanderlans' : 3600,
+            'Glakelys' : 5400,
+            'Russe' : 0,
+            'Croire' : 1800,
+            'Crumidia' : 3600,
+            'Kucre' : 14400
+        }
+    },
+    'Croire' : {
+        'Biome' : 'Grassland', 
+        'Drops' : 'You can `hunt` and `forage` here for `fur`, and `wheat`.',
+        'Destinations' : {
+            'Aramithea' : 7200,
+            'Mythic Forest' : 10800,
+            'Thenuille' : 7200,
+            'Fernheim' : 7200,
+            'Sunset Prairie' : 10800,
+            'Riverburn' : 7200,
+            'Thanderlans' : 1800,
+            'Glakelys' : 3600,
+            'Russe' : 3600,
+            'Croire' : 0,
+            'Crumidia' : 1800,
+            'Kucre' : 14400
+        }
+    },
+    'Crumidia' : {
+        'Biome' : 'Hills', 
+        'Drops' : 'You can `mine` and `forage` here for `iron` and `silver`.',
+        'Destinations' : {
+            'Aramithea' : 5400,
+            'Mythic Forest' : 7200,
+            'Thenuille' : 3600,
+            'Fernheim' : 5400,
+            'Sunset Prairie' : 10800,
+            'Riverburn' : 7200,
+            'Thanderlans' : 3600,
+            'Glakelys' : 5400,
+            'Russe' : 7200,
+            'Croire' : 1800,
+            'Crumidia' : 0,
+            'Kucre' : 7200
+        }
+    },
+    'Kucre' : {
+        'Biome' : 'Jungle', 
+        'Drops' : 'You can `forage` here for `cacao`.',
+        'Destinations' : {
+            'Aramithea' : 14400,
+            'Mythic Forest' : 10800,
+            'Thenuille' : 7200,
+            'Fernheim' : 10800,
+            'Sunset Prairie' : 14400,
+            'Riverburn' : 10800,
+            'Thanderlans' : 7200,
+            'Glakelys' : 7200,
+            'Russe' : 10800,
+            'Croire' : 7200,
+            'Crumidia' : 7200,
+            'Kucre' : 0
+        }
+    }
+}
+
 WEAPON_TYPES = ['Spear', 'Sword', 'Dagger', 'Bow', 'Trebuchet', 'Gauntlets', 
                 'Staff', 'Greatsword', 'Axe', 'Sling', 'Javelin', 'Falx', 
                 'Mace']

@@ -1,6 +1,7 @@
 import discord
 
 import asyncpg
+from discord import user
 
 from Utilities import Checks, ItemObject, Vars, AcolyteObject, AssociationObject
 from Utilities.ItemObject import Weapon
@@ -59,6 +60,8 @@ class Player:
         The destination of the player's adventure on the map
     gravitas : int
         The player's wealth in gravitas (alternate currency)
+    resources : dict
+        A dictionary containing the player's resources
     daily_streak : int
         The amount of days in a row the player has used the `daily` command
     """
@@ -96,6 +99,7 @@ class Player:
         self.adventure = record['adventure']
         self.destination = record['destination']
         self.gravitas = record['gravitas']
+        self.resources = None
         self.daily_streak = record['daily_streak']
 
     async def _load_equips(self, conn : asyncpg.Connection):
@@ -114,6 +118,7 @@ class Player:
         self.acolyte2 = await AcolyteObject.get_acolyte_by_id(
             conn, self.acolyte2)
         self.assc = await AssociationObject.get_assc_by_id(conn, self.assc)
+        self.resources = dict(await self.get_backpack(conn))
 
     def get_level(self, get_next = False) -> int:
         """Returns the player's level.
@@ -165,15 +170,15 @@ class Player:
             gold = self.level * 500
             rubidics = int(self.level / 30) + 1
 
-            self.give_gold(conn, gold)
-            self.give_rubidics(conn, rubidics)
+            await self.give_gold(conn, gold)
+            await self.give_rubidics(conn, rubidics)
 
             embed = discord.Embed(
                 title = f"You have levelled up to level {self.level}!",
                 color = Vars.ABLUE)
             embed.add_field(
                 name = f"{self.char_name}, you gained some rewards",
-                value = f"**Gold:** {gold}\n**Rubidics:**{rubidics}")
+                value = f"**Gold:** {gold}\n**Rubidics:** {rubidics}")
 
             await ctx.respond(embed=embed)
 
@@ -371,6 +376,38 @@ class Player:
 
         await conn.execute(psql, rubidics, self.disc_id)
 
+    async def give_gravitas(self, conn : asyncpg.Connection, gravitas : int):
+        """Gives the player the passed amount of gravitas."""
+        if gravitas < 0 and gravitas*-1 > self.gravitas:
+            gravitas = self.gravitas * -1
+
+        self.gravitas += gravitas
+
+        psql = """
+                UPDATE players
+                SET gravitas = gravitas + $1
+                WHERE user_id = $2;
+                """
+        await conn.execute(psql, gravitas, self.disc_id)
+
+    async def give_resource(self, conn : asyncpg.Connection, resource : str, 
+            amount : int):
+        """Give a resource to the player."""
+        try:
+            if amount < 0 and amount*-1 > self.resources[resource]:
+                raise Checks.NotEnoughResources(resource, 
+                    amount*-1 - self.resources[resource], 
+                    self.resources[resource])
+        except KeyError:
+            raise Checks.InvalidResource
+
+        psql = f"""
+                UPDATE resources
+                SET {resource} = {resource} + $1
+                WHERE user_id = $2;
+                """
+        await conn.execute(psql, amount, self.disc_id)
+
     async def get_backpack(self, conn : asyncpg.Connection) -> asyncpg.Record:
         """Returns a dict containg the player's resource amounts. Keys are:
         Wheat, Oat, Wood, Reeds, Pine, Moss, Iron, Cacao, Fur, Bone, Silver
@@ -383,6 +420,37 @@ class Player:
                 WHERE user_id = $1;
                 """
         return await conn.fetchrow(psql, self.disc_id)
+
+    async def set_location(self, conn : asyncpg.Connection, location : str):
+        """Sets the player's location"""
+        self.location = location
+
+        psql = """
+                UPDATE players
+                SET loc = $1
+                WHERE user_id = $2;
+                """
+        await conn.execute(psql, location, self.disc_id)
+
+    async def set_adventure(self, conn : asyncpg.Connection, adventure : int,
+            destination : str):
+        """Sets the player's adventure and destination.
+
+        Adventure should be an integer (time.time()). If travelling, destination
+        is the desired destination, and adventure is the time of adventure
+        completion.
+        If expedition, adventure should be the start time of the adventure and
+        destination reads "EXPEDITION"
+        """
+        self.adventure = adventure
+        self.destination = destination
+
+        psql = """
+                UPDATE players
+                SET adventure = $1, destination = $2
+                WHERE user_id = $3;
+                """
+        await conn.execute(psql, adventure, destination, self.disc_id)
 
     def get_attack(self) -> int:
         """Returns the player's attack stat, calculated from all other sources.
@@ -478,15 +546,12 @@ async def get_player_by_id(conn : asyncpg.Connection, user_id : int) -> Player:
             WHERE players.user_id = $1;
             """
     
-    print("Fetching record")
     player_record = await conn.fetchrow(psql, user_id)
 
     if player_record is None:
         raise Checks.PlayerHasNoChar
 
-    print("Creating profile")
     player = Player(player_record)
-    print("Loading equipment")
     await player._load_equips(conn)
 
     return player
