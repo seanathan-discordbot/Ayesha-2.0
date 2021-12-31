@@ -394,16 +394,13 @@ class Items(commands.Cog):
 
             # Send player the offer
             view = OfferView(target=player)
+            self.bot.trading_players[ctx.author.id] = 0
             msg = await ctx.respond(content=message, view=view)
             await view.wait()
             if view.value is None:
                 await ctx.respond("Timed out.")
             elif view.value:
                 if not item.is_empty:
-                    # Prevent scams (where item is sold by other command)
-                    if not author.is_weapon_owner(conn, item.weapon_id):
-                        return await ctx.respond(
-                            "Trade cancelled since item was altered.")
                     await item.set_owner(conn, player_char.disc_id)
                 if gold is not None:
                     await player_char.give_gold(conn, gold - price)
@@ -415,6 +412,7 @@ class Items(commands.Cog):
             else:
                 await ctx.respond("They declined your offer.")
             await msg.delete_original_message()
+            self.bot.trading_players.pop(ctx.author.id)
 
 
 def setup(bot):
