@@ -84,6 +84,9 @@ class NotEnoughResources(Exception):
         self.diff = needed - current
         super().__init__(needed, current)
 
+class InvalidTransactionType(Exception):
+    pass
+
 # --- NOW FOR THE ACTUAL CHECKS :) ---
 
 async def not_player(ctx):
