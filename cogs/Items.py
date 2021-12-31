@@ -6,6 +6,7 @@ from discord.ext import commands, pages
 import random
 
 from Utilities import Checks, Vars, PlayerObject, ItemObject, Finances
+from Utilities.Finances import Transaction
 
 class OfferView(discord.ui.View):
     """Help me. Same code as Profile.ConfirmButton. Bad code moment"""
@@ -235,26 +236,25 @@ class Items(commands.Cog):
                     "item being upgraded."))
 
             # Calculate the cost of the merge
-            cost_info = await Finances.calc_cost_with_tax_rate(
-                conn, 10000, player.origin)
-            if cost_info['total'] > player.gold:
+            purchase = await Transaction.calc_cost(conn, player, 10000)
+            if purchase.paying_price > player.gold:
                 return await ctx.respond((
-                    f"You need at least `{cost_info['total']}` gold to perform "
-                    f"this operation. You currently have `{player.gold}` "
-                    f"gold."))
+                    f"You need at least `{purchase.paying_price}` gold to "
+                    f"perform this operation. You currently have "
+                    f"`{player.gold}` gold."))
             
             # Perform the merge
             await item_w.set_attack(conn, item_w.attack+1)
             await fodder_w.destroy(conn)
-            await player.give_gold(conn, cost_info['total']*-1)
-            await Finances.log_transaction(conn, player.disc_id, 
-                cost_info['subtotal'], cost_info['tax_amount'], 
-                cost_info['tax_rate'])
+            print_tax = await purchase.log_transaction(conn, "purchase")
+            # await player.give_gold(conn, cost_info['total']*-1)
+            # await Finances.log_transaction(conn, player.disc_id, 
+            #     cost_info['subtotal'], cost_info['tax_amount'], 
+            #     cost_info['tax_rate'])
 
         await ctx.respond((
             f"You buffed your **{item_w.name}** to `{item_w.attack}` ATK.\n"
-            f"This cost you `10000` gold, with an additional "
-            f"`{cost_info['tax_amount']}` in taxes."))
+            f"This cost you `10000` gold.\n{print_tax}"))
 
     @commands.slash_command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
@@ -283,18 +283,12 @@ class Items(commands.Cog):
                 # Make the sale
                 gold = random.randint(a=Vars.RARITIES[item.rarity]['low_gold'], 
                     b=Vars.RARITIES[item.rarity]['high_gold'])
-                gold = Finances.apply_sale_bonuses(gold, player)
-                cost_info = await Finances.calc_cost_with_tax_rate(
-                    conn, gold, player.origin)
-                await player.give_gold(conn, cost_info['payout'])
-                await Finances.log_transaction(conn, player.disc_id, 
-                    cost_info['subtotal'], cost_info['tax_amount'], 
-                    cost_info['tax_rate'])
+                sale = await Transaction.create_sale(conn, player, gold)
+                print_tax = await sale.log_transaction(conn, "sale")
                 await item.destroy(conn)
                 await ctx.respond((
-                    f"You sold your `{item_id}: {item.name}` and made a "
-                    f"`{cost_info['payout']}` gold profit.\n"
-                    f"You paid `{cost_info['tax_amount']}` in taxes."))
+                    f"You sold your `{item_id}`: {item.name} and made "
+                    f"`{sale.subtotal}` gold.\n{print_tax}"))
 
             elif rarity is not None: 
                 psql = """
@@ -318,16 +312,11 @@ class Items(commands.Cog):
                 subtotal = random.randint(a=Vars.RARITIES[rarity]['low_gold'], 
                     b=Vars.RARITIES[rarity]['high_gold'])
                 subtotal *= amount_sold
-                cost_info = await Finances.calc_cost_with_tax_rate(
-                    conn, subtotal, player.origin)
-                await player.give_gold(conn, cost_info["payout"])
-                await Finances.log_transaction(conn, player.disc_id, 
-                    cost_info['subtotal'], cost_info['tax_amount'], 
-                    cost_info['tax_rate'])
+                sale = await Transaction.create_sale(conn, player, subtotal)
+                print_tax = await sale.log_transaction(conn, "sale")
                 await ctx.respond((
-                    f"You sold all {amount_sold} of your {rarity.lower()} "
-                    f"items for a profit of `{cost_info['payout']}` gold.\n"
-                    f"You paid `{cost_info['tax_amount']}` in taxes."))
+                    f"You sould all {amount_sold} of your {rarity.lower()} "
+                    f"items and made `{sale.subtotal}` gold.\n{print_tax}"))
 
             else: # Then they passed nothing bruh
                 await ctx.respond("You didn't pass anything to sell.")
