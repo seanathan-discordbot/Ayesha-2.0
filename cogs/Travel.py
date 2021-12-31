@@ -7,7 +7,8 @@ from discord.ext import commands
 import random
 import time
 
-from Utilities import Checks, PlayerObject, ItemObject, Vars, Finances
+from Utilities import Checks, PlayerObject, ItemObject, Vars
+from Utilities.Finances import Transaction
 
 class Travel(commands.Cog):
     """View and manipulate your inventory"""
@@ -473,28 +474,23 @@ class Travel(commands.Cog):
                 gold_cost += 35 * (weapon.attack + i)
             verb = "time" if iter == 1 else "times"
 
-            gold_cost_info = await Finances.calc_cost_with_tax_rate(
-                conn, gold_cost, player.origin)
+            purchase = await Transaction.calc_cost(conn, player, gold_cost)
 
-            if player.gold < gold_cost_info['total']:
-                raise Checks.NotEnoughGold(gold_cost_info['total'], player.gold)
+            if player.gold < purchase.paying_price:
+                raise Checks.NotEnoughGold(purchase.paying_price, player.gold)
             if player.resources["iron"] < iron_cost:
                 raise Checks.NotEnoughResources(
                     "iron", iron_cost, player.resources["iron"])
 
             # If all else clears, upgrade the item
             await weapon.set_attack(conn, weapon.attack + iter)
-            await player.give_gold(conn, gold_cost_info['total']*-1)
-            await Finances.log_transaction(
-                conn, player.disc_id, gold_cost_info['subtotal'], 
-                gold_cost_info['tax_amount'], gold_cost_info['tax_rate'])
+            print_tax = await purchase.log_transaction(conn, "purchase")
             await player.give_resource(conn, "iron", iron_cost*-1)
             await ctx.respond((
                 f"You upgraded your `{weapon.weapon_id}`: {weapon.name} "
-                f"{iter} {verb} for `{gold_cost_info['total']}` gold and "
+                f"{iter} {verb} for `{purchase.paying_price}` gold and "
                 f"`{iron_cost}` iron, increasing its ATK to "
-                f"`{weapon.attack}`! You paid `{gold_cost_info['tax_amount']}` "
-                f"in taxes."))
+                f"`{weapon.attack}`! {print_tax}"))
 
 def setup(bot):
     bot.add_cog(Travel(bot))
