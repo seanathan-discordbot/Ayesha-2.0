@@ -247,10 +247,6 @@ class Items(commands.Cog):
             await item_w.set_attack(conn, item_w.attack+1)
             await fodder_w.destroy(conn)
             print_tax = await purchase.log_transaction(conn, "purchase")
-            # await player.give_gold(conn, cost_info['total']*-1)
-            # await Finances.log_transaction(conn, player.disc_id, 
-            #     cost_info['subtotal'], cost_info['tax_amount'], 
-            #     cost_info['tax_rate'])
 
         await ctx.respond((
             f"You buffed your **{item_w.name}** to `{item_w.attack}` ATK.\n"

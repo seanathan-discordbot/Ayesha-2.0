@@ -1,4 +1,3 @@
-from os import name
 import discord
 from discord.commands.commands import Option, OptionChoice
 
