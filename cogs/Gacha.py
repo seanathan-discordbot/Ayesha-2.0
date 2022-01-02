@@ -23,6 +23,17 @@ class Gacha(commands.Cog):
             4 : "Epic",
             5 : "Legendary"
         }
+        self.armor_costs = {
+            "Cloth" : 2500,
+            "Wood" : 5000,
+            "Silk" : 8000,
+            "Leather" : 20000,
+            "Gambeson" : 25000,
+            "Bronze" : 50000,
+            "Ceramic Plate" : 70000,
+            "Chainmail" : 75000,
+            "Iron" : 100000
+        } # Be sure to change the OptionChoices in shop if changing this
 
         # Get a list of all acolytes sorted by rarity
         with open(Vars.ACOLYTE_LIST_PATH) as f:
@@ -146,6 +157,41 @@ class Gacha(commands.Cog):
             else:
                 await ctx.respond(embed=embed_list[0])
 
+    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_player)
+    async def shop(self, ctx,
+            armor : Option(str,
+                description="The type of armor you are buying",
+                choices=[OptionChoice(t) for t in Vars.ARMOR_DEFENSE]),
+            material : Option(str,
+                description="The material of the armor you want",
+                choices=[
+                    OptionChoice("Cloth Armor (2,500 gold)", "Cloth"),
+                    OptionChoice("Wooden Armor (5,000 gold)", "Wood"),
+                    OptionChoice("Silk Armor (8,000 gold)", "Silk"),
+                    OptionChoice("Leather Armor (20,000 gold)", "Leather"),
+                    OptionChoice("Gambeson Armor (25,000 gold)", "Gambeson"),
+                    OptionChoice("Bronze Armor (50,000 gold)", "Bronze"),
+                    OptionChoice("Ceramic Plate Armor (70,000 gold)", 
+                        "Ceramic Plate"),
+                    OptionChoice("Chainmail Armor (75,000 gold)", "Chainmail"),
+                    OptionChoice("Iron Armor (100,000 gold)", "Iron")])):
+        """Exchange your extra gold for some other stuff!"""
+        async with self.bot.db.acquire() as conn:
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+            purchase = await Transaction.calc_cost(
+                conn, player, self.armor_costs[material])
+
+            if purchase.paying_price > player.gold:
+                raise Checks.NotEnoughGold(purchase.paying_price, player.gold)
+
+            item = await ItemObject.create_armor(conn, player.disc_id, armor, material)
+            print_tax = await purchase.log_transaction(conn, "purchase")
+
+            await ctx.respond((
+                f"You purchased `{item.id}`: {item.name}. Use the `/equip` "
+                f"command to equip it!\n"
+                f"This purchase cost `{purchase.subtotal}` gold. {print_tax}"))
 
 
 def setup(bot):
