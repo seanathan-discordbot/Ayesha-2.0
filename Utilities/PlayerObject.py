@@ -421,6 +421,17 @@ class Player:
                 """
         return await conn.fetchrow(psql, self.disc_id)
 
+    async def set_pity_counter(self, conn : asyncpg.Connection, counter : int):
+        """Sets the player's pitycounter."""
+        self.pity_counter = counter
+
+        psql = """
+                UPDATE players
+                SET pitycounter = $1
+                WHERE user_id = $2;
+                """
+        await conn.execute(psql, counter, self.disc_id)
+
     async def set_location(self, conn : asyncpg.Connection, location : str):
         """Sets the player's location"""
         self.location = location

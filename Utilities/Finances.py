@@ -172,42 +172,42 @@ async def set_tax_rate(conn : asyncpg.Connection, tax_rate: float, setby: int):
     psql = """INSERT INTO tax_rates (tax_rate, setby) VALUES ($1, $2);"""
     await conn.execute(psql, tax_rate, setby)
 
-async def calc_cost_with_tax_rate(conn : asyncpg.Connection, 
-        subtotal : int, player_origin : str) -> dict:
-    """Returns a dict containing information about a transaction.
-    Dict Keys: subtotal, total, tax_rate, tax_amount
-    """
-    tax_rate = await get_tax_rate(conn)
-    if player_origin == 'Sunset':
-        tax_amount=int((subtotal*tax_rate/100)*0.95)
-    else:
-        tax_amount=int(subtotal*tax_rate/100)
-    return {
-        'subtotal' : subtotal,
-        'total' : subtotal + tax_amount,
-        'payout' : subtotal - tax_amount,
-        'tax_rate' : tax_rate,
-        'tax_amount' : tax_amount
-    }
+# async def calc_cost_with_tax_rate(conn : asyncpg.Connection, 
+#         subtotal : int, player_origin : str) -> dict:
+#     """Returns a dict containing information about a transaction.
+#     Dict Keys: subtotal, total, tax_rate, tax_amount
+#     """
+#     tax_rate = await get_tax_rate(conn)
+#     if player_origin == 'Sunset':
+#         tax_amount=int((subtotal*tax_rate/100)*0.95)
+#     else:
+#         tax_amount=int(subtotal*tax_rate/100)
+#     return {
+#         'subtotal' : subtotal,
+#         'total' : subtotal + tax_amount,
+#         'payout' : subtotal - tax_amount,
+#         'tax_rate' : tax_rate,
+#         'tax_amount' : tax_amount
+#     }
 
-async def log_transaction(conn : asyncpg.Connection, user_id : int, 
-        subtotal : int, tax_amount : int, tax_rate : float):
-    """Log a transaction that has been fulfilled."""
-    psql = """
-            INSERT INTO tax_transactions
-                (user_id, before_tax, tax_amount, tax_rate)
-            VALUES ($1, $2, $3, $4);
-            """
-    await conn.execute(psql, user_id, subtotal, tax_amount, tax_rate)
+# async def log_transaction(conn : asyncpg.Connection, user_id : int, 
+#         subtotal : int, tax_amount : int, tax_rate : float):
+#     """Log a transaction that has been fulfilled."""
+#     psql = """
+#             INSERT INTO tax_transactions
+#                 (user_id, before_tax, tax_amount, tax_rate)
+#             VALUES ($1, $2, $3, $4);
+#             """
+#     await conn.execute(psql, user_id, subtotal, tax_amount, tax_rate)
 
-def apply_sale_bonuses(gold : int, player : PlayerObject.Player) -> int:
-    """Adjusts the gold a player would receive in a sale based off any bonuses
-    such as guild, occupation, etc.
-    """
-    sale_bonus = 1
-    if player.occupation == "Merchant":
-        sale_bonus += .5
-    if player.assc.type == "Guild":
-        sale_bonus += .5 + (.1 * player.assc.get_level())
-    # TODO: Implement comptroller bonuses
-    return int(gold * sale_bonus)
+# def apply_sale_bonuses(gold : int, player : PlayerObject.Player) -> int:
+#     """Adjusts the gold a player would receive in a sale based off any bonuses
+#     such as guild, occupation, etc.
+#     """
+#     sale_bonus = 1
+#     if player.occupation == "Merchant":
+#         sale_bonus += .5
+#     if player.assc.type == "Guild":
+#         sale_bonus += .5 + (.1 * player.assc.get_level())
+#     # TODO: Implement comptroller bonuses
+#     return int(gold * sale_bonus)
