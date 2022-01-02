@@ -236,7 +236,7 @@ async def create_acolyte(conn : asyncpg.Connection, owner_id : int,
         return aco_obj
 
     else: # Then create a new acolyte and add it to their tavern
-        psql = """"
+        psql = """
                 WITH rows AS (
                     INSERT INTO acolytes (user_id, acolyte_name)
                     VALUES ($1, $2)

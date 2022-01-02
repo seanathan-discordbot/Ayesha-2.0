@@ -152,7 +152,7 @@ class Armor:
             self.type = record['armor_type']
             self.slot = record['armor_slot']
             self.owner_id = record['user_id']
-            self.name = f"{self.type} {self.type}"
+            self.name = f"{self.type} {self.slot}"
             self.defense = Vars.ARMOR_DEFENSE[self.slot][self.type]
         else:
             self.is_empty = True
