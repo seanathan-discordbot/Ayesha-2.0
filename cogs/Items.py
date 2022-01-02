@@ -73,6 +73,21 @@ class Items(commands.Cog):
             start += 1
         return embed
 
+    def create_armor_embed(self, start, inv):
+        embed = discord.Embed(title="Your Armory", color=Vars.ABLUE)
+
+        iteration = 0
+        while start < len(inv) and iteration < 5:
+            mat = inv[start]['armor_type']
+            slot = inv[start]['armor_slot']
+            embed.add_field(
+                name=f"{mat} {slot}: `{inv[start]['armor_id']}`",
+                value=f"**Defense:** {Vars.ARMOR_DEFENSE[slot][mat]}%",
+                inline=False)
+            iteration += 1
+            start += 1
+        
+        return embed
     
     # COMMANDS
     @commands.slash_command(guild_ids=[762118688567984151])
@@ -163,6 +178,67 @@ class Items(commands.Cog):
             embeds = [self.create_embed(i, inventory, got_eq) 
                 for i in range(0, len(inventory), 5)]
 
+            paginator = pages.Paginator(pages=embeds, timeout=30)
+            paginator.customize_button("next", button_label=">", 
+                button_style=discord.ButtonStyle.green)
+            paginator.customize_button("prev", button_label="<", 
+                button_style=discord.ButtonStyle.green)
+            paginator.customize_button("first", button_label="<<", 
+                button_style=discord.ButtonStyle.blurple)
+            paginator.customize_button("last", button_label=">>", 
+                button_style=discord.ButtonStyle.blurple)
+            await paginator.send(ctx, ephemeral=False)
+
+    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_player)
+    async def armory(self, ctx,
+        slot : Option(str,
+            description="Get only a specific armor slot",
+            required=False,
+            choices=[OptionChoice(s) for s in Vars.ARMOR_DEFENSE]),
+        material : Option(str,
+            description="Get only a specific armor material",
+            required=False,
+            choices=[OptionChoice(m) for m in Vars.ARMOR_DEFENSE["Boots"]])):
+        """Armories held both weapons and armor, but here only armor :P"""
+        await ctx.defer()
+        async with self.bot.db.acquire() as conn:
+            psql = f"""
+                    SELECT armor_id, armor_type, armor_slot
+                    FROM armor
+                    WHERE user_id = $1 
+                    """
+
+            if slot is not None and material is not None:
+                psql += """ 
+                        AND armor_type = $2 AND armor_slot = $3
+                        ORDER BY armor_id;
+                        """
+                armory = await conn.fetch(psql, ctx.author.id, material, slot)
+            elif slot is not None and material is None:
+                psql += """
+                        AND armor_slot = $2
+                        ORDER BY armor_id;
+                        """
+                armory = await conn.fetch(psql, ctx.author.id, slot)
+            elif slot is None and material is not None:
+                psql += """
+                        AND armor_type = $2
+                        ORDER BY armor_id;
+                        """
+                armory = await conn.fetch(psql, ctx.author.id, material)
+            else:
+                psql += " ORDER BY armor_id;"
+                armory = await conn.fetch(psql, ctx.author.id)
+
+        if len(armory) == 0:
+            return await ctx.respond("Your armory is empty!")
+
+        embeds = [self.create_armor_embed(i, armory) 
+            for i in range(0, len(armory), 5)]
+        if len(embeds) == 1:
+            await ctx.respond(embed=embeds[0])
+        else:
             paginator = pages.Paginator(pages=embeds, timeout=30)
             paginator.customize_button("next", button_label=">", 
                 button_style=discord.ButtonStyle.green)
