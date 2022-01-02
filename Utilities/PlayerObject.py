@@ -1,7 +1,6 @@
 import discord
 
 import asyncpg
-from discord import user
 
 from Utilities import Checks, ItemObject, Vars, AcolyteObject, AssociationObject
 from Utilities.ItemObject import Weapon
@@ -237,6 +236,57 @@ class Player:
 
         psql = """
                 UPDATE players SET equipped_item = NULL WHERE user_id = $1;
+                """
+        await conn.execute(psql, self.disc_id)
+
+    async def is_armor_owner(self, conn : asyncpg.Connection,
+        armor_id : int) -> bool:
+        """Returns true/false depending on whether the armor with the given
+        ID is this player's inventory.
+        """
+        psql = """
+                SELECT armor_id FROM armor
+                WHERE user_id = $1 and armor_id = $2;
+                """
+        return await conn.fetchval(psql, self.disc_id, armor_id) is not None
+
+    async def equip_armor(self, conn : asyncpg.Connection, armor_id : int):
+        """Equips armor to the player"""
+        if not await self.is_armor_owner(conn, armor_id):
+            raise Checks.NotArmorOwner
+
+        armor = await ItemObject.get_armor_by_id(conn, armor_id)
+        if armor.slot == "Helmet":
+            self.helmet = armor
+            psql = """
+                    UPDATE equips
+                    SET helmet = $1
+                    WHERE user_id = $2;
+                    """
+        elif armor.slot == "Bodypiece":
+            self.bodypiece = armor
+            psql = """
+                    UPDATE equips
+                    SET bodypiece = $1
+                    WHERE user_id = $2;
+                    """
+        elif armor.slot == "Boots":
+            self.boots = armor
+            psql = """
+                    UPDATE equips
+                    SET boots = $1
+                    WHERE user_id = $2;
+                    """
+        else:
+            raise Checks.InvalidArmorType
+        await conn.execute(psql, armor.id, self.disc_id)
+
+    async def unequip_armor(self, conn : asyncpg.Connection):
+        """Unequips all armor the player is currently wearing."""
+        psql = """
+                UPDATE equips 
+                SET helmet, bodypiece, boots = NULL
+                WHERE user_id = $1;
                 """
         await conn.execute(psql, self.disc_id)
 
