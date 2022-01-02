@@ -251,7 +251,7 @@ class Player:
         return await conn.fetchval(psql, self.disc_id, armor_id) is not None
 
     async def equip_armor(self, conn : asyncpg.Connection, armor_id : int):
-        """Equips armor to the player"""
+        """Equips armor to the player. Returns the Armor object."""
         if not await self.is_armor_owner(conn, armor_id):
             raise Checks.NotArmorOwner
 
@@ -280,12 +280,13 @@ class Player:
         else:
             raise Checks.InvalidArmorType
         await conn.execute(psql, armor.id, self.disc_id)
+        return armor
 
     async def unequip_armor(self, conn : asyncpg.Connection):
         """Unequips all armor the player is currently wearing."""
         psql = """
                 UPDATE equips 
-                SET helmet, bodypiece, boots = NULL
+                SET helmet = NULL, bodypiece = NULL, boots = NULL
                 WHERE user_id = $1;
                 """
         await conn.execute(psql, self.disc_id)
