@@ -35,6 +35,9 @@ class NotWeaponOwner(Exception):
 class InvalidWeaponType(Exception):
     pass
 
+class NotArmorOwner(Exception):
+    pass
+
 class InvalidArmorType(Exception):
     pass
 
