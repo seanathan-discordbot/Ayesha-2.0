@@ -1,9 +1,13 @@
 import discord
 from discord.commands.commands import Option, OptionChoice
 
-from discord.ext import commands
+from discord.ext import commands, pages
 
-from Utilities import Checks, Vars, PlayerObject
+import asyncpg
+import json
+import random
+
+from Utilities import Checks, Vars, PlayerObject, AcolyteObject, ItemObject
 from Utilities.Finances import Transaction
 
 class Gacha(commands.Cog):
@@ -11,11 +15,53 @@ class Gacha(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.rarities = None
+        self.int_rar_to_str = {
+            1 : "Common",
+            2 : "Uncommon",
+            3 : "Rare",
+            4 : "Epic",
+            5 : "Legendary"
+        }
+
+        # Get a list of all acolytes sorted by rarity
+        with open(Vars.ACOLYTE_LIST_PATH) as f:
+            acolyte_list = json.load(f)
+            self.rarities = {i:[] for i in range(1,6)}
+            for acolyte in acolyte_list:
+                self.rarities[acolyte_list[acolyte]['Rarity']].append(acolyte)
 
     # EVENTS
     @commands.Cog.listener()
     async def on_ready(self):
         print("Gacha is ready.")
+
+    # INVISIBLE
+    async def roll_acolyte(self, conn : asyncpg.Connection, 
+            player : PlayerObject.Player, 
+            rarity : int) -> discord.Embed:
+        """Creates a random acolyte of the specified rarity.
+        Returns an embed listing the acolyte's information.
+        """
+        acolyte_name = random.choice(self.rarities[rarity])
+        acolyte =  await AcolyteObject.create_acolyte(
+            conn, player.disc_id, acolyte_name)
+
+        embed=discord.Embed(
+            title=(
+                f"{acolyte.acolyte_name} ({acolyte.gen_dict['Rarity']}) has "
+                f"entered the tavern!"),
+            color=Vars.ABLUE)
+        embed.set_thumbnail(url=acolyte.gen_dict['Image'])
+        embed.add_field(name="Attack",
+            value=f"{acolyte.gen_dict['Attack']} + {acolyte.gen_dict['Scale']}")
+        embed.add_field(name="Crit", value = acolyte.gen_dict['Crit'])
+        embed.add_field(name="HP", value=acolyte.gen_dict['HP'])
+        embed.add_field(name="Effect",
+            value=(
+                f"{acolyte.gen_dict['Effect']}\n {acolyte.acolyte_name} uses `"
+                f"{acolyte.gen_dict['Mat']}` to level up."))
+        return embed
 
     # COMMANDS
     @commands.slash_command(guild_ids=[762118688567984151])
@@ -33,8 +79,73 @@ class Gacha(commands.Cog):
             if player.rubidics < pulls:
                 raise Checks.NotEnoughResources("rubidics", 
                     pulls, player.rubidics)
-            
-            await ctx.respond(f"You have {player.rubidics} and are at {player.pity_counter} pulls.")
+
+            # This essentially calculates the results (type and rarity)
+            r_types = random.choices(
+                population=["weapon", "acolyte"],
+                weights=[75, 25],
+                k=pulls)
+            r_rarities = random.choices(
+                population=range(1,6),
+                weights=[1, 60, 35, 3, 1],
+                k=pulls)
+
+            # Simulate the pulls by creating new objects
+            embed_list = []
+            for i in range(pulls):
+                if player.pity_counter >= 79:
+                    # Give 5 star acolyte
+                    embed_list.append(await self.roll_acolyte(conn, player, 5))
+                    player.pity_counter = 0
+                    continue
+
+                # Create a random new weapon or acolyte
+                # Write an embed for this and add it to the list
+                if r_types[i] == "acolyte":
+                    embed_list.append(await self.roll_acolyte(
+                        conn, player, r_rarities[i]))
+
+                else:
+                    weapon = await ItemObject.create_weapon(
+                        conn=conn,
+                        user_id=player.disc_id,
+                        rarity=self.int_rar_to_str[r_rarities[i]])
+
+                    embed=discord.Embed(
+                        title=f"You received {weapon.name} ({weapon.rarity})",
+                        color=Vars.ABLUE)
+                    embed.add_field(name="Type", value=weapon.type)
+                    embed.add_field(name="Attack", value=weapon.attack)
+                    embed.add_field(name="Crit", value=weapon.crit)
+                    embed_list.append(embed)
+
+                player.pity_counter += 1 # Temp change, not stored in db
+
+            for embed in embed_list:
+                embed.set_footer(text=(
+                    f"You have {player.rubidics-pulls} rubidics. You will "
+                    f"receive a 5-star acolyte in {80-player.pity_counter} "
+                    f"summons."))
+
+            # Update player's rubidics and pity counter
+            await player.give_rubidics(conn, pulls*-1)
+            await player.set_pity_counter(conn, player.pity_counter)
+
+            # Paginate embeds if pulls > 1 and print them
+            if len(embed_list) > 1:
+                paginator = pages.Paginator(pages=embed_list, timeout=30)
+                paginator.customize_button("next", button_label=">", 
+                    button_style=discord.ButtonStyle.green)
+                paginator.customize_button("prev", button_label="<", 
+                    button_style=discord.ButtonStyle.green)
+                paginator.customize_button("first", button_label="<<", 
+                    button_style=discord.ButtonStyle.blurple)
+                paginator.customize_button("last", button_label=">>", 
+                    button_style=discord.ButtonStyle.blurple)
+                await paginator.send(ctx, ephemeral=False)
+            else:
+                await ctx.respond(embed=embed_list[0])
+
 
 
 def setup(bot):
