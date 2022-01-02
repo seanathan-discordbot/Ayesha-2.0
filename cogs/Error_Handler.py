@@ -113,6 +113,11 @@ class Error_Handler(commands.Cog):
                 await ctx.respond(message)
                 print_traceback = False
 
+            if isinstance(error.original, Checks.NotArmorOwner):
+                message = f"You do not own the armor with this ID."
+                await ctx.respond(message)
+                print_traceback = False
+
         # --- ARGUMENT ERRORS ---
         if isinstance(error, Checks.ExcessiveCharacterCount):
             message = (f"Your response exceeded the character limit.\nPlease "

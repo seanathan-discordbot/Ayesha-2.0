@@ -1,4 +1,3 @@
-from os import name
 import discord
 from discord.commands.commands import Option, OptionChoice
 
@@ -236,7 +235,7 @@ class Travel(commands.Cog):
                         f"Your campaign increased your gravitas by "
                         f"`{gravitas}`.\n")
                 else:
-                    gravitas = player.gravitas * gravitas_decay * -1
+                    gravitas = int(player.gravitas * gravitas_decay * -1)
                     e_name = "You returned from your expedition"
                     e_message += (
                         f"Your gravitas decreased by `{gravitas*-1}` while "
