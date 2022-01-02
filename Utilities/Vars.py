@@ -211,66 +211,110 @@ MATERIALS = ["Fur", "Bone", "Iron", "Silver", "Wood", "Wheat", "Oat", "Reeds",
 
 OCCUPATIONS = {
     'Soldier' : {
+        'Name' : 'Soldier',
+        'Desc' : 'You are a retainer of your local lord, trained in the discipline of swordsmanship.',
+        'Passive' : '10% bonus to character ATK; +1 gravitas/day',
+        'Command' : 'Deal 50% more damage when doing `raid attack`',
         'atk_bonus' : 0,
         'crit_bonus' : 0,
         'hp_bonus' : 0,
         'weapon_bonus' : ("Spear", "Sword")
     },
     'Blacksmith' : {
+        'Name' : 'Blacksmith',
+        'Desc' : 'You\'ve spent years as the apprentice of a hardy blacksmith, and now a master in the art of forging.',
+        'Passive' : 'Gain double gold and resources from `mine`, and pay half cost from `upgrade`.',
+        'Command' : 'Exclusive access to the `smith` command. Do `help smith` for more info.',
         'atk_bonus' : 0,
         'crit_bonus' : 0,
         'hp_bonus' : 0,
         'weapon_bonus' : ("Greatsword", "Gauntlets")
     },
     'Farmer' : {
+        'Name' : 'Farmer',
+        'Desc' : 'You are a lowly farmer, but farming is no easy job.',
+        'Passive' : '+4 gravitas/day',
+        'Command' : 'Exclusive access to the `farm` command. Do `help farm` for more info.',
         'atk_bonus' : 0,
         'crit_bonus' : 0,
         'hp_bonus' : 0,
         'weapon_bonus' : ("Sling", "Falx")
     },
     'Hunter' : {
+        'Name' : 'Hunter',
+        'Desc' : 'The wild is your domain; no game is unconquerable.',
+        'Passive' : 'Gain double gold and resources from `hunt`.',
+        'Command' : 'Exclusive access to the `pet` command. Do `help pet` for more info.',
         'atk_bonus' : 0,
         'crit_bonus' : 0,
         'hp_bonus' : 0,
         'weapon_bonus' : ("Bow", "Javelin")
     },
     'Merchant' : {
+        'Name' : 'Merchant',
+        'Desc' : 'Screw you, exploiter of others\' labor.',
+        'Passive' : 'Gain 50% increased gold from the `sell` and `shop sell` command.',
+        'Command' : 'Guaranteed item upon defeating a boss in `bounty`.',
         'atk_bonus' : 0,
         'crit_bonus' : 0,
         'hp_bonus' : 0,
         'weapon_bonus' : ("Dagger", "Mace")
     },
     'Traveler' : {
+        'Name' : 'Traveler',
+        'Desc' : 'The wild forests north await, as do the raging seas to the south. What will you discover?',
+        'Passive' : 'Gain triple gold from the `travel` command and double materials from the `forage` command.',
+        'Command' : '50% chance to gain an acolyte from expeditions lasting longer than 72 hours.',
         'atk_bonus' : 0,
         'crit_bonus' : 0,
         'hp_bonus' : 0,
         'weapon_bonus' : ("Staff", "Javelin")
     },
     'Leatherworker' : {
+        'Name' : 'Leatherworker',
+        'Desc' : 'The finest protective gear, saddles, and equipment have your name on it.',
+        'Passive' : '250 more HP',
+        'Command' : 'Take 15% less damage from every hit in `bounty` battles.',
         'atk_bonus' : 0,
         'crit_bonus' : 0,
         'hp_bonus' : 250,
         'weapon_bonus' : ("Mace", "Axe")
     },
     'Butcher' : {
+        'Name' : 'Butcher',
+        'Desc' : 'Meat. What would one do without it?',
+        'Passive' : '100% increased healing effectiveness in `battle` and `bounty`.',
+        'Command' : 'Exclusive access to the `butchery` command. Do `help butchery` for more info.',
         'atk_bonus' : 0,
         'crit_bonus' : 0,
         'hp_bonus' : 0,
         'weapon_bonus' : ("Axe", "Dagger")
     },
     'Engineer' : {
+        'Name' : 'Engineer',
+        'Desc' : 'Your lord praises the seemingly impossible design of his new manor.',
+        'Passive' : 'Gain increased rewards from the special commands of whatever association you are in: `bh steal`, `guild invest`, or `cl usurp`.',
+        'Command' : 'Critical hits in `battle` and `bounty` deal 1.75x damage instead of 1.5x',
         'atk_bonus' : 0,
         'crit_bonus' : 0,
         'hp_bonus' : 0,
         'weapon_bonus' : ("Trebuchet", "Falx")
     },
     'Scribe' : {
+        'Name' : 'Scribe',
+        'Desc' : 'Despite the might of your lord, you have learned quite a bit about everything, too.',
+        'Passive' : '+10 Crit; +1 gravitas daily',
+        'Command' : 'Exclusive access to the `scriptorium` command. Do `help scriptorium` for more info.',
         'atk_bonus' : 0,
         'crit_bonus' : 10,
         'hp_bonus' : 0,
         'weapon_bonus' : ("Sword", "Dagger")
     },
     None : {
+        'Name' : None,
+        'Desc' : None,
+        'Passive' : None,
+        'Command' : None,
         'atk_bonus' : 0,
         'crit_bonus' : 0,
         'hp_bonus' : 0,
@@ -280,46 +324,73 @@ OCCUPATIONS = {
 
 ORIGINS = {
     'Aramithea' : {
+        'Name' : 'Aramithea',
+        'Desc' : 'You\'re a metropolitan. Aramithea, the largest city on Rabidus, must have at least a million people, and a niche for everybody.',
+        'Passive' : '+5 gravitas/day',
         'atk_bonus' : 0,
         'crit_bonus' : 0,
         'hp_bonus' : 0
     },
     'Riverburn' : {
+        'Name' : 'Riverburn',
+        'Desc' : 'The great rival of Aramithea; Will you bring your city to become the center of the kingdom?',
+        'Passive' : '+5 ATK, +3 gravitas/day',
         'atk_bonus' : 5,
         'crit_bonus' : 0,
         'hp_bonus' : 0
     },
     'Thenuille' : {
+        'Name' : 'Thenuille',
+        'Desc' : 'You love the sea; you love exploration; you love trade. From here one can go anywhere, and be anything.',
+        'Passive' : '+25 HP, +3 gravitas/day',
         'atk_bonus' : 0,
         'crit_bonus' : 0,
         'hp_bonus' : 25
     },
     'Mythic Forest' : {
+        'Name' : 'Mythic Forest',
+        'Desc' : 'You come from the lands down south, covered in forest. You could probably hit a deer square between the eyes blindfolded.',
+        'Passive' : '+2 Crit, +1 gravitas/day',
         'atk_bonus' : 0,
         'crit_bonus' : 2,
         'hp_bonus' : 0
     },
     'Sunset' : {
+        'Name' : 'Sunset',
+        'Desc' : 'Nothing is more peaceful than an autumn afternoon in the prairie.',
+        'Passive' : 'Pay 5% less in taxes.',
         'atk_bonus' : 0,
         'crit_bonus' : 0,
         'hp_bonus' : 0
     },
     'Lunaris' : {
+        'Name' : 'Lunaris',
+        'Desc' : 'The crossroads of civilization; the battleground of those from the north, west, and east. Your times here have hardened you.',
+        'Passive' : '+50 HP, +1 gravitas/day',
         'atk_bonus' : 0,
         'crit_bonus' : 0,
         'hp_bonus' : 50
     },
     'Crumidia' : {
+        'Name' : 'Crumidia',
+        'Desc' : 'The foothills have turned you into a strong warrior. Perhaps you will seek domination over your adversaries?',
+        'Passive' : '+10 ATK, +1 gravitas/day',
         'atk_bonus' : 10,
         'crit_bonus' : 0,
         'hp_bonus' : 0
     },
     'Maritimiala' : {
+        'Name' : 'Maritimiala',
+        'Desc' : 'North of the mountains, the Maritimialan tribes look lustfully upon the fertile plains below. Will you seek integration, or domination?',
+        'Passive' : '+4 Crit',
         'atk_bonus' : 0,
         'crit_bonus' : 4,
         'hp_bonus' : 0
     },
     'Glakelys' : {
+        'Name' : 'Glakelys',
+        'Desc' : 'The small towns beyond Riverburn disregard the Aramithean elite. The first line of defense from invasions from Lunaris, the Glakelys are as tribal as they were 300 years ago.',
+        'Passive' : '+5 ATK, +25 HP',
         'atk_bonus' : 5,
         'crit_bonus' : 0,
         'hp_bonus' : 25
