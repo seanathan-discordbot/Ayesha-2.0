@@ -176,24 +176,38 @@ class Items(commands.Cog):
 
     @commands.slash_command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
-    async def equip(self, ctx, item : Option(int, 
-            description="The ID of the item you want to equip.",
-            required=False)):
-        """Equip an item using its ID (get from /inventory)"""
-        await ctx.defer()
-
+    async def equip(self, ctx, 
+            equip : Option(str,
+                description="Equip either a weapon or armor",
+                choices=[
+                    OptionChoice("Equip a Weapon"), 
+                    OptionChoice("Equip Armor")]),
+            id : Option(int, 
+                description="The ID of the item you want to equip.",
+                required=False)):
+        """Equip an item using its ID (get from /inventory if weapon, /armory if armor)"""
         async with self.bot.db.acquire() as conn:
             player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
-            if item:
-                await player.equip_item(conn, item)
+
+            if equip == "Equip a Weapon" and id is not None:
+                await player.equip_item(conn, id)
                 await ctx.respond((
-                    f"Equipped item {player.equipped_item.weapon_id}: "
+                    f"Equipped item `{player.equipped_item.weapon_id}`: "
                     f"{player.equipped_item.name} (ATK: "
                     f"{player.equipped_item.attack}, CRIT: "
                     f"{player.equipped_item.crit})"))
-            else: # Unequip current item
+            elif equip == "Equip Armor" and id is not None:
+                armor = await player.equip_armor(conn, id)
+                await ctx.respond((
+                    f"Equipped armor `{armor.id}`: {armor.name} "
+                    f"(DEF: `{armor.defense}%`)"))
+
+            elif equip == "Equip a Weapon" and id is None:
                 await player.unequip_item(conn)
                 await ctx.respond("Unequipped your item.")
+            else:
+                await player.unequip_armor(conn)
+                await ctx.respond("Unequipped all your armor.")
 
     @commands.slash_command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
