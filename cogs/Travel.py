@@ -3,17 +3,27 @@ from discord.commands.commands import Option, OptionChoice
 
 from discord.ext import commands
 
+import json
 import random
 import time
 
-from Utilities import Checks, PlayerObject, ItemObject, Vars
+from Utilities import AcolyteObject, Checks, PlayerObject, ItemObject, Vars
 from Utilities.Finances import Transaction
 
 class Travel(commands.Cog):
-    """View and manipulate your inventory"""
+    """Go on an adventure!"""
 
     def __init__(self, bot):
         self.bot = bot
+        self.rarities = None
+
+        # Get a list of all acolytes sorted by rarity - same code as in Gacha
+        with open(Vars.ACOLYTE_LIST_PATH) as f:
+            acolyte_list = json.load(f)
+            self.rarities = {i:[] for i in range(1,6)}
+            for acolyte in acolyte_list:
+                self.rarities[acolyte_list[acolyte]['Rarity']].append(acolyte)
+
 
     # EVENTS
     @commands.Cog.listener()
@@ -137,6 +147,7 @@ class Travel(commands.Cog):
                     f"will arrive there in `{diff}.`")
                 await ctx.respond(message)
 
+            # TRAVEL TYPE ADV IS OVER
             elif not a and b and not c: # End the adventure - give rewards
                 # Calculate what to give
                 length = Vars.TRAVEL_LOCATIONS[player.location]\
@@ -173,7 +184,7 @@ class Travel(commands.Cog):
                 await player.set_location(conn, player.destination)
                 await player.set_adventure(conn, None, None)
                 
-
+            # EXPEDITION TYPE ADV IS OVER
             else: # End the expedition, nothing really matters for this one
                 # Calculate what to give
                 elapsed = int(time.time() - player.adventure)
@@ -256,7 +267,16 @@ class Travel(commands.Cog):
                         resource = "cacao"
 
                 e_message += f"You gained `{mats}` {resource}.\n"
-                # TODO: Implement Traveler getting acolyte bonus
+                # Traveler 50% chance to get acolyte on long expeditions
+                right_occ = player.occupation == "Traveler"
+                if right_occ and hours >= 72 and random.randint(1,2) == 1:
+                    rarity = random.choices(range(1,6), (1, 60, 35, 3, 1))[0]
+                    name = random.choice(self.rarities[rarity])
+                    acolyte = await AcolyteObject.create_acolyte(
+                        conn, player.disc_id, name)
+                    e_message += (
+                        f"During your expedition you befriended a new acolyte: "
+                        f"{acolyte.acolyte_name} ({rarity}⭐)")
                 await player.give_resource(conn, resource, mats)
                 await player.give_gravitas(conn, gravitas)
                 await player.set_adventure(conn, None, None)
