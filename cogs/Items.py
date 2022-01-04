@@ -295,8 +295,6 @@ class Items(commands.Cog):
         if item == fodder:
             return await ctx.respond("You cannot merge an item with itself.")
         
-        await ctx.defer() # I hate how I have to use this a lot
-        
         async with self.bot.db.acquire() as conn:
             player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
 
@@ -334,7 +332,11 @@ class Items(commands.Cog):
                     f"`{player.gold}` gold."))
             
             # Perform the merge
-            await item_w.set_attack(conn, item_w.attack+1)
+            if player.occupation == "Blacksmith":
+                new_atk = item_w.attack + 2
+            else:
+                new_atk = item_w.attack + 1
+            await item_w.set_attack(conn, new_atk)
             await fodder_w.destroy(conn)
             print_tax = await purchase.log_transaction(conn, "purchase")
 
