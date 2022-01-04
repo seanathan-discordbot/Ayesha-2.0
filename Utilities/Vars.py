@@ -225,7 +225,7 @@ OCCUPATIONS = {
         'Name' : 'Blacksmith',
         'Desc' : 'You\'ve spent years as the apprentice of a hardy blacksmith, and now a master in the art of forging.',
         'Passive' : 'Gain double gold and resources from `mine`, and pay half cost from `upgrade`.',
-        'Command' : 'Exclusive access to the `smith` command. Do `help smith` for more info.',
+        'Command' : '`/merge` will increase weapon ATK by 2 instead of 1.',
         'atk_bonus' : 0,
         'crit_bonus' : 0,
         'hp_bonus' : 0,
