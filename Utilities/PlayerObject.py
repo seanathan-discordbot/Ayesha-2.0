@@ -483,6 +483,19 @@ class Player:
                 """
         await conn.execute(psql, counter, self.disc_id)
 
+    async def set_occupation(self, conn : asyncpg.Connection, occupation : str):
+        """Sets the player's occupation."""
+        if occupation not in Vars.OCCUPATIONS:
+            raise Checks.InvalidOccupation(occupation)
+
+        self.occupation = occupation
+        psql = """
+                UPDATE players
+                SET occupation = $1
+                WHERE user_id = $2;
+                """
+        await conn.execute(psql, occupation, self.disc_id)
+
     async def set_location(self, conn : asyncpg.Connection, location : str):
         """Sets the player's location"""
         self.location = location

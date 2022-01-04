@@ -90,6 +90,10 @@ class NotEnoughResources(Exception):
 class InvalidTransactionType(Exception):
     pass
 
+class InvalidOccupation(Exception):
+    def __init__(self, occupation : str):
+        self.occupation = occupation
+
 # --- NOW FOR THE ACTUAL CHECKS :) ---
 
 async def not_player(ctx):
