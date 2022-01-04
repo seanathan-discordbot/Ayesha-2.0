@@ -269,7 +269,9 @@ class Travel(commands.Cog):
                 e_message += f"You gained `{mats}` {resource}.\n"
                 # Traveler 50% chance to get acolyte on long expeditions
                 right_occ = player.occupation == "Traveler"
-                if right_occ and hours >= 72 and random.randint(1,2) == 1:
+                a = hours >= 72 and random.randint(1, 2) == 1
+                b = hours >= 144 and random.randint(1, 2) == 1
+                if right_occ and (a or b):
                     rarity = random.choices(range(1,6), (1, 60, 35, 3, 1))[0]
                     name = random.choice(self.rarities[rarity])
                     acolyte = await AcolyteObject.create_acolyte(
