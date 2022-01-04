@@ -56,7 +56,8 @@ class Ayesha(commands.AutoShardedBot):
             "cogs.Error_Handler",
             "cogs.Items",
             "cogs.Travel",
-            "cogs.Gacha"
+            "cogs.Gacha",
+            "cogs.Occupations"
         )
 
         for cog in self.init_cogs:
