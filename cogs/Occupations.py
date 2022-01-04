@@ -18,7 +18,7 @@ class OccupationMenu(discord.ui.Select):
         embed = discord.Embed(title=occ['Name'], description=occ['Desc'], 
             color=Vars.ABLUE)
         embed.add_field(name="Passive Effect", value=occ['Passive'])
-        embed.add_field(name="Exclusive/Empowered Command", 
+        embed.add_field(name="Empowered Command", 
             value=occ['Command'])
         embed.add_field(
             name=(

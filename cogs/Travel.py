@@ -226,6 +226,11 @@ class Travel(commands.Cog):
                     mats = int(hours * 30)
                     gravitas = int(hours / 2)
                     gravitas_decay = .25
+                
+                # Farmer gets reduced loss or bonus on expedition
+                if player.occupation == "Farmer":
+                    gravitas = int(gravitas * 1.2)
+                    gravitas_decay *= 1/2
 
                 # Create the embed to send
                 embed = discord.Embed(title="Expedition Complete!", 
