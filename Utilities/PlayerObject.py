@@ -496,6 +496,19 @@ class Player:
                 """
         await conn.execute(psql, occupation, self.disc_id)
 
+    async def set_origin(self, conn : asyncpg.Connection, origin : str):
+        """Sets the player's origin"""
+        if origin not in Vars.ORIGINS:
+            raise Checks.InvalidOrigin
+
+        self.origin = origin
+        psql = """
+                UPDATE players
+                SET origin = $1
+                WHERE user_id = $2;
+                """
+        await conn.execute(psql, origin, self.disc_id)
+
     async def set_location(self, conn : asyncpg.Connection, location : str):
         """Sets the player's location"""
         self.location = location
