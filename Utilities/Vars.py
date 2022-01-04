@@ -274,21 +274,21 @@ OCCUPATIONS = {
     'Leatherworker' : {
         'Name' : 'Leatherworker',
         'Desc' : 'The finest protective gear, saddles, and equipment have your name on it.',
-        'Passive' : '250 more HP',
-        'Command' : 'Take 15% less damage from every hit in `bounty` battles.',
+        'Passive' : 'Increases DEF by 3% on each piece of equipped armor.',
+        'Command' : 'Take 15% less damage from every hit in PvE battles.',
         'atk_bonus' : 0,
         'crit_bonus' : 0,
-        'hp_bonus' : 250,
+        'hp_bonus' : 0,
         'weapon_bonus' : ("Mace", "Axe")
     },
     'Butcher' : {
         'Name' : 'Butcher',
         'Desc' : 'Meat. What would one do without it?',
-        'Passive' : '100% increased healing effectiveness in `battle` and `bounty`.',
-        'Command' : 'Exclusive access to the `butchery` command. Do `help butchery` for more info.',
+        'Passive' : 'Gain 250 HP.',
+        'Command' : '100% heal bonus in PvE.',
         'atk_bonus' : 0,
         'crit_bonus' : 0,
-        'hp_bonus' : 0,
+        'hp_bonus' : 250,
         'weapon_bonus' : ("Axe", "Dagger")
     },
     'Engineer' : {

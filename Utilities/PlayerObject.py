@@ -593,8 +593,16 @@ class Player:
     def get_defense(self) -> int:
         """Returns the player's DEF stat, calculated from all other sources.
         The value returned by this method is 'the final say` on the stat.
-        """   
-        return self.helmet.defense + self.bodypiece.defense + self.boots.defense
+        """
+        base = self.helmet.defense + self.bodypiece.defense + self.boots.defense
+        if self.occupation == "Leatherworker":
+            if not self.helmet.is_empty:
+                base += 3
+            if not self.bodypiece.is_empty:
+                base += 3
+            if not self.boots.is_empty:
+                base += 3
+        return base
 
 
 async def get_player_by_id(conn : asyncpg.Connection, user_id : int) -> Player:
