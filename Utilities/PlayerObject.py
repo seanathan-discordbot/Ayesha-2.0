@@ -483,6 +483,32 @@ class Player:
                 """
         await conn.execute(psql, counter, self.disc_id)
 
+    async def set_occupation(self, conn : asyncpg.Connection, occupation : str):
+        """Sets the player's occupation."""
+        if occupation not in Vars.OCCUPATIONS:
+            raise Checks.InvalidOccupation(occupation)
+
+        self.occupation = occupation
+        psql = """
+                UPDATE players
+                SET occupation = $1
+                WHERE user_id = $2;
+                """
+        await conn.execute(psql, occupation, self.disc_id)
+
+    async def set_origin(self, conn : asyncpg.Connection, origin : str):
+        """Sets the player's origin"""
+        if origin not in Vars.ORIGINS:
+            raise Checks.InvalidOrigin
+
+        self.origin = origin
+        psql = """
+                UPDATE players
+                SET origin = $1
+                WHERE user_id = $2;
+                """
+        await conn.execute(psql, origin, self.disc_id)
+
     async def set_location(self, conn : asyncpg.Connection, location : str):
         """Sets the player's location"""
         self.location = location
@@ -567,8 +593,16 @@ class Player:
     def get_defense(self) -> int:
         """Returns the player's DEF stat, calculated from all other sources.
         The value returned by this method is 'the final say` on the stat.
-        """   
-        return self.helmet.defense + self.bodypiece.defense + self.boots.defense
+        """
+        base = self.helmet.defense + self.bodypiece.defense + self.boots.defense
+        if self.occupation == "Leatherworker":
+            if not self.helmet.is_empty:
+                base += 3
+            if not self.bodypiece.is_empty:
+                base += 3
+            if not self.boots.is_empty:
+                base += 3
+        return base
 
 
 async def get_player_by_id(conn : asyncpg.Connection, user_id : int) -> Player:

@@ -202,13 +202,9 @@ class Profile(commands.Cog):
 
         async with self.bot.db.acquire() as conn:
             # Load information
-            print("Loading profile.")
             profile = await PlayerObject.get_player_by_id(conn, player.id)
-            print("Calculating level")
             level, dist = profile.get_level(get_next=True)
-            print("Getting resources")
             pack = await profile.get_backpack(conn)
-            print("Getting ranks")
             gold_rank = Analytics.stringify_rank(
                 await Analytics.get_gold_rank(conn, player.id))
             gravitas_rank = Analytics.stringify_rank(
@@ -221,7 +217,6 @@ class Profile(commands.Cog):
                 await Analytics.get_pvpwins_rank(conn, player.id))
             
             # Create pages
-            print("Creating embeds")
             page1 = discord.Embed(            
                 title=f"Character Information: {profile.char_name}",
                 color=Vars.ABLUE
@@ -339,7 +334,6 @@ class Profile(commands.Cog):
                 embeds = [page1, page2, page3, page4]
 
         # Output pages
-        print("Paginating")
         paginator = pages.Paginator(pages=embeds, timeout=30)
         paginator.customize_button("next", button_label=">", 
             button_style=discord.ButtonStyle.green)

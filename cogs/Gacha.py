@@ -11,7 +11,7 @@ from Utilities import Checks, Vars, PlayerObject, AcolyteObject, ItemObject
 from Utilities.Finances import Transaction
 
 class Gacha(commands.Cog):
-    """View and manipulate your inventory"""
+    """Spend rubidics and gold for random items"""
 
     def __init__(self, bot):
         self.bot = bot
@@ -60,7 +60,7 @@ class Gacha(commands.Cog):
 
         embed=discord.Embed(
             title=(
-                f"{acolyte.acolyte_name} ({acolyte.gen_dict['Rarity']}) has "
+                f"{acolyte.acolyte_name} ({acolyte.gen_dict['Rarity']}⭐) has "
                 f"entered the tavern!"),
             color=Vars.ABLUE)
         embed.set_thumbnail(url=acolyte.gen_dict['Image'])
@@ -144,7 +144,7 @@ class Gacha(commands.Cog):
 
             # Paginate embeds if pulls > 1 and print them
             if len(embed_list) > 1:
-                paginator = pages.Paginator(pages=embed_list, timeout=30)
+                paginator = pages.Paginator(pages=embed_list, timeout=60)
                 paginator.customize_button("next", button_label=">", 
                     button_style=discord.ButtonStyle.green)
                 paginator.customize_button("prev", button_label="<", 

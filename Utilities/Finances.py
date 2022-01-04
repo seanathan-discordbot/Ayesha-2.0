@@ -63,6 +63,8 @@ class Transaction:
         multiplier = 1
         if player.origin == "Sunset":
             multiplier -= .05
+        if player.occupation == "Scribe":
+            multiplier -= .15
         if player.gravitas >= 200:
             multiplier -= .05
         elif player.gravitas >= 500:
