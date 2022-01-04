@@ -29,6 +29,22 @@ class OccupationMenu(discord.ui.Select):
             
         await interaction.response.edit_message(embed=embed)
 
+class OriginMenu(discord.ui.Select):
+    def __init__(self):
+        # Exclude last entry; its the empty origin
+        options = [discord.SelectOption(label=o) for o in Vars.ORIGINS][:-1]
+        super().__init__(placeholder="Pick something!", options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        ori = Vars.ORIGINS[self.values[0]]
+        embed = discord.Embed(
+            title=ori['Name'], 
+            description=(
+                f"{ori['Desc']}\n\n"
+                f"**Passive Effect:** {ori['Passive']}"))
+        await interaction.response.edit_message(embed=embed)
+
+
 class Occupations(commands.Cog):
     """Customize your character!"""
 
@@ -65,20 +81,41 @@ class Occupations(commands.Cog):
                 try:
                     occ = menu.values[0]
                 except IndexError: # pressed confirm on home page
-                    return await ctx.respond("Don't confirm the landing page.")
-
-                async with self.bot.db.acquire() as conn:
-                    player = await PlayerObject.get_player_by_id(
-                        conn, ctx.author.id)
-                    await player.set_occupation(conn, occ)
-                    await ctx.respond(f"You are now a **{occ}**!")
+                    await ctx.respond("Don't confirm the landing page.")
+                else:
+                    async with self.bot.db.acquire() as conn:
+                        player = await PlayerObject.get_player_by_id(
+                            conn, ctx.author.id)
+                        await player.set_occupation(conn, occ)
+                        await ctx.respond(f"You are now a **{occ}**!")
             else:
                 await ctx.respond("You decided not to change your occupation.")
             await msg.delete_original_message()
 
         else:
-            hi = [o for o in Vars.OCCUPATIONS]
-            await ctx.respond(hi)
+            view = ConfirmationMenu()
+            menu = OriginMenu()
+            view.add_item(menu)
+            embed = discord.Embed(title="Origin Changing Menu")
+            embed.set_image(url="https://i.imgur.com/9hqOOTf.jpeg")
+            msg = await ctx.respond(embed=embed, view=view)
+            await view.wait()
+            if view.value is None:
+                await ctx.respond("Timed out.")
+            elif view.value:
+                try:
+                    ori = menu.values[0]
+                except IndexError: # pressed confirm on home page
+                    await ctx.respond("Don't confirm the landing page.")
+                else:
+                    async with self.bot.db.acquire() as conn:
+                        player = await PlayerObject.get_player_by_id(
+                            conn, ctx.author.id)
+                        await player.set_origin(conn, ori)
+                        await ctx.respond(f"Homeland set to **{ori}**!")
+            else:
+                await ctx.respond("You decided not to change your origin.")
+            await msg.delete_original_message()
 
 
 def setup(bot):
