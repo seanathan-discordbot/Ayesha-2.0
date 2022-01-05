@@ -158,12 +158,11 @@ class Association:
         await conn.execute(psql, desc, self.id)
 
     async def set_icon(self, conn : asyncpg.Connection, icon : str):
+        """Set the icon of the association. Please give a valid link."""
         if self.is_empty:
             raise Checks.EmptyObject
-        
-        """Set the icon of the association. Please give a valid link."""
+        # TODO: Do aiohttp check
         self.desc = icon
-
         psql = """
                 UPDATE associations
                 SET assc_icon = $1
@@ -181,7 +180,7 @@ class Association:
         psql = """
                 UPDATE associations 
                 SET join_status = 'closed' 
-                WHERE guild_id = $1;
+                WHERE assc_id = $1;
                 """
         await conn.execute(psql, self.id)
 
@@ -194,7 +193,7 @@ class Association:
         psql = """
                 UPDATE associations 
                 SET join_status = 'open' 
-                WHERE guild_id = $1;
+                WHERE assc_id = $1;
                 """
         await conn.execute(psql, self.id)
 
@@ -236,9 +235,9 @@ class Association:
                 UPDATE associations
                 SET 
                     leader_id = 767234703161294858,
-                    guild_desc = 'This association has been disbanded.'
+                    assc_desc = 'This association has been disbanded.',
                     join_status = 'closed'
-                WHERE guild_id = $1;
+                WHERE assc_id = $1;
                 """
         psql2 = """
                 UPDATE players 
@@ -251,8 +250,10 @@ class Association:
 
         if self.type == "Brotherhood":
             pass
+            # TODO: brotherhood champions deletion
         elif self.type == "Guild":
             pass
+            # TODO: guild accounts deletion
 
         self = Association()
         
