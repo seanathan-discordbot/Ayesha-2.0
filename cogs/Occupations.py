@@ -8,12 +8,16 @@ from Utilities.ConfirmationMenu import ConfirmationMenu
 from Utilities.Finances import Transaction
 
 class OccupationMenu(discord.ui.Select):
-    def __init__(self):
+    def __init__(self, author):
+        self.author = author
         # Exclude last entry; its the empty occupation (Name = None)
         options = [discord.SelectOption(label=o) for o in Vars.OCCUPATIONS][:-1]
         super().__init__(placeholder="Pick an Occupation", options=options)
 
     async def callback(self, interaction : discord.Interaction):
+        if interaction.user.id != self.author.id:
+            return
+        
         occ = Vars.OCCUPATIONS[self.values[0]] # The dict for just this occ
         embed = discord.Embed(title=occ['Name'], description=occ['Desc'], 
             color=Vars.ABLUE)
@@ -30,12 +34,16 @@ class OccupationMenu(discord.ui.Select):
         await interaction.response.edit_message(embed=embed)
 
 class OriginMenu(discord.ui.Select):
-    def __init__(self):
+    def __init__(self, author):
+        self.author = author
         # Exclude last entry; its the empty origin
         options = [discord.SelectOption(label=o) for o in Vars.ORIGINS][:-1]
         super().__init__(placeholder="Pick something!", options=options)
 
     async def callback(self, interaction: discord.Interaction):
+        if interaction.user.id != self.author.id:
+            return
+        
         ori = Vars.ORIGINS[self.values[0]]
         embed = discord.Embed(
             title=ori['Name'], 
@@ -68,8 +76,8 @@ class Occupations(commands.Cog):
         """Choose your character's occupation or origin."""
         if setting == "Occ":
             # Create a menu of the occupations for player to choose
-            view = ConfirmationMenu()
-            menu = OccupationMenu()
+            view = ConfirmationMenu(ctx.author)
+            menu = OccupationMenu(ctx.author)
             view.add_item(menu)
             embed = discord.Embed(title="Career Changing Menu")
             embed.set_image(url="https://i.imgur.com/hr4dLr7.jpeg")
@@ -93,8 +101,8 @@ class Occupations(commands.Cog):
             await msg.delete_original_message()
 
         else:
-            view = ConfirmationMenu()
-            menu = OriginMenu()
+            view = ConfirmationMenu(ctx.author)
+            menu = OriginMenu(ctx.author)
             view.add_item(menu)
             embed = discord.Embed(title="Origin Changing Menu")
             embed.set_image(url="https://i.imgur.com/9hqOOTf.jpeg")
