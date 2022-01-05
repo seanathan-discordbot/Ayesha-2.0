@@ -130,7 +130,10 @@ class Gacha(commands.Cog):
                     embed.add_field(name="Crit", value=weapon.crit)
                     embed_list.append(embed)
 
-                player.pity_counter += 1 # Temp change, not stored in db
+                if r_rarities[i] == 5:
+                    player.pity_counter = 0
+                else:
+                    player.pity_counter += 1 # Temp change, not stored in db
 
             for embed in embed_list:
                 embed.set_footer(text=(
