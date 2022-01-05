@@ -110,6 +110,20 @@ class Association:
                 """
         return await conn.fetchval(psql, self.id)
 
+    async def get_all_members(self, conn : asyncpg.Connection) -> list:
+        """Returns a list of 'PlayerObject.Player's for every assc member.
+        Using ctx.defer() in any command that invokes this method may be 
+        a good idea.
+        """
+        psql = """
+                SELECT user_id
+                FROM players
+                WHERE assc = $1;
+                """
+        members = await conn.fetch(psql, self.id)
+        from Utilities.PlayerObject import get_player_by_id as gpbi
+        return [await gpbi(conn, id['user_id']) for id in members]
+
     async def increase_xp(self, conn : asyncpg.Connection, xp : int):
         """Increase the association's xp by the given amount."""
         if self.is_empty:
