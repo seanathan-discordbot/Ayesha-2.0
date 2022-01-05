@@ -207,6 +207,8 @@ ARMOR_DEFENSE = {
     },
 }
 
+DEFAULT_ICON = "https://upload.wikimedia.org/wikipedia/commons/a/ac/White_flag_of_surrender.svg"
+
 MATERIALS = ["Fur", "Bone", "Iron", "Silver", "Wood", "Wheat", "Oat", "Reeds",
              "Pine", "Moss", "Cacao"]
 

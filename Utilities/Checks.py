@@ -118,6 +118,10 @@ class InvalidOrigin(Exception):
     def __init__(self, origin : str):
         self.origin = origin
 
+class NameTaken(Exception):
+    def __init__(self, name : str):
+        self.name = name
+
 # --- NOW FOR THE ACTUAL CHECKS :) ---
 
 async def not_player(ctx):
@@ -187,13 +191,13 @@ async def _get_assc(ctx):
 
 async def in_association(ctx):
     record = await _get_assc(ctx)
-    if record is None:
+    if record['assc'] is None:
         raise NotInAssociation
     return True
 
 async def not_in_association(ctx):
     record = await _get_assc(ctx)
-    if record is not None:
+    if record['assc'] is not None:
         raise InAssociation
     return True
 

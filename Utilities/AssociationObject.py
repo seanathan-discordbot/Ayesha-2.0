@@ -378,3 +378,34 @@ async def get_assc_by_name(conn : asyncpg.Connection,
     psql = "SELECT assc_id FROM associations WHERE assc_name = $1;"
     assc_id = await conn.fetchval(psql, assc_name)
     return get_assc_by_id(assc_id)
+
+async def create_assc(conn : asyncpg.Connection, name : str, type : str, 
+        base : str, leader : int) -> Association:
+    """Create an association with the fields given.
+    type must be 'Brotherhood','College', or 'Guild'.
+    """
+    psql = """
+            SELECT assc_id 
+            FROM associations
+            WHERE assc_name = $1;
+            """
+    if await conn.fetchval(psql, name) is not None:
+        raise Checks.NameTaken(name)
+    psql1 = """
+            WITH rows AS (
+                INSERT INTO associations
+                    (assc_name, assc_type, leader_id, assc_icon, base)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING assc_id
+            )
+            SELECT assc_id FROM rows;
+            """
+    psql2 = """
+            UPDATE players
+            SET assc = $1, guild_rank = 'Leader'
+            WHERE user_id = $2;
+            """
+    assc_id = await conn.fetchval(
+        psql1, name, type, leader, Vars.DEFAULT_ICON, base)
+    await conn.execute(psql2, assc_id, leader)
+    return await get_assc_by_id(conn, assc_id)
