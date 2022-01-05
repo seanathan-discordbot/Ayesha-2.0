@@ -1,7 +1,8 @@
 import discord
 
 class ConfirmationMenu(discord.ui.View):
-    def __init__(self):
+    def __init__(self, author):
+        self.author = author
         super().__init__(timeout=30.0)
         self.value = None
 
@@ -16,3 +17,7 @@ class ConfirmationMenu(discord.ui.View):
             interaction : discord.Interaction):
         self.value = False
         self.stop()
+
+    async def interaction_check(self, 
+            interaction : discord.Interaction) -> bool:
+        return interaction.user.id == self.author.id
