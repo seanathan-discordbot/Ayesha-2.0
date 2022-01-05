@@ -118,6 +118,34 @@ class Error_Handler(commands.Cog):
                 await ctx.respond(message)
                 print_traceback = False
 
+            # --- ASSOCIATIONS ---
+            if isinstance(error.original, Checks.NotInAssociation):
+                if error.original.req is None:
+                    message = (
+                        "You need to be in an association to use this "
+                        "command!\n Ask for an invitation to one or found your "
+                        "own with `/association create`!")
+                else:
+                    message = (
+                        f"You need to be in a {error.original.req} to use this "
+                        f"command!\n Ask for an invitation to one or found "
+                        f"your own with `/association create`!")
+                await ctx.respond(message)
+                print_traceback = False
+
+            if isinstance(error.original, Checks.InAssociation):
+                message = "You are already in an association!"
+                await ctx.respond(message)
+                print_traceback = False
+
+            if isinstance(error.original, Checks.IncorrectAssociationRank):
+                message = (
+                    f"You need to be an Association {error.original.rank} "
+                    f"to use this command.")
+                await ctx.respond(message)
+                print_traceback = False
+
+
         # --- ARGUMENT ERRORS ---
         if isinstance(error, Checks.ExcessiveCharacterCount):
             message = (f"Your response exceeded the character limit.\nPlease "
