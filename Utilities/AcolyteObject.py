@@ -246,4 +246,4 @@ async def create_acolyte(conn : asyncpg.Connection, owner_id : int,
                 """
         acolyte_id = await conn.fetchval(psql, owner_id, acolyte)
 
-        return get_acolyte_by_id(conn, acolyte_id)
+        return await get_acolyte_by_id(conn, acolyte_id)
