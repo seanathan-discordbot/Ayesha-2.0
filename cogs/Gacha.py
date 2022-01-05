@@ -10,6 +10,21 @@ import random
 from Utilities import Checks, Vars, PlayerObject, AcolyteObject, ItemObject
 from Utilities.Finances import Transaction
 
+class SummonDropdown(discord.ui.Select):
+    def __init__(self, results : list, author_id : int):
+        self.results = results
+        self.author_id = author_id
+        options = [discord.SelectOption(label=results[i][0], value=str(i)) 
+            for i in range(len(results))]
+        super().__init__(options = options)
+
+    async def callback(self, interaction: discord.Interaction):
+        if interaction.user.id != self.author_id:
+            return
+
+        await interaction.response.edit_message(
+            embed=self.results[int(self.values[0])][1])
+
 class Gacha(commands.Cog):
     """Spend rubidics and gold for random items"""
 
@@ -52,10 +67,11 @@ class Gacha(commands.Cog):
             player : PlayerObject.Player, 
             rarity : int) -> discord.Embed:
         """Creates a random acolyte of the specified rarity.
-        Returns an embed listing the acolyte's information.
+        Returns a tuple containing an informational string (for Dropdown Menu)
+        and an embed listing the acolyte's information.
         """
         acolyte_name = random.choice(self.rarities[rarity])
-        acolyte =  await AcolyteObject.create_acolyte(
+        acolyte = await AcolyteObject.create_acolyte(
             conn, player.disc_id, acolyte_name)
 
         embed=discord.Embed(
@@ -72,7 +88,7 @@ class Gacha(commands.Cog):
             value=(
                 f"{acolyte.gen_dict['Effect']}\n {acolyte.acolyte_name} uses `"
                 f"{acolyte.gen_dict['Mat']}` to level up."))
-        return embed
+        return (f"{rarity}⭐ Acolyte: {acolyte_name}", embed)
 
     # COMMANDS
     @commands.slash_command(guild_ids=[762118688567984151])
@@ -102,18 +118,26 @@ class Gacha(commands.Cog):
                 k=pulls)
 
             # Simulate the pulls by creating new objects
-            embed_list = []
+            # embed_list = []
+            result_list = [] 
+            # In order to show summons in a dropdown menu instead of a paginator
+            # we need another way to create the labels for the dropdown choices
+            # necessitating the use of a list of tuples that contain both this
+            # descriptive name and the embed that will be shown.
+            # A dictionary may be clearer for future (TODO), otherwise note the
+            # placement of the string at index 0 and the embed at index 1
+            # result_list[SUMMON NUMBER][0 IF STR ELSE 1]
             for i in range(pulls):
                 if player.pity_counter >= 79:
                     # Give 5 star acolyte
-                    embed_list.append(await self.roll_acolyte(conn, player, 5))
+                    result_list.append(await self.roll_acolyte(conn, player, 5))
                     player.pity_counter = 0
                     continue
 
                 # Create a random new weapon or acolyte
                 # Write an embed for this and add it to the list
                 if r_types[i] == "acolyte":
-                    embed_list.append(await self.roll_acolyte(
+                    result_list.append(await self.roll_acolyte(
                         conn, player, r_rarities[i]))
 
                 else:
@@ -128,15 +152,18 @@ class Gacha(commands.Cog):
                     embed.add_field(name="Type", value=weapon.type)
                     embed.add_field(name="Attack", value=weapon.attack)
                     embed.add_field(name="Crit", value=weapon.crit)
-                    embed_list.append(embed)
+                    result_list.append(
+                        (f"{weapon.rarity} {weapon.type}: {weapon.name}", 
+                        embed))
 
                 if r_rarities[i] == 5:
                     player.pity_counter = 0
                 else:
                     player.pity_counter += 1 # Temp change, not stored in db
 
-            for embed in embed_list:
-                embed.set_footer(text=(
+            # Summons done, tell player their remaining balance in footer
+            for result in result_list:
+                result[1].set_footer(text=(
                     f"You have {player.rubidics-pulls} rubidics. You will "
                     f"receive a 5-star acolyte in {80-player.pity_counter} "
                     f"summons."))
@@ -146,19 +173,22 @@ class Gacha(commands.Cog):
             await player.set_pity_counter(conn, player.pity_counter)
 
             # Paginate embeds if pulls > 1 and print them
-            if len(embed_list) > 1:
-                paginator = pages.Paginator(pages=embed_list, timeout=60)
-                paginator.customize_button("next", button_label=">", 
-                    button_style=discord.ButtonStyle.green)
-                paginator.customize_button("prev", button_label="<", 
-                    button_style=discord.ButtonStyle.green)
-                paginator.customize_button("first", button_label="<<", 
-                    button_style=discord.ButtonStyle.blurple)
-                paginator.customize_button("last", button_label=">>", 
-                    button_style=discord.ButtonStyle.blurple)
-                await paginator.send(ctx, ephemeral=False)
+            if len(result_list) > 1:
+                # paginator = pages.Paginator(pages=embed_list, timeout=60)
+                # paginator.customize_button("next", button_label=">", 
+                #     button_style=discord.ButtonStyle.green)
+                # paginator.customize_button("prev", button_label="<", 
+                #     button_style=discord.ButtonStyle.green)
+                # paginator.customize_button("first", button_label="<<", 
+                #     button_style=discord.ButtonStyle.blurple)
+                # paginator.customize_button("last", button_label=">>", 
+                #     button_style=discord.ButtonStyle.blurple)
+                # await paginator.send(ctx, ephemeral=False)
+                view = discord.ui.View()
+                view.add_item(SummonDropdown(result_list, player.disc_id))
+                await ctx.respond(embed=result_list[0][1], view=view)
             else:
-                await ctx.respond(embed=embed_list[0])
+                await ctx.respond(embed=result_list[0][1])
 
     @commands.slash_command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
