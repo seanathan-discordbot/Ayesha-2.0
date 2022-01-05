@@ -1,9 +1,9 @@
 import discord
 from discord.commands.commands import Option, OptionChoice
 
-from discord.ext import commands
+from discord.ext import commands, pages
 
-from Utilities import AssociationObject, Checks, PlayerObject, Vars
+from Utilities import AcolyteObject, AssociationObject, Checks, PlayerObject, Vars
 from Utilities.ConfirmationMenu import ConfirmationMenu
 from Utilities.Finances import Transaction
 
@@ -21,20 +21,83 @@ class Associations(commands.Cog):
     a = discord.commands.SlashCommandGroup("association", 
         "Commands related to coop gameplay", guild_ids=[762118688567984151])
 
+    # AUXILIARY FUNCTIONS
+    def write_member_page(self, start, members):
+        embed = discord.Embed(title="Association Members", color=Vars.ABLUE)
+        iteration = 0
+        while start < len(members) and iteration < 10:
+            player = members[start]
+            embed.add_field(
+                name=f"{player.char_name} [{player.guild_rank}]",
+                value=(
+                    f"Level `{player.level}`, with `{player.get_attack()}` "
+                    f"ATK, `{player.get_crit()}` CRIT, `{player.get_hp()}` HP, "
+                    f"`{player.get_defense()}` DEF"),
+                inline=False)
+            iteration += 1
+            start += 1
+        return embed
+
     # COMMANDS
     @a.command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
     @commands.check(Checks.in_association)
-    async def view(self, ctx):
-        """View the brotherhood/college/guild that you are in."""
-        # Load Information
+    async def view(self, ctx,
+            name : Option(str,
+                description="Search an association by name",
+                required=False),
+            id : Option(int,
+                description="Search an association by its ID",
+                required=False),
+            player : Option(discord.Member,
+                description="View another player's association",
+                required=False,
+                converter=commands.MemberConverter())):
+        """View a brotherhood/college/guild's information."""
         async with self.bot.db.acquire() as conn:
-            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
-            assc = player.assc
+            # Get the association based on the passed argument
+            if name is not None:
+                psql = """
+                        SELECT assc_id
+                        FROM associations
+                        WHERE assc_name = $1;
+                        """
+                assc_id = await conn.fetchval(psql, name)
+                if assc_id is None:
+                    return await ctx.respond(
+                        f"No association exists with the name **{name}**.")
+                assc = await AssociationObject.get_assc_by_id(conn, assc_id)
+            elif id is not None:
+                assc = await AssociationObject.get_assc_by_id(conn, id)
+                if assc.is_empty:
+                    return await ctx.respond(
+                        f"No association exists with this ID: `{id}`.")
+            elif player is not None:
+                psql = """
+                        SELECT assc
+                        FROM players
+                        WHERE user_id = $1;
+                        """
+                if await conn.fetchval(psql, player.id) is None:
+                    return await ctx.respond(
+                        "This person is not in an association.")
+                profile = await PlayerObject.get_player_by_id(
+                    conn, player.id)
+                assc = profile.assc
+            else: # Get the player's association
+                profile = await PlayerObject.get_player_by_id(
+                    conn, ctx.author.id)
+                assc = profile.assc
+            if assc.leader == 767234703161294858: # TODO: This is Ayesha's ID
+                return await ctx.respond(
+                    "The guild with this name/ID has been disbanded.")
+
+            # Load the rest of the information of the associaiton
             assc_leader = await ctx.bot.fetch_user(assc.leader)
             assc_members = await assc.get_member_count(conn)
             assc_capacity = assc.get_member_capacity()
             assc_level, progress = assc.get_level(give_graphic=True)
+            member_list = await assc.get_all_members(conn)
 
         # Create embed - similar to profile
         mainpage = discord.Embed(            
@@ -60,7 +123,22 @@ class Associations(commands.Cog):
                 inline=False)
         mainpage.set_footer(text=f"{assc.type} ID: {assc.id}")
 
-        await ctx.respond(embed=mainpage)
+        # Create embed list containing all the member information
+        embeds = [mainpage]
+        for i in range(0, len(member_list), 10):
+            embeds.append(self.write_member_page(i, member_list))
+
+        # Paginate and send association information
+            paginator = pages.Paginator(pages=embeds, timeout=30)
+            paginator.customize_button("next", button_label=">", 
+                button_style=discord.ButtonStyle.green)
+            paginator.customize_button("prev", button_label="<", 
+                button_style=discord.ButtonStyle.green)
+            paginator.customize_button("first", button_label="<<", 
+                button_style=discord.ButtonStyle.blurple)
+            paginator.customize_button("last", button_label=">>", 
+                button_style=discord.ButtonStyle.blurple)
+            await paginator.send(ctx, ephemeral=False)
 
     @a.command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
@@ -99,7 +177,23 @@ class Associations(commands.Cog):
     @commands.check(Checks.is_assc_officer)
     async def edit(self, ctx):
         """Change your association's settings."""
+        # change base
+        # desc
+        # icon
+        # lock
+        # level req
+        # promote, demote
+        # transfer ownership
+        # kick
+        # delete
         await ctx.respond("3")
+
+    # TODO: invite command and UserCommand
+    # leave guild
+    # contribute money
+    # list of members
+    # exclusive commands
+    # join command
 
 
 def setup(bot):
