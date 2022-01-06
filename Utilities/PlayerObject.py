@@ -370,6 +370,18 @@ class Player:
 
         self.assc = assc
 
+    async def set_association_rank(self, conn : asyncpg.Connection, rank : str):
+        """Sets the player's association rank."""
+        if rank not in ("Member", "Adept", "Officer"):
+            raise Checks.InvalidRankName(rank)
+        self.guild_rank = rank
+        psql = """
+                UPDATE players
+                SET guild_rank = $1
+                WHERE user_id = $2;
+                """
+        await conn.execute(psql, rank, self.disc_id)
+
     async def leave_assc(self, conn : asyncpg.Connection):
         """Makes the player leave their current association."""
         if self.assc.is_empty:

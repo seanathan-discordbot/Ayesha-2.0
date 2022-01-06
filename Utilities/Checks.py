@@ -122,6 +122,13 @@ class NameTaken(Exception):
     def __init__(self, name : str):
         self.name = name
 
+class InvalidIconURL(Exception):
+    pass
+
+class InvalidRankName(Exception):
+    def __init__(self, rank : str):
+        self.rank = rank
+
 # --- NOW FOR THE ACTUAL CHECKS :) ---
 
 async def not_player(ctx):
