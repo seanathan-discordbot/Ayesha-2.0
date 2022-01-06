@@ -3,8 +3,10 @@ from discord import member
 from discord.commands.commands import Option, OptionChoice
 
 from discord.ext import commands, pages
+from discord.ext.commands import BucketType, cooldown
 
 from aiohttp import InvalidURL
+import random
 
 from Utilities import AcolyteObject, AssociationObject, Checks, PlayerObject, Vars
 from Utilities.ConfirmationMenu import ConfirmationMenu
@@ -31,6 +33,10 @@ class Associations(commands.Cog):
 
     a = discord.commands.SlashCommandGroup("association", 
         "Commands related to coop gameplay", guild_ids=[762118688567984151])
+
+    b = discord.commands.SlashCommandGroup("brotherhood",
+        "Association commands exclusive to brotherhood members", 
+        guild_ids=[762118688567984151])
 
     # AUXILIARY FUNCTIONS
     def write_member_page(self, start, members):
@@ -478,6 +484,54 @@ class Associations(commands.Cog):
                 f"increasing its xp to `{player.assc.xp}`. "
                 f"**{player.assc.name}** is level {player.assc.get_level()}. "
                 f"{print_tax}")
+
+
+
+    # ------------------------------------------
+    # ----- BROTHERHOOD EXCLUSIVE COMMANDS -----
+    # ------------------------------------------
+
+    @b.command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_player)
+    @commands.check(Checks.in_brotherhood)
+    @cooldown(1, 3600, BucketType.user)
+    async def steal(self, ctx):
+        """Steal up to 5% of a random player's gold."""
+        async with self.bot.db.acquire() as conn:
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+            if random.randint(1,100) >= 20 + player.assc.get_level()*5:
+                return await ctx.respond("You were caught and had to flee.")
+
+            possible_nums = await PlayerObject.get_player_count(conn)
+            victim_num = random.randint(1, possible_nums-1)
+
+            try: # Gets a random player using their unique ID
+                victim = await PlayerObject.get_player_by_num(conn, victim_num)
+            except Checks.NonexistentPlayer:
+                # Due to poor planning in Ayesha 1.0 Alpha, some nums 
+                # don't actually exist. This compensates for that
+                await player.give_gold(conn, 100)
+                return await ctx.respond(
+                    f"You stole `100` gold from a random guy.")
+
+            if victim.disc_id == player.disc_id: # Steal from themselves
+                return await ctx.respond(
+                    "You stole gold from a person's pocket, but then realized "
+                    "that the pocket you stole from was yours! You gained `0` "
+                    "gold.")
+
+            amount_stolen = 50 if victim.gold < 1000 else int(victim.gold / 20)
+            await victim.give_gold(conn, amount_stolen * -1)
+            if player.occupation == "Engineer": # Occupation bonus
+                amount_stolen *= 2
+            await player.give_gold(conn, amount_stolen)
+            await ctx.respond(
+                f"You stole `{amount_stolen}` gold from {victim.char_name}.")
+
+    # steal
+    # champions - view, set, remove
+    # area attack
+
 
 
 def setup(bot):
