@@ -38,6 +38,10 @@ class Associations(commands.Cog):
         "Association commands exclusive to brotherhood members", 
         guild_ids=[762118688567984151])
 
+    c = discord.commands.SlashCommandGroup("college",
+        "Association commands exclusive to college members", 
+        guild_ids=[762118688567984151])
+
     # AUXILIARY FUNCTIONS
     def write_member_page(self, start, members):
         embed = discord.Embed(title="Association Members", color=Vars.ABLUE)
@@ -597,6 +601,42 @@ class Associations(commands.Cog):
     # ----- COLLEGE EXCLUSIVE COMMANDS -----
     # --------------------------------------
 
+    @c.command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_player)
+    @commands.check(Checks.in_college)
+    @cooldown(1, 14400, BucketType.user)
+    async def usurp(self, ctx):
+        """Make a political play for power, gaining a few gravitas."""
+        async with self.bot.db.acquire() as conn:
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+
+            chance = random.randint(1,4)
+            gravitas = 5 if player.occupation == "Engineer" else 0
+            gravitas += player.assc.get_level()
+            if chance == 1: # Failure
+                gravitas -= random.randint(16, 25)
+                message = (
+                    f"Your political play was wildly unpopular with the "
+                    f"people of {player.location}. You lost `{gravitas}` "
+                    f"gravitas.")
+            elif chance == 2: # Big success
+                gravitas += random.randint(12, 25)
+                message = (
+                    f"Your maneuver was received with raucous applause from "
+                    f" the people of {player.location}. You gained "
+                    f"`{gravitas}` gravitas.")
+            else:
+                gravitas += random.randint(3, 10)
+                message = (
+                    f"Your speech turned some heads but most of the people of "
+                    f"{player.location} are apathetic to your rhetoric. You "
+                    f"gained `{gravitas}` gravitas.")
+            
+            await player.give_gravitas(conn, gravitas)
+            await ctx.respond(message)
+
+
+                
 
 
 def setup(bot):
