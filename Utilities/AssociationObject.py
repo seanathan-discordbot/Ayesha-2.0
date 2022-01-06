@@ -1,5 +1,6 @@
 import discord
 
+import aiohttp
 import asyncpg
 
 from Utilities import Checks, Vars
@@ -161,7 +162,11 @@ class Association:
         """Set the icon of the association. Please give a valid link."""
         if self.is_empty:
             raise Checks.EmptyObject
-        # TODO: Do aiohttp check
+        async with aiohttp.ClientSession() as client:
+            resp = await client.get(icon)
+            img = resp.headers.get("content-type")
+            if img not in ("image/jpeg", "image/png", "image/webp", "image/gif"):
+                raise Checks.InvalidIconURL
         self.desc = icon
         psql = """
                 UPDATE associations
