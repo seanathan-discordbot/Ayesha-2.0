@@ -681,3 +681,26 @@ async def create_character(conn : asyncpg.Connection, user_id : int,
         weapon_type="Spear")
 
     return await get_player_by_id(conn, user_id)
+
+async def get_player_by_num(conn : asyncpg.Connection, num : int) -> Player:
+    """Returns the player object of the person with the given num 
+    (unique, non-Discord ID). Raises Checks.NonexistentPlayer if there is no
+    player with this num.
+    """
+    psql = """
+            SELECT user_id
+            FROM players
+            WHERE num = $1;
+            """
+    user_id = await conn.fetchval(psql, num)
+    if user_id is None:
+        raise Checks.NonexistentPlayer
+    return await get_player_by_id(conn, user_id)
+
+async def get_player_count(conn : asyncpg.Connection):
+    """Return an integer of the amount of players in the database."""
+    psql = """
+            SELECT COUNT(*)
+            FROM players;
+            """
+    return await conn.fetchval(psql)

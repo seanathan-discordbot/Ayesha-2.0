@@ -129,6 +129,9 @@ class InvalidRankName(Exception):
     def __init__(self, rank : str):
         self.rank = rank
 
+class NonexistentPlayer(Exception):
+    pass
+
 # --- NOW FOR THE ACTUAL CHECKS :) ---
 
 async def not_player(ctx):
