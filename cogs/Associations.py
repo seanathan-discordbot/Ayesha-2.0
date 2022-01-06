@@ -415,8 +415,31 @@ class Associations(commands.Cog):
             else:
                 await ctx.respond("They declined your offer.")
             await msg.delete_original_message()
+        
+    @a.command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_player)
+    @commands.check(Checks.not_in_association)
+    async def join(self, ctx, association : Option(int,
+            description="the ID of the association you want to join")):
+        """Join an open association"""
+        async with self.bot.db.acquire() as conn:
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+            assc = await AssociationObject.get_assc_by_id(conn, association)
+            if assc.is_empty:
+                return await ctx.respond("No such guild exists.")
+            if assc.join_status != "open":
+                return await ctx.respond(
+                    "This association is closed to new players.")
+            if player.level < assc.lvl_req:
+                return await ctx.respond(
+                    f"You must be level `{assc.lvl_req}` to join this "
+                    f"association. You are currently level `{player.level}`.")
+            if await assc.get_member_count(conn) >= assc.get_member_capacity():
+                return await ctx.respond(
+                    "This association is at its member capacity. Please wait "
+                    "for a vacancy before joining.")
+            # Otherwise they can join the association
     
-    # TODO: invite command and UserCommand
     # leave guild
     # contribute money
     # exclusive commands
