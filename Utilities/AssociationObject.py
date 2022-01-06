@@ -288,6 +288,12 @@ class Association:
 
     # --- BROTHERHOOD METHODS ---
     async def get_champions(self, conn : asyncpg.Connection) -> list:
+        """Returns a list of 'Player's containing the brotherhood's champions.
+        
+        If the brotherhood has less than the 3 maximum champions, the empty
+        slots will be None. Note the possibility of an AttributeError when 
+        working with the list.        
+        """
         if self.type != "Brotherhood":
             raise Checks.NotInSpecifiedAssociation("Brotherhood")
 
@@ -299,13 +305,13 @@ class Association:
                 WHERE assc_id = $1;
                 """
         champs = await conn.fetchrow(psql, self.id)
-        champ_list = []
+        champ_list = [None, None, None]
         if champs['champ1'] is not None:
-            champ_list.append(get_player_by_id(conn, champs['champ1']))
+            champ_list[0] = await get_player_by_id(conn, champs['champ1'])
         if champs['champ2'] is not None:
-            champ_list.append(get_player_by_id(conn, champs['champ2']))
+            champ_list[1] = await get_player_by_id(conn, champs['champ2'])
         if champs['champ3'] is not None:
-            champ_list.append(get_player_by_id(conn, champs['champ3']))            
+            champ_list[2] = await get_player_by_id(conn, champs['champ3'])      
 
         return champ_list
 
