@@ -102,7 +102,6 @@ class Associations(commands.Cog):
     # COMMANDS
     @a.command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
-    @commands.check(Checks.in_association)
     async def view(self, ctx,
             name : Option(str,
                 description="Search an association by name",
@@ -149,6 +148,7 @@ class Associations(commands.Cog):
                 profile = await PlayerObject.get_player_by_id(
                     conn, ctx.author.id)
                 assc = profile.assc
+            # Don't show disbanded guilds
             if assc.leader == 767234703161294858: # TODO: This is Ayesha's ID
                 return await ctx.respond(
                     f"The {assc.type} with this name/ID has been disbanded.")
@@ -425,8 +425,6 @@ class Associations(commands.Cog):
         async with self.bot.db.acquire() as conn:
             player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
             assc = await AssociationObject.get_assc_by_id(conn, association)
-            if assc.is_empty:
-                return await ctx.respond("No such guild exists.")
             if assc.join_status != "open":
                 return await ctx.respond(
                     "This association is closed to new players.")
@@ -434,16 +432,52 @@ class Associations(commands.Cog):
                 return await ctx.respond(
                     f"You must be level `{assc.lvl_req}` to join this "
                     f"association. You are currently level `{player.level}`.")
-            if await assc.get_member_count(conn) >= assc.get_member_capacity():
-                return await ctx.respond(
-                    "This association is at its member capacity. Please wait "
-                    "for a vacancy before joining.")
             # Otherwise they can join the association
-    
-    # leave guild
-    # contribute money
-    # exclusive commands
-    # join command
+            await player.join_assc(conn, assc.id)
+            await ctx.respond((
+                f"You have successfully joined **{assc.name}**! Use the "
+                f"`/association view` command to see it!"))
+
+    @a.command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_player)
+    @commands.check(Checks.in_association)
+    async def leave(self, ctx):
+        """Leave your current association."""
+        async with self.bot.db.acquire() as conn:
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+            if player.guild_rank == "Leader":
+                return await ctx.respond(
+                    "You are the leader; you cannot leave!")
+            await player.leave_assc(conn)
+            await ctx.respond("You left your association.")
+
+    @a.command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_player)
+    @commands.check(Checks.in_association)
+    async def contribute(self, ctx, donation : Option(int,
+            description="The amount of gold you are donating",
+            min_value=1,
+            max_value=10000000)):
+        """Contribute money to the strength of your association. Each level costs 1,000,000 gold."""
+        async with self.bot.db.acquire() as conn:
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+            if player.assc.get_level() >= 10:
+                return await ctx.respond(
+                    f"**{player.assc.name}** is already at its maximum level!")
+            # Decrease donation amount so that they don't "over-donate"
+            to_max_level = 10000000 - player.assc.xp
+            donation = to_max_level if to_max_level < donation else donation
+            purchase = await Transaction.calc_cost(conn, player, donation)
+            if purchase.paying_price > player.gold:
+                raise Checks.NotEnoughGold(purchase.paying_price, player.gold)
+            # Complete the transaction
+            await player.assc.increase_xp(conn, donation)
+            print_tax = await purchase.log_transaction(conn, "purchase")
+            await ctx.respond(
+                f"You donated `{donation}` gold to your association, "
+                f"increasing its xp to `{player.assc.xp}`. "
+                f"**{player.assc.name}** is level {player.assc.get_level()}. "
+                f"{print_tax}")
 
 
 def setup(bot):
