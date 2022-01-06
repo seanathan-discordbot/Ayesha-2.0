@@ -5,6 +5,7 @@ from discord.ext import commands
 import sys
 import time
 import traceback
+from discord.ext.commands.errors import CommandOnCooldown
 
 from discord.ui.item import Item
 
@@ -70,6 +71,18 @@ class Error_Handler(commands.Cog):
 
         # --- COMMAND ERRORS ---
         if isinstance(error, ApplicationCommandInvokeError):
+            # --- COOLDOWN ERRORS ---
+            if isinstance(error.original, CommandOnCooldown):
+                if error.original.retry_after >= 3600:
+                    cd_length = time.strftime(
+                        "%H:%M:%S", time.gmtime(error.original.retry_after))
+                else:
+                    cd_length = time.strftime(
+                        "%M:%S", time.gmtime(error.original.retry_after))
+                message = (f"You are on cooldown for `{cd_length}`.")
+                await ctx.respond(message)
+                print_traceback = False
+
             # --- ARGUMENT ERRORS ---
             if isinstance(error.original, Checks.PlayerHasNoChar):
                 message = ("This player does not have a character. "
