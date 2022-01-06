@@ -222,6 +222,19 @@ class Associations(commands.Cog):
                 description="Remove this player from the association",
                 converter=commands.MemberConverter(),
                 required=False),
+            change_rank : Option(discord.Member,
+                description=(
+                    "Change one of your members' ranks. Select the rank in "
+                    "the 'rank_to' parameter."),
+                converter=commands.MemberConverter(),
+                required=False),
+            rank_to : Option(str,
+                description="The rank you are changing the `change_rank` to",
+                required=False,
+                choices=[
+                    OptionChoice("Officer"), 
+                    OptionChoice("Adept"),
+                    OptionChoice("Member")]),
             transfer_ownership : Option(discord.Member,
                 description="Set the association owner to this player",
                 converter=commands.MemberConverter(),
@@ -287,32 +300,60 @@ class Associations(commands.Cog):
 
             # KICK A MEMBER
             if kick_member is not None:
-                player = await PlayerObject.get_player_by_id(
+                target = await PlayerObject.get_player_by_id(
                     conn, kick_member.id)
-                if player.assc.id != assc.id:
+                if target.assc.id != assc.id:
                     message += (
                         f"No players kicked as they are not in this "
                         f"association.\n")
-                elif player.guild_rank in ("Officer", "Leader"):
+                elif target.guild_rank in ("Officer", "Leader"):
                     message += (
                         f"No players kicked as they are a high ranking member."
                         "\n")
                 else:
-                    await player.leave_assc(conn)
+                    await target.leave_assc(conn)
                     await kick_member.send(
                         f"You have been removed from **{assc.name}** by "
                         f"{ctx.author.name}.")
                     message += f"Kicked member {kick_member.name}.\n"
 
+            # PROMOTE/DEMOTE
+            if change_rank is not None and rank_to is not None:
+                if player.guild_rank != "Leader":
+                    raise Checks.IncorrectAssociationRank("Leader")
+
+                target = await PlayerObject.get_player_by_id(
+                    conn, change_rank.id)
+                if target.assc.id != assc.id:
+                    message += (
+                        f"Player rank unchanged as they are not in this "
+                        f"association.\n")
+                elif target.disc_id == assc.leader:
+                    message += (
+                        "Player rank unchanged as they are the association "
+                        "leader.\n")
+                else:
+                    await target.set_association_rank(conn, rank_to)
+                    await change_rank.send(
+                        f"Your rank in **{assc.name}** has been changed to "
+                        f"**{rank_to}**.")
+                    message += f"Set {change_rank.name}'s rank to {rank_to}.\n"
+
             # TRANSFER LEADERSHIP
             if transfer_ownership is not None:
-                player = await PlayerObject.get_player_by_id(
+                if player.guild_rank != "Leader":
+                    raise Checks.IncorrectAssociationRank("Leader")
+
+                target = await PlayerObject.get_player_by_id(
                     conn, transfer_ownership.id)
-                if player.assc.id != assc.id:
+                if target.assc.id != assc.id:
                     message += (
                         f"Leadership unchanged as target is not in this "
                         f"association.\n")
-                elif player.guild_rank not in ("Officer", "Leader"):
+                elif target.disc_id == assc.leader:
+                    message += (
+                        "Leadership unchanged as target is already leader.\n")
+                elif target.guild_rank not in ("Officer", "Leader"):
                     message += (
                         f"Leadership unchanged as target is not a high ranking "
                         "association member.\n")
@@ -334,7 +375,6 @@ class Associations(commands.Cog):
 
     
     # TODO: invite command and UserCommand
-    # promote/demote
     # leave guild
     # contribute money
     # exclusive commands
