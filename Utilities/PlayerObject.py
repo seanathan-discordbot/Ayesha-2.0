@@ -355,10 +355,10 @@ class Player:
 
     async def join_assc(self, conn : asyncpg.Connection, assc_id : int):
         """Makes the player join the association with the given ID"""
-        assc = AssociationObject.get_assc_by_id(conn, assc_id)
+        assc = await AssociationObject.get_assc_by_id(conn, assc_id)
         if assc.is_empty:
             raise Checks.InvalidAssociationID
-        if assc.get_member_count(conn) >= assc.get_member_capacity():
+        if await assc.get_member_count(conn) >= assc.get_member_capacity():
             raise Checks.AssociationAtCapacity
 
         psql = """
