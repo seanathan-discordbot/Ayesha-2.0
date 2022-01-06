@@ -63,8 +63,12 @@ class Associations(commands.Cog):
             assc_capacity = assc.get_member_capacity()
             assc_level, progress = assc.get_level(give_graphic=True)
             member_list = await assc.get_all_members(conn)
+            try:
+                champ_list = await assc.get_champions(conn)
+            except Checks.NotInSpecifiedAssociation:
+                pass
 
-        # Create embed - similar to profile
+        # Create embed - similar to the one shown in profile
         mainpage = discord.Embed(            
             title=f"{assc.type}: {assc.name}",
             color=Vars.ABLUE)
@@ -88,8 +92,29 @@ class Associations(commands.Cog):
                 inline=False)
         mainpage.set_footer(text=f"{assc.type} ID: {assc.id}")
 
+        embeds = [mainpage] # Multiple embeds need to be paginated
+
+        # Create an embed containing champion info if brotherhood
+        if assc.type == "Brotherhood":
+            championpage = discord.Embed(title=f"{assc.name}'s Champions")
+            for i, champion in enumerate(champ_list):
+                try:
+                    championpage.add_field(name=f"Champion {i+1}",
+                        value = (
+                            f"Name: {champion.char_name}\n"
+                            f"ATK/CRIT: `{champion.get_attack()}`/"
+                            f"`{champion.get_crit()}`%\n"
+                            f"HP/DEF: `{champion.get_hp()}`/"
+                            f"`{champion.get_defense()}`%"))
+                except AttributeError:
+                    championpage.add_field(name=f"Champion {i+1}", 
+                        value = "None")
+            championpage.set_footer(text=(
+                "If a champion is 'None', ask an officer to add one with the "
+                "'/brotherhood champion' command!"))
+            embeds.append(championpage)
+
         # Create embed list containing all the member information
-        embeds = [mainpage]
         for i in range(0, len(member_list), 10):
             embeds.append(self.write_member_page(i, member_list))
 
@@ -528,9 +553,49 @@ class Associations(commands.Cog):
             await ctx.respond(
                 f"You stole `{amount_stolen}` gold from {victim.char_name}.")
 
-    # steal
-    # champions - view, set, remove
-    # area attack
+    @b.command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_player)
+    @commands.check(Checks.in_brotherhood)
+    @commands.check(Checks.is_assc_officer)
+    async def champion(self, ctx, 
+            slot : Option(int,
+                description=(
+                    "The order in battle you are putting this champion into."),
+                min_value=1,
+                max_value=3),
+            champion : Option(discord.Member,
+                description="The person you are making champion",
+                converter=commands.MemberConverter(),
+                required=False)):
+        """Assign someone to be a champion of your brotherhood."""
+        async with self.bot.db.acquire() as conn:
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+            assc = player.assc
+
+            if champion is None: # Unequip champion in given slot
+                await assc.remove_champion(conn, slot)
+                await ctx.respond(f"Removed the champion in slot {slot}.")
+            else:
+                target = await PlayerObject.get_player_by_id(conn, champion.id)
+                if target.assc.id != player.assc.id:
+                    return await ctx.respond(
+                        "This player is not in your association.")
+                current = await assc.get_champions(conn)
+                if target.disc_id in [player.disc_id for player in current]:
+                    return await ctx.respond(
+                        "This player is already one of your champions.")
+                await assc.set_champion(conn, target.disc_id, slot)
+                await ctx.respond(
+                    f"Added {target.char_name} to your the brotherhood's "
+                    f"roster of champions.")
+
+    # TODO: Implement area attack when a combat system is developed
+
+
+
+    # --------------------------------------
+    # ----- COLLEGE EXCLUSIVE COMMANDS -----
+    # --------------------------------------
 
 
 
