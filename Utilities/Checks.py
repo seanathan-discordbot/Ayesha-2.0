@@ -122,9 +122,6 @@ class NameTaken(Exception):
     def __init__(self, name : str):
         self.name = name
 
-class InvalidIconURL(Exception):
-    pass
-
 # --- NOW FOR THE ACTUAL CHECKS :) ---
 
 async def not_player(ctx):
