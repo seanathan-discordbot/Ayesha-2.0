@@ -10,6 +10,14 @@ from Utilities import AcolyteObject, AssociationObject, Checks, PlayerObject, Va
 from Utilities.ConfirmationMenu import ConfirmationMenu
 from Utilities.Finances import Transaction
 
+class InviteMenu(ConfirmationMenu):
+    def __init__(self, author, target : discord.Member):
+        self.target = target
+        super().__init__(author)
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return interaction.user.id == self.target.id
+
 class Associations(commands.Cog):
     """Association Text"""
 
@@ -373,6 +381,40 @@ class Associations(commands.Cog):
                     color=Vars.ABLUE)
                 await ctx.respond(embed=embed)
 
+    @a.command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_player)
+    @commands.check(Checks.in_association)
+    @commands.check(Checks.is_assc_officer)
+    async def invite(self, ctx, target : Option(discord.Member,
+            description="The person you are inviting to your association",
+            converter=commands.MemberConverter())):
+        """Invite a player to your association"""
+        async with self.bot.db.acquire() as conn:
+            profile = await PlayerObject.get_player_by_id(conn, target.id)
+            if not profile.assc.is_empty:
+                return await ctx.respond(
+                    "This player is already in an association.")
+            # target is eligible for invitation
+            author = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+            assc = author.assc
+            embed = discord.Embed(color=Vars.ABLUE)
+            embed.add_field(name=f"Invitation to {assc.name}",
+                value=(
+                    f"{target.mention}, {ctx.author.mention} is inviting you "
+                    f"to join their {assc.type}."))
+            view = InviteMenu(author=ctx.author, target=target)
+            msg = await ctx.respond(target.mention, embed=embed, view=view)
+            await view.wait()
+            if view.value is None:
+                await ctx.respond("Timed out.")
+            elif view.value:
+                await profile.join_assc(conn, assc.id)
+                await ctx.respond((
+                    f"{target.mention}, welcome to {assc.name}! Do "
+                    f"`/association view` to see it!"))
+            else:
+                await ctx.respond("They declined your offer.")
+            await msg.delete_original_message()
     
     # TODO: invite command and UserCommand
     # leave guild
