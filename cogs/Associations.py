@@ -42,6 +42,10 @@ class Associations(commands.Cog):
         "Association commands exclusive to college members", 
         guild_ids=[762118688567984151])
 
+    g = discord.commands.SlashCommandGroup("guild",
+        "Association commands exclusive to guild members", 
+        guild_ids=[762118688567984151])
+
     # AUXILIARY FUNCTIONS
     def write_member_page(self, start, members):
         embed = discord.Embed(title="Association Members", color=Vars.ABLUE)
@@ -62,7 +66,10 @@ class Associations(commands.Cog):
     async def view_association(self, ctx, assc : AssociationObject.Association):
         async with self.bot.db.acquire() as conn:
             # Load the rest of the information of the associaiton
-            assc_leader = await ctx.bot.fetch_user(assc.leader)
+            try:
+                assc_leader = await ctx.bot.fetch_user(assc.leader)
+            except discord.HTTPException:
+                assc_leader = str(assc.leader)
             assc_members = await assc.get_member_count(conn)
             assc_capacity = assc.get_member_capacity()
             assc_level, progress = assc.get_level(give_graphic=True)
@@ -77,7 +84,7 @@ class Associations(commands.Cog):
             title=f"{assc.type}: {assc.name}",
             color=Vars.ABLUE)
         mainpage.set_thumbnail(url=assc.icon)
-        mainpage.add_field(name="Leader", value=assc_leader.mention)
+        mainpage.add_field(name="Leader", value=assc_leader)
         mainpage.add_field(name="Members", 
             value=f"{assc_members}/{assc_capacity}")
         mainpage.add_field(name="Level", value=assc_level)
@@ -636,7 +643,57 @@ class Associations(commands.Cog):
             await ctx.respond(message)
 
 
-                
+
+    # ------------------------------------
+    # ----- GUILD EXCLUSIVE COMMANDS -----
+    # ------------------------------------
+
+    @g.command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_player)
+    @commands.check(Checks.in_guild)
+    @cooldown(1, 7200, BucketType.user)
+    async def invest(self, ctx, capital : Option(int,
+            description="The amount of money you are investing",
+            min_value=100,
+            max_value=250000)):
+        """Invest in a nearby project and gain/lose some money."""
+        async with self.bot.db.acquire() as conn:
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+            if player.gold < capital:
+                raise Checks.NotEnoughGold(capital, player.gold)
+            
+            # Determine the return
+            bonus_occ = player.occupation == "Engineer"
+            multiplier = random.randint(0, 21500) / 10000.0 # up to 2.15x
+            print(multiplier)
+            return_amt = int(capital * multiplier)
+            return_amt = int(return_amt * 1.25) if bonus_occ else return_amt
+
+            # Pick random things to display to player
+            projects = ("museum", "church", "residence", 
+                "fishing company", "game company", "guild", "boat", 
+                "road construction", "cooperative", "ponzi scheme", "MLM",
+                "non-fungible token", "animal herd", "mercenary band")
+            project = random.choice(projects)
+
+            # Determine if loss or gain
+            capital_gains = return_amt - capital
+            if capital_gains > 0: # Player made money, tax it
+                sale = await Transaction.create_sale(
+                    conn, player, capital_gains)
+                print_tax = await sale.log_transaction(conn, "sale")
+                message = (
+                    f"You invested `{capital}` gold in a {project} and made a "
+                    f"return of `{return_amt}`. {print_tax}")
+            else:
+                await player.give_gold(conn, capital_gains)
+                message = (
+                    f"You invested `{capital}` gold in a {project} and made a "
+                    f"return of `{return_amt}`. Since you lost money, you "
+                    f"were not taxed.")
+            await ctx.respond(message)
+
+    # guild bank account
 
 
 def setup(bot):

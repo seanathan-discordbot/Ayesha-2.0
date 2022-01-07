@@ -1,4 +1,5 @@
 import discord
+from discord.commands.context import ApplicationContext
 from discord.commands.errors import ApplicationCommandInvokeError
 from discord.ext import commands
 
@@ -82,6 +83,8 @@ class Error_Handler(commands.Cog):
                 message = (f"You are on cooldown for `{cd_length}`.")
                 await ctx.respond(message)
                 print_traceback = False
+            else: # Reset the cooldown on other errors
+                ctx.command.reset_cooldown(ctx)
 
             # --- ARGUMENT ERRORS ---
             if isinstance(error.original, Checks.PlayerHasNoChar):
@@ -119,6 +122,11 @@ class Error_Handler(commands.Cog):
             if isinstance(error.original, Checks.InvalidResource):
                 await ctx.respond("Ping Aramythia for this error lol")
                 print(f"Resource {error.original.resource} DNE.")
+
+            if isinstance(error.original, Checks.NameTaken):
+                message = f"Name {error.original.name} is already in use."
+                await ctx.respond(message)
+                print_traceback = False
 
             # --- OWNERSHIP ---
             if isinstance(error.original, Checks.NotWeaponOwner):
