@@ -70,6 +70,12 @@ class Error_Handler(commands.Cog):
             await ctx.respond(message)
             print_traceback = False
 
+        # --- CONCURRENCY ERROR ---
+        if isinstance(error, commands.MaxConcurrencyReached):
+            await ctx.respond(
+                "You can only have 1 instance of this command running at once.")
+            print_traceback = False
+
         # --- COMMAND ERRORS ---
         if isinstance(error, ApplicationCommandInvokeError):
             # --- COOLDOWN ERRORS ---
