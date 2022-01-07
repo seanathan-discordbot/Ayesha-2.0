@@ -190,6 +190,10 @@ class Associations(commands.Cog):
                 profile = await PlayerObject.get_player_by_id(
                     conn, ctx.author.id)
                 assc = profile.assc
+                if assc.is_empty:
+                    return await ctx.respond((
+                        "You are not in an association. Use the "
+                        "`/association join` command to join one!"))
             # Don't show disbanded guilds
             if assc.leader == 767234703161294858: # TODO: This is Ayesha's ID
                 return await ctx.respond(
@@ -693,7 +697,75 @@ class Associations(commands.Cog):
                     f"were not taxed.")
             await ctx.respond(message)
 
-    # guild bank account
+    @g.command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_player)
+    @commands.check(Checks.in_guild)
+    async def account(self, ctx, 
+            action : Option(str,
+                description="What you are doing with your bank account",
+                choices=[OptionChoice(name=t) for t in 
+                    ("View Bank Account", "Deposit Gold", "Withdraw Gold")]),
+            transaction : Option(int,
+                description="The gold you are depositing/withdrawing, if any",
+                required=False,
+                min_value=1)):
+        """Safely store gold in your guild bank account"""
+        async with self.bot.db.acquire() as conn:
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+
+            # First loads the bank account and creates one if it does not exist
+            # Also returns the current funds
+            # If there is a conflict the INSERT won't return anything so the
+            # second UNION will get it. If the INSERT does return something,
+            # both values (should be) the same so no harm done
+            psql = """
+                    WITH insertion AS (
+                        INSERT INTO guild_bank_account (user_id)
+                        VALUES ($1)
+                        ON CONFLICT (user_id) DO NOTHING
+                        RETURNING account_funds
+                    )
+                    SELECT account_funds 
+                    FROM insertion
+                    UNION
+                        SELECT account_funds
+                        FROM guild_bank_account
+                        WHERE user_id = $1;
+                    """
+            funds = await conn.fetchval(psql, player.disc_id)
+
+            if action == "View Bank Account":
+                return await ctx.respond(
+                    f"You have `{funds}` gold in your guild bank account.")
+            elif transaction is None:
+                return await ctx.respond((
+                    "Please include the amount of gold you are depositing "
+                    "or withdrawing."))
+
+            # Condition above handles missing transaction parameter
+            if action == "Deposit Gold":
+                # Make sure they have the gold they are trying to deposit
+                if transaction > player.gold:
+                    raise Checks.NotEnoughGold(transaction, player.gold)
+                await player.give_gold(conn, transaction*-1)
+            else:
+                if transaction > funds:
+                    return await ctx.respond((
+                        f"You cannot withdraw that amount as you only have "
+                        f"`{funds}` gold in your bank account."))
+                await player.give_gold(conn, transaction)
+                transaction *= -1
+
+            psql = """
+                    UPDATE guild_bank_account
+                    SET account_funds = account_funds + $1
+                    WHERE user_id = $2;
+                    """
+            await conn.execute(psql, transaction, player.disc_id)
+            await ctx.respond((
+                f"Your transaction was a success! You now have `{player.gold}` "
+                f"gold on-hand, and `{funds+transaction}` remaining in your "
+                f"account."))
 
 
 def setup(bot):
