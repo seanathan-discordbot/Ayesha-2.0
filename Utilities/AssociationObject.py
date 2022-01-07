@@ -431,7 +431,13 @@ async def create_assc(conn : asyncpg.Connection, name : str, type : str,
             SET assc = $1, guild_rank = 'Leader'
             WHERE user_id = $2;
             """
+    psql3 = """
+            INSERT INTO brotherhood_champions (assc_id)
+            VALUES ($1);
+            """
     assc_id = await conn.fetchval(
         psql1, name, type, leader, Vars.DEFAULT_ICON, base)
     await conn.execute(psql2, assc_id, leader)
+    if type == "Brotherhood":
+        await conn.execute(psql3, assc_id)
     return await get_assc_by_id(conn, assc_id)
