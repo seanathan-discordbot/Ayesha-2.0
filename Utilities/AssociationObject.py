@@ -249,16 +249,29 @@ class Association:
                 SET assc = NULL, guild_rank = NULL
                 WHERE assc = $1;
                 """
+        psql3 = """
+                WITH balance AS (
+                    DELETE FROM guild_bank_account
+                    WHERE user_id = $1
+                    RETURNING account_funds
+                )
+                SELECT account_funds 
+                FROM balance;
+                """
+        psql4 = """
+                UPDATE players
+                SET gold = gold + $1
+                WHERE user_id = $2;
+                """
 
         await conn.execute(psql1, self.id)
         await conn.execute(psql2, self.id)
 
-        if self.type == "Brotherhood":
-            pass
-            # TODO: brotherhood champions deletion
-        elif self.type == "Guild":
-            pass
-            # TODO: guild accounts deletion
+        # Brotherhood champion deletion is probably unneccessary
+        if self.type == "Guild":
+            in_bank = await conn.fetchval(psql3, self.leader)
+            if in_bank is not None:
+                await conn.execute(psql4, in_bank, self.leader)
 
         self = Association()
         

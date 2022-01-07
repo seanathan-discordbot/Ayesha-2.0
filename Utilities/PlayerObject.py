@@ -407,11 +407,28 @@ class Player:
                 SET champ3 = NULL
                 WHERE champ3 = $1;
                 """
+        psql5 = """
+                WITH balance AS (
+                    DELETE FROM guild_bank_account
+                    WHERE user_id = $1
+                    RETURNING account_funds
+                )
+                SELECT account_funds 
+                FROM balance;
+                """
+        psql6 = """
+                UPDATE players
+                SET gold = gold + $1
+                WHERE user_id = $2;
+                """
 
         await conn.execute(psql1, self.disc_id)
         await conn.execute(psql2, self.disc_id)
         await conn.execute(psql3, self.disc_id)
         await conn.execute(psql4, self.disc_id)
+        in_bank = await conn.fetchval(psql5, self.disc_id)
+        if in_bank is not None:
+            await conn.execute(psql6, in_bank, self.disc_id)
 
         self.assc = Association()
 
