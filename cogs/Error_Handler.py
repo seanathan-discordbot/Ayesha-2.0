@@ -1,10 +1,12 @@
 import discord
+from discord.commands.context import ApplicationContext
 from discord.commands.errors import ApplicationCommandInvokeError
 from discord.ext import commands
 
 import sys
 import time
 import traceback
+from discord.ext.commands.errors import CommandOnCooldown
 
 from discord.ui.item import Item
 
@@ -70,6 +72,20 @@ class Error_Handler(commands.Cog):
 
         # --- COMMAND ERRORS ---
         if isinstance(error, ApplicationCommandInvokeError):
+            # --- COOLDOWN ERRORS ---
+            if isinstance(error.original, CommandOnCooldown):
+                if error.original.retry_after >= 3600:
+                    cd_length = time.strftime(
+                        "%H:%M:%S", time.gmtime(error.original.retry_after))
+                else:
+                    cd_length = time.strftime(
+                        "%M:%S", time.gmtime(error.original.retry_after))
+                message = (f"You are on cooldown for `{cd_length}`.")
+                await ctx.respond(message)
+                print_traceback = False
+            else: # Reset the cooldown on other errors
+                ctx.command.reset_cooldown(ctx)
+
             # --- ARGUMENT ERRORS ---
             if isinstance(error.original, Checks.PlayerHasNoChar):
                 message = ("This player does not have a character. "
@@ -107,6 +123,11 @@ class Error_Handler(commands.Cog):
                 await ctx.respond("Ping Aramythia for this error lol")
                 print(f"Resource {error.original.resource} DNE.")
 
+            if isinstance(error.original, Checks.NameTaken):
+                message = f"Name {error.original.name} is already in use."
+                await ctx.respond(message)
+                print_traceback = False
+
             # --- OWNERSHIP ---
             if isinstance(error.original, Checks.NotWeaponOwner):
                 message = f"You do not own a weapon with this ID."
@@ -117,6 +138,34 @@ class Error_Handler(commands.Cog):
                 message = f"You do not own the armor with this ID."
                 await ctx.respond(message)
                 print_traceback = False
+
+            # --- ASSOCIATIONS ---
+            if isinstance(error.original, Checks.NotInAssociation):
+                if error.original.req is None:
+                    message = (
+                        "You need to be in an association to use this "
+                        "command!\n Ask for an invitation to one or found your "
+                        "own with `/association create`!")
+                else:
+                    message = (
+                        f"You need to be in a {error.original.req} to use this "
+                        f"command!\n Ask for an invitation to one or found "
+                        f"your own with `/association create`!")
+                await ctx.respond(message)
+                print_traceback = False
+
+            if isinstance(error.original, Checks.InAssociation):
+                message = "You are already in an association!"
+                await ctx.respond(message)
+                print_traceback = False
+
+            if isinstance(error.original, Checks.IncorrectAssociationRank):
+                message = (
+                    f"You need to be an Association {error.original.rank} "
+                    f"to use this command.")
+                await ctx.respond(message)
+                print_traceback = False
+
 
         # --- ARGUMENT ERRORS ---
         if isinstance(error, Checks.ExcessiveCharacterCount):

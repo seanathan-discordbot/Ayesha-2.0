@@ -1,5 +1,5 @@
-# ACOLYTE_LIST_PATH = r'F:\OneDrive\Python_Projects\Ayesha_Rewrite\Assets\Acolyte_List.json'
-ACOLYTE_LIST_PATH = r'C:\Users\sebas\OneDrive\Python_Projects\Ayesha_Rewrite\Assets\Acolyte_List.json'
+ACOLYTE_LIST_PATH = r'F:\OneDrive\Python_Projects\Ayesha_Rewrite\Assets\Acolyte_List.json'
+# ACOLYTE_LIST_PATH = r'C:\Users\sebas\OneDrive\Python_Projects\Ayesha_Rewrite\Assets\Acolyte_List.json'
 
 ABLUE =  0xBEDCF6
 
@@ -206,6 +206,8 @@ ARMOR_DEFENSE = {
         'Dragonscale' : 18
     },
 }
+
+DEFAULT_ICON = "https://upload.wikimedia.org/wikipedia/commons/a/ac/White_flag_of_surrender.svg"
 
 MATERIALS = ["Fur", "Bone", "Iron", "Silver", "Wood", "Wheat", "Oat", "Reeds",
              "Pine", "Moss", "Cacao"]

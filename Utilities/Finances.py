@@ -71,7 +71,7 @@ class Transaction:
             multiplier -= .15
         elif player.gravitas >= 1000:
             multiplier -= .25
-        tax_rate = await get_tax_rate(conn) * multiplier
+        tax_rate = float(await get_tax_rate(conn)) * multiplier
         tax_amount = int(subtotal * tax_rate / 100)
 
         return cls(player, subtotal, tax_rate, tax_amount)

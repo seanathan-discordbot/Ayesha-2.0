@@ -355,10 +355,10 @@ class Player:
 
     async def join_assc(self, conn : asyncpg.Connection, assc_id : int):
         """Makes the player join the association with the given ID"""
-        assc = AssociationObject.get_assc_by_id(conn, assc_id)
+        assc = await AssociationObject.get_assc_by_id(conn, assc_id)
         if assc.is_empty:
             raise Checks.InvalidAssociationID
-        if assc.get_member_count(conn) >= assc.get_member_capacity():
+        if await assc.get_member_count(conn) >= assc.get_member_capacity():
             raise Checks.AssociationAtCapacity
 
         psql = """
@@ -369,6 +369,18 @@ class Player:
         await conn.execute(psql, assc_id, self.disc_id)
 
         self.assc = assc
+
+    async def set_association_rank(self, conn : asyncpg.Connection, rank : str):
+        """Sets the player's association rank."""
+        if rank not in ("Member", "Adept", "Officer"):
+            raise Checks.InvalidRankName(rank)
+        self.guild_rank = rank
+        psql = """
+                UPDATE players
+                SET guild_rank = $1
+                WHERE user_id = $2;
+                """
+        await conn.execute(psql, rank, self.disc_id)
 
     async def leave_assc(self, conn : asyncpg.Connection):
         """Makes the player leave their current association."""
@@ -395,11 +407,28 @@ class Player:
                 SET champ3 = NULL
                 WHERE champ3 = $1;
                 """
+        psql5 = """
+                WITH balance AS (
+                    DELETE FROM guild_bank_account
+                    WHERE user_id = $1
+                    RETURNING account_funds
+                )
+                SELECT account_funds 
+                FROM balance;
+                """
+        psql6 = """
+                UPDATE players
+                SET gold = gold + $1
+                WHERE user_id = $2;
+                """
 
         await conn.execute(psql1, self.disc_id)
         await conn.execute(psql2, self.disc_id)
         await conn.execute(psql3, self.disc_id)
         await conn.execute(psql4, self.disc_id)
+        in_bank = await conn.fetchval(psql5, self.disc_id)
+        if in_bank is not None:
+            await conn.execute(psql6, in_bank, self.disc_id)
 
         self.assc = Association()
 
@@ -669,3 +698,26 @@ async def create_character(conn : asyncpg.Connection, user_id : int,
         weapon_type="Spear")
 
     return await get_player_by_id(conn, user_id)
+
+async def get_player_by_num(conn : asyncpg.Connection, num : int) -> Player:
+    """Returns the player object of the person with the given num 
+    (unique, non-Discord ID). Raises Checks.NonexistentPlayer if there is no
+    player with this num.
+    """
+    psql = """
+            SELECT user_id
+            FROM players
+            WHERE num = $1;
+            """
+    user_id = await conn.fetchval(psql, num)
+    if user_id is None:
+        raise Checks.NonexistentPlayer
+    return await get_player_by_id(conn, user_id)
+
+async def get_player_count(conn : asyncpg.Connection):
+    """Return an integer of the amount of players in the database."""
+    psql = """
+            SELECT COUNT(*)
+            FROM players;
+            """
+    return await conn.fetchval(psql)

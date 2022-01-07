@@ -1,5 +1,6 @@
 import discord
 
+import aiohttp
 import asyncpg
 
 from Utilities import Checks, Vars
@@ -110,6 +111,20 @@ class Association:
                 """
         return await conn.fetchval(psql, self.id)
 
+    async def get_all_members(self, conn : asyncpg.Connection) -> list:
+        """Returns a list of 'PlayerObject.Player's for every assc member.
+        Using ctx.defer() in any command that invokes this method may be 
+        a good idea.
+        """
+        psql = """
+                SELECT user_id
+                FROM players
+                WHERE assc = $1;
+                """
+        members = await conn.fetch(psql, self.id)
+        from Utilities.PlayerObject import get_player_by_id as gpbi
+        return [await gpbi(conn, id['user_id']) for id in members]
+
     async def increase_xp(self, conn : asyncpg.Connection, xp : int):
         """Increase the association's xp by the given amount."""
         if self.is_empty:
@@ -144,12 +159,15 @@ class Association:
         await conn.execute(psql, desc, self.id)
 
     async def set_icon(self, conn : asyncpg.Connection, icon : str):
+        """Set the icon of the association. Please give a valid link."""
         if self.is_empty:
             raise Checks.EmptyObject
-        
-        """Set the icon of the association. Please give a valid link."""
+        async with aiohttp.ClientSession() as client:
+            resp = await client.get(icon)
+            img = resp.headers.get("content-type")
+            if img not in ("image/jpeg", "image/png", "image/webp", "image/gif"):
+                raise Checks.InvalidIconURL
         self.desc = icon
-
         psql = """
                 UPDATE associations
                 SET assc_icon = $1
@@ -167,7 +185,7 @@ class Association:
         psql = """
                 UPDATE associations 
                 SET join_status = 'closed' 
-                WHERE guild_id = $1;
+                WHERE assc_id = $1;
                 """
         await conn.execute(psql, self.id)
 
@@ -180,7 +198,7 @@ class Association:
         psql = """
                 UPDATE associations 
                 SET join_status = 'open' 
-                WHERE guild_id = $1;
+                WHERE assc_id = $1;
                 """
         await conn.execute(psql, self.id)
 
@@ -222,23 +240,38 @@ class Association:
                 UPDATE associations
                 SET 
                     leader_id = 767234703161294858,
-                    guild_desc = 'This association has been disbanded.'
+                    assc_desc = 'This association has been disbanded.',
                     join_status = 'closed'
-                WHERE guild_id = $1;
+                WHERE assc_id = $1;
                 """
         psql2 = """
                 UPDATE players 
                 SET assc = NULL, guild_rank = NULL
                 WHERE assc = $1;
                 """
+        psql3 = """
+                WITH balance AS (
+                    DELETE FROM guild_bank_account
+                    WHERE user_id = $1
+                    RETURNING account_funds
+                )
+                SELECT account_funds 
+                FROM balance;
+                """
+        psql4 = """
+                UPDATE players
+                SET gold = gold + $1
+                WHERE user_id = $2;
+                """
 
         await conn.execute(psql1, self.id)
         await conn.execute(psql2, self.id)
 
-        if self.type == "Brotherhood":
-            pass
-        elif self.type == "Guild":
-            pass
+        # Brotherhood champion deletion is probably unneccessary
+        if self.type == "Guild":
+            in_bank = await conn.fetchval(psql3, self.leader)
+            if in_bank is not None:
+                await conn.execute(psql4, in_bank, self.leader)
 
         self = Association()
         
@@ -268,6 +301,12 @@ class Association:
 
     # --- BROTHERHOOD METHODS ---
     async def get_champions(self, conn : asyncpg.Connection) -> list:
+        """Returns a list of 'Player's containing the brotherhood's champions.
+        
+        If the brotherhood has less than the 3 maximum champions, the empty
+        slots will be None. Note the possibility of an AttributeError when 
+        working with the list.        
+        """
         if self.type != "Brotherhood":
             raise Checks.NotInSpecifiedAssociation("Brotherhood")
 
@@ -279,13 +318,13 @@ class Association:
                 WHERE assc_id = $1;
                 """
         champs = await conn.fetchrow(psql, self.id)
-        champ_list = []
+        champ_list = [None, None, None]
         if champs['champ1'] is not None:
-            champ_list.append(get_player_by_id(conn, champs['champ1']))
+            champ_list[0] = await get_player_by_id(conn, champs['champ1'])
         if champs['champ2'] is not None:
-            champ_list.append(get_player_by_id(conn, champs['champ2']))
+            champ_list[1] = await get_player_by_id(conn, champs['champ2'])
         if champs['champ3'] is not None:
-            champ_list.append(get_player_by_id(conn, champs['champ3']))            
+            champ_list[2] = await get_player_by_id(conn, champs['champ3'])      
 
         return champ_list
 
@@ -378,3 +417,40 @@ async def get_assc_by_name(conn : asyncpg.Connection,
     psql = "SELECT assc_id FROM associations WHERE assc_name = $1;"
     assc_id = await conn.fetchval(psql, assc_name)
     return get_assc_by_id(assc_id)
+
+async def create_assc(conn : asyncpg.Connection, name : str, type : str, 
+        base : str, leader : int) -> Association:
+    """Create an association with the fields given.
+    type must be 'Brotherhood','College', or 'Guild'.
+    """
+    psql = """
+            SELECT assc_id 
+            FROM associations
+            WHERE assc_name = $1;
+            """
+    if await conn.fetchval(psql, name) is not None:
+        raise Checks.NameTaken(name)
+    psql1 = """
+            WITH rows AS (
+                INSERT INTO associations
+                    (assc_name, assc_type, leader_id, assc_icon, base)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING assc_id
+            )
+            SELECT assc_id FROM rows;
+            """
+    psql2 = """
+            UPDATE players
+            SET assc = $1, guild_rank = 'Leader'
+            WHERE user_id = $2;
+            """
+    psql3 = """
+            INSERT INTO brotherhood_champions (assc_id)
+            VALUES ($1);
+            """
+    assc_id = await conn.fetchval(
+        psql1, name, type, leader, Vars.DEFAULT_ICON, base)
+    await conn.execute(psql2, assc_id, leader)
+    if type == "Brotherhood":
+        await conn.execute(psql3, assc_id)
+    return await get_assc_by_id(conn, assc_id)
