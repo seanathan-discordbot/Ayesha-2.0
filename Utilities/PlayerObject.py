@@ -99,7 +99,7 @@ class Player:
         self.destination = record['destination']
         self.gravitas = record['gravitas']
         self.resources = None
-        self.daily_streak = record['daily_streak']
+        self.pve_limit = record['pve_limit']
 
     async def _load_equips(self, conn : asyncpg.Connection):
         """Converts object variables from their IDs into the proper objects.
@@ -615,6 +615,16 @@ class Player:
                     """
         await conn.execute(psql, self.disc_id)
 
+    async def increment_pve_limit(self, conn : asyncpg.Connection):
+        """Increase the player's PVE limit by 1"""
+        self.pve_limit += 1
+        psql = """
+                UPDATE players
+                SET pve_limit = pve_limit + 1
+                WHERE user_id = $1;
+                """
+        await conn.execute(psql, self.disc_id)
+
     def get_attack(self) -> int:
         """Returns the player's attack stat, calculated from all other sources.
         The value returned by this method is 'the final say' on the stat.
@@ -656,7 +666,7 @@ class Player:
         """Returns the player's HP stat, calculated from all other sources.
         The value returned by this method is 'the final say' on the stat.
         """
-        hp = 500 + self.level
+        hp = 500 + self.level * 3
         hp += self.acolyte1.get_hp()
         hp += self.acolyte2.get_hp()
         hp += Vars.ORIGINS[self.origin]['hp_bonus']
@@ -706,7 +716,7 @@ async def get_player_by_id(conn : asyncpg.Connection, user_id : int) -> Player:
                 players.adventure,
                 players.destination,
                 players.gravitas,
-                players.daily_streak,
+                players.pve_limit,
                 equips.helmet,
                 equips.bodypiece,
                 equips.boots,

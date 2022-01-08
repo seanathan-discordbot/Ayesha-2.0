@@ -114,7 +114,10 @@ class Belligerent:
     @classmethod
     def load_boss(cls, difficulty : int):
         """Create a belligerent object of the 'Boss' type """
-        name = Vars.BOSSES[difficulty]
+        if difficulty <= 25:
+            name = Vars.BOSSES[difficulty]
+        else:
+            name = "REDACTED"
 
         if difficulty == 1:
             attack = 1
