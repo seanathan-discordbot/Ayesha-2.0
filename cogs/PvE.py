@@ -74,12 +74,17 @@ class PvE(commands.Cog):
     async def pve(self, ctx,
             level : Option(int,
                 description="The difficulty level of your opponent",
-                min_value=1,
-                max_value=25)):
+                min_value=1)):
         """Fight an enemy for gold, xp, and items!"""
         async with self.bot.db.acquire() as conn:
             author = await PlayerObject.get_player_by_id(conn, ctx.author.id)
         # Create belligerents
+        if level > author.pve_limit:
+            return await ctx.respond(
+                f"You cannot attempt this level yet! To challenge bosses past "
+                f"level 25, you will have to beat each level sequentially. "
+                f"You can currently challenge up to level {author.pve_limit}.")
+
         player = CombatObject.Belligerent.load_player(player=author)
         boss = CombatObject.Belligerent.load_boss(difficulty=level)
         
@@ -92,7 +97,7 @@ class PvE(commands.Cog):
         while turn_counter <= 25: # Manually broken if HP hits 0
             # Update information display
             embed = discord.Embed(
-                title=f"{player.name} vs. {boss.name}",
+                title=f"{player.name} vs. {boss.name} (Level {level})",
                 color=Vars.ABLUE)
             embed.add_field(name="Attack", value=player.attack)
             embed.add_field(name="Crit Rate", value=f"{player.crit}%")
@@ -180,6 +185,14 @@ class PvE(commands.Cog):
                 title = f"You were defeated by {boss.name}!"
                 header = f"They had {boss.current_hp} HP remaining."
 
+            # ON GAME END event technically
+            acolytes = [a.acolyte_name 
+                for a in (player.acolyte1, player.acolyte2)]
+            if "Sean" in acolytes:
+                xp = int(xp * 1.2)
+            if "Spartacus" in acolytes:
+                gold += 200
+
             # Create and send embed
             embed = discord.Embed(title=title, color=Vars.ABLUE)
             embed.add_field(
@@ -206,6 +219,10 @@ class PvE(commands.Cog):
             await author.give_gold(conn, gold)
             await author.check_xp_increase(conn, ctx, xp)
             await author.log_pve(conn, victory)
+            if level == author.pve_limit and victory:
+                await author.increment_pve_limit(conn)
+                embed.set_footer(
+                    text=f"You have unlocked PvE level {author.pve_limit}.")
 
         await interaction.edit_original_message(embed=embed, view=None)
 
