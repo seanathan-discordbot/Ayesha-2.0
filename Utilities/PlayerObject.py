@@ -124,10 +124,10 @@ class Player:
         Pass get_next as true to also get the xp needed to level up.
         """
         def f(x):
-            return int(20 * x**3 + 500)
+            return int(10 * x**3 + 500)
         
         def g(x):
-            return int(2/5 * x**4 + 250000)
+            return int(1/5 * x**4 + 108500)
 
         if self.xp <= 540500: # Simpler scaling for first 30 levels
             level = 0
@@ -629,7 +629,7 @@ class Player:
         """Returns the player's attack stat, calculated from all other sources.
         The value returned by this method is 'the final say' on the stat.
         """
-        attack = 10 + int(self.level / 3)
+        attack = 10 + int(self.level / 2)
         attack += self.equipped_item.attack
         attack += self.acolyte1.get_attack()
         attack += self.acolyte2.get_attack()
