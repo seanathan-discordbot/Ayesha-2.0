@@ -1,5 +1,7 @@
 import discord
 
+import random
+
 from Utilities import PlayerObject, Vars
 from Utilities.AcolyteObject import Acolyte
 from Utilities.AssociationObject import Association
@@ -17,7 +19,7 @@ class Belligerent:
     Attributes
     ----------
     """
-    def __init__(self, name : str, bell_type : str, attack : int, crit : int,
+    def __init__(self, name : str, occ_type : str, attack : int, crit : int,
             hp : int, defense : int, disc_id : int = None, 
             weapon : Weapon = Weapon(), helmet : Armor = Armor(),
             bodypiece : Armor = Armor(), boots : Armor = Armor(),
@@ -28,8 +30,8 @@ class Belligerent:
         ----------
         name : str
             The name of the player or boss
-        bell_type : str
-            'Player' or 'Boss'
+        occ_type : str
+            The player's occupation if applicable. 'Boss' if boss.
         attack : int
             The attack stat
         crit : int
@@ -39,7 +41,7 @@ class Belligerent:
         defense : int
             The defense stat
         disc_id : Optional[int]
-            If bell_type is 'Player', pass the person's Discord ID
+            If occ_type is not 'Boss', pass the person's Discord ID
         weapon : Optional[ItemObject.Weapon]
             The weapon object that the person has equipped
         helmet : Optional[ItemObject.Armor]
@@ -57,7 +59,7 @@ class Belligerent:
         """
         # Useful information
         self.name = name
-        self.type = bell_type
+        self.type = occ_type
         self.disc_id = disc_id
         # Combat Stats
         self.attack = attack
@@ -73,6 +75,10 @@ class Belligerent:
         self.acolyte1 = acolyte1
         self.acolyte2 = acolyte2
         self.assc = assc
+        # For gameplay
+        self.last_move = None
+        self.damage = 0
+        self.heal = 0
 
     @classmethod
     def load_player(cls, player : PlayerObject.Player):
@@ -86,6 +92,7 @@ class Belligerent:
         # General info
         name = player.char_name
         disc_id = player.disc_id
+        occ = player.occupation
         # Combat Stats
         attack = player.get_attack()
         crit = player.get_crit()
@@ -101,7 +108,7 @@ class Belligerent:
         assc = player.assc
 
         return cls(
-            name, "Player", attack, crit, hp, defense, disc_id, weapon, helmet,
+            name, occ, attack, crit, hp, defense, disc_id, weapon, helmet,
             bodypiece, boots, acolyte1, acolyte2, assc)
 
     @classmethod
@@ -116,75 +123,219 @@ class Belligerent:
         return cls(name, "Boss", attack, crit, hp, defense)
 
 
+class ActionChoice(discord.ui.View):
+    """"""
+    def __init__(self, author_id : int):
+        self.author_id = author_id
+        self.choice = None
+        super().__init__(timeout=10)
 
-class CombatInstance:
-    def perform_attack(self, attacker : Belligerent, defender : Belligerent):
-        damage_reduction = (100.0 - defender.defense) / 100.0
-        damage = int(attacker.attack * damage_reduction)
-        defender.current_hp -= damage
-        return f"{attacker.name} dealt {damage} damage to {defender.name}!"
-
-
-
-
-
-class CombatMenu(discord.ui.View):
-    """A view specifically made for PvE.    
-    """
-    def __init__(self, author : discord.Member, player1 : Belligerent,
-            player2 : Belligerent):
-        super().__init__(timeout=30.0)
-        self.author = author
-        self.player1 = player1
-        self.player2 = player2
-        self.combat_instance = CombatInstance()
-        self.turn_counter = 1
-        self.embed = None
-
-    @discord.ui.button(label="Attack", style=discord.ButtonStyle.green)
+    @discord.ui.button(style=discord.ButtonStyle.blurple, 
+            emoji="🗡️")
     async def attack(self, button : discord.ui.Button, 
             interaction : discord.Interaction):
-        turn = self.combat_instance.perform_attack(self.player1, self.player2)
-        await self.update(interaction, turn)
+        self.choice = "Attack"
+        button.disabled = True
+        self.stop()
 
-    # @discord.ui.button(label="Crit", style=discord.ButtonStyle.green)
-    # async def crit(self, button : discord.ui.Button, 
-    #         interaction : discord.Interaction):
-    #     self.output += "You crit\n"
-    #     await self.update(interaction)
+    @discord.ui.button(style=discord.ButtonStyle.grey, 
+            emoji="\N{SHIELD}")
+    async def block(self, button : discord.ui.Button, 
+            interaction : discord.Interaction):
+        self.choice = "Block"
+        button.disabled = True
+        self.stop()
 
-    def update_embed(self):
-        self.embed = discord.Embed(
-            title=f"{self.player1.name} vs. {self.player2.name}",
-            color=Vars.ABLUE)
-        self.embed.add_field(
-            name=f"{self.player1.name}'s Stats",
-            value = (
-                f"ATK: `{self.player1.attack}`\n"
-                f"CRIT: `{self.player1.crit}%`\n"
-                f"HP: `{self.player1.current_hp}`\n"
-                f"DEF: `{self.player1.defense}`\n"))
-        self.embed.add_field(
-            name=f"{self.player2.name}'s Stats",
-            value = (
-                f"ATK: `{self.player2.attack}`\n"
-                f"CRIT: `{self.player2.crit}%`\n"
-                f"HP: `{self.player2.current_hp}`\n"
-                f"DEF: `{self.player2.defense}`\n"))
-        self.embed.add_field(
-            name="Your move", value=f"Turn `{self.turn_counter}`", inline=False)
+    @discord.ui.button(style=discord.ButtonStyle.green, 
+            emoji="\N{CROSSED SWORDS}")
+    async def parry(self, button : discord.ui.Button, 
+            interaction : discord.Interaction):
+        self.choice = "Parry"
+        button.disabled = True
+        self.stop()
 
-    async def update(self, interaction : discord.Interaction, turn : str):
-        if self.player2.current_hp <= 0:
-            await interaction.response.edit_message(content="You win", embed=None)
-        else:
-            self.update_embed()
-            await interaction.response.edit_message(embed=self.embed)
-            self.turn_counter += 1
+    @discord.ui.button(style=discord.ButtonStyle.red, 
+            emoji="\u2764")
+    async def heal(self, button : discord.ui.Button, 
+            interaction : discord.Interaction):
+        self.choice = "Heal"
+        button.disabled = True
+        self.stop()
+
+    @discord.ui.button(style=discord.ButtonStyle.grey, 
+            emoji="\u23F1")
+    async def bide(self, button : discord.ui.Button, 
+            interaction : discord.Interaction):
+        self.choice = "Bide"
+        button.disabled = True
+        self.stop()
 
     async def interaction_check(self, 
             interaction : discord.Interaction) -> bool:
-        return interaction.user.id == self.author.id
+        return interaction.user.id == self.author_id
+
+
+class InvalidMove(Exception):
+    pass
+
+# Passive the attacking players choice, followed by the defending players 
+# choice. This will return a float that will be multiplied to the 
+# damage they deal
+ACTION_COMBOS = {
+    "Attack" : {
+        "Attack" : 1,
+        "Block" : .05,
+        "Parry" : .5,
+        "Heal" : 1,
+        "Bide" : .8
+    },
+    "Block" : {
+        "Attack" : .25, # Note the inverse, Attack->Block does only .05
+        "Block" : 0, # Punish mutual blocking
+        "Parry" : .05,
+        "Heal" : 0,
+        "Bide" : 0
+    },
+    "Parry" : {
+        "Attack" : .5,
+        "Block" : 0,
+        "Parry" : .75,
+        "Heal" : .75,
+        "Bide" : .5
+    },
+    "Heal" : {
+        "Attack" : 0,
+        "Block" : 0,
+        "Parry" : 0,
+        "Heal" : 0,
+        "Bide" : 0
+    },
+    "Bide" : {
+        "Attack" : 0,
+        "Block" : 0,
+        "Parry" : 0,
+        "Heal" : 0,
+        "Bide" : 0
+    }
+}
+
+class CombatInstance:
+    def __init__(self, player1 : Belligerent, player2 : Belligerent, 
+            turn : int):
+        self.turn = turn
+        self.player1 = player1
+        self.player2 = player2
+        # Make sure both belligerents have active moves
+        moves = ("Attack", "Block", "Parry", "Heal", "Bide")
+        if self.player1.last_move not in moves:
+            raise InvalidMove
+        if self.player2.last_move not in moves:
+            raise InvalidMove
+
+        # Create a raw damage count
+        self.player1.damage = random.randint(
+            self.player1.attack, self.player1.attack + 20)
+        self.player2.damage = random.randint(
+            self.player2.attack, self.player2.attack + 20)
+
+        # Determine critical strikes
+        if random.randint(1, 100) < self.player1.crit:
+            self.player1 = self.on_critical_hit(self.player1)
+        if random.randint(1, 100) < self.player2.crit:
+            self.player2 = self.on_critical_hit(self.player2)
+
+        # Calculate damage multipliers based off action combinations
+        self.player1.damage *= ACTION_COMBOS[self.player1.last_move]\
+            [self.player2.last_move]
+        self.player2.damage *= ACTION_COMBOS[self.player2.last_move]\
+            [self.player1.last_move]
+
+        # Unique interactions with attack choices
+        self.player1, self.player2 = self.run_events(
+            agent=self.player1, object=self.player2)
+        self.player2, self.player1 = self.run_events(
+            agent=self.player2, object=self.player1)
+
+        # Cast everything to int
+        self.player1.damage = int(self.player1.damage)
+        self.player1.heal = int(self.player1.heal)
+        self.player2.damage = int(self.player2.damage)
+        self.player2.heal = int(self.player2.heal)
+
+    def apply_damage(self):
+        """Actually edits the players' stats and returns their objects to
+        the gameloop. Essentially the de-initializer.
+        Returns 2 'Belligerent' objects.
+        """
+        self.player1.current_hp += self.player1.heal - self.player2.damage
+        self.player2.current_hp += self.player2.heal - self.player1.damage
+
+        # Reset everything to 0
+        self.player1.last_move = None
+        self.player1.damage = 0
+        self.player1.heal = 0
+        self.player2.last_move = None
+        self.player2.damage = 0
+        self.player2.heal = 0
+
+        return self.player1, self.player2
+
+    def get_turn_str(self):
+        """Returns a string detailing what happened in combat."""
+        output = f"**Turn {self.turn}:** "
+        for p in (self.player1, self.player2):
+            if p.last_move in ("Attack", "Block", "Parry"):
+                output += (
+                    f"**{p.name}** decided to {p.last_move.lower()}, "
+                    f"and dealt **{p.damage}** damage. ")
+            elif p.last_move == "Heal":
+                output += f"**{p.name}** healed themselves for `{p.heal}` HP. "
+            else:
+                output += (
+                    f"**{p.name}** saved their strength for a turn and "
+                    f"received a 10% ATK boost! ")
+        return output
+
+    # Independent event as it happens during damage calculation
+    def on_critical_hit(self, player : Belligerent):
+        return player
+
+    # Below events will all be part of on_damage
+    def run_events(self, agent : Belligerent, object : Belligerent):
+        # ON_DAMAGE : Any time the agent deals damage
+
+
+        # ON_ATTACK : Agent attacks
+
+
+        # ON_BLOCK : Agent blocks
+
+
+        # ON_PARRY : Agent parries
+
+
+        # ON_HEAL : Agent heals
+
+
+        # ON_BIDE : Agents bides
+
+
+        return agent, object
+
+    def on_combat_begin(self):
+        return
+
+    def on_combat_end(self):
+        return
+
+    @staticmethod
+    def on_turn_end(player1 : Belligerent, player2 : Belligerent):
+        return player1, player2
+
+
+
+
+
 
 # Outlined below is a general idea of how PvE was performed before
 """
