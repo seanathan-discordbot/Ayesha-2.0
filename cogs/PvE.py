@@ -7,7 +7,7 @@ from discord.ext.commands import BucketType, cooldown
 import asyncio
 import random
 
-from Utilities import Checks, CombatObject, PlayerObject, Vars
+from Utilities import Checks, CombatObject, ItemObject, PlayerObject, Vars
 from Utilities.CombatObject import CombatInstance
 
 class PvE(commands.Cog):
@@ -20,6 +20,53 @@ class PvE(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         print("PvE is ready.")
+
+    # AUXILIARY FUNCTIONS
+    def level_to_rewards(self, level):
+        """Returns the rarity of weapon/armor based on the level the player beat
+        Dict: weapon, armor
+        """
+        if level < 2:
+            weapon = "Common"
+            armor = "Cloth"
+        elif level < 5:
+            weapon = "Common"
+            armor = "Leather"
+        elif level < 9:
+            weapon = "Common"
+            armor = "Gambeson"
+        elif level == 9:
+            weapon = "Uncommon"
+            armor = "Bearskin"
+        elif level == 13:
+            weapon = "Uncommon"
+            armor = "Wolfskin"
+        elif level < 15:
+            weapon = "Uncommon"
+            armor = "Bronze"
+        elif level < 18:
+            weapon = "Rare"
+            armor = "Ceramic Plate"
+        elif level < 21:
+            weapon = "Rare"
+            armor = "Chainmail"
+        elif level < 25:
+            weapon = "Rare"
+            armor = "Iron"
+        elif level < 40:
+            weapon = "Epic"
+            armor = "Steel"
+        elif level < 50:
+            weapon = "Epic"
+            armor = "Mysterious"
+        else:
+            weapon = "Legendary"
+            armor = "Dragonscale"
+
+        return {
+            "weapon" : weapon,
+            "armor" : armor
+        }
 
     # COMMANDS
     @commands.slash_command(guild_ids=[762118688567984151])
@@ -42,7 +89,7 @@ class PvE(commands.Cog):
         # Stores string information to display to player
         recent_turns = [
             f"Battle begins between **{player.name}** and **{boss.name}**.",] 
-        while turn_counter <= 50: # Manually broken if HP hits 0
+        while turn_counter <= 25: # Manually broken if HP hits 0
             # Update information display
             embed = discord.Embed(
                 title=f"{player.name} vs. {boss.name}",
@@ -92,15 +139,74 @@ class PvE(commands.Cog):
 
             turn_counter += 1
 
-        # Determine why loop ended
-        if boss.current_hp <= 0:
-            # Win
-            return await interaction.edit_original_message(
-                content="You win.", embed=None, view=None)
-        else: 
-            # Loss
-            return await interaction.edit_original_message(
-                content="You lose.", embed=None, view=None)
+        # With loop over, determine winner and give rewards
+        async with self.bot.db.acquire() as conn:
+            weapon = None
+            armor = None
+
+            if boss.current_hp <= 0: # Win
+                if player.current_hp < 1:
+                    player.current_hp = 1
+
+                gold = random.randint(level**2 + 20, level**2 + 80)
+                xp = 2**(level/10)
+                xp *= (level+10)**2 # Put weight on high levels and HP
+                xp *= (player.current_hp / 750) + .2
+                xp = int(xp)
+
+                # Possibly get weapons + armor
+                item_rarities = self.level_to_rewards(level)
+                if random.randint(1, 4) == 1 or player.type == "Merchant":
+                    weapon = await ItemObject.create_weapon(
+                        conn, author.disc_id, item_rarities["weapon"])
+
+                if random.randint(1, 100) < 6: # 5% chance at armor
+                    armor = await ItemObject.create_armor(
+                        conn=conn, user_id=author.disc_id,
+                        type=random.choice(("Helmet", "Bodypiece", "Boots")),
+                        material=item_rarities['armor'])
+
+                title = f"You have defeated {boss.name}!"
+                header = f"You had {player.current_hp} HP remaining."
+
+            else: # Loss
+                if boss.current_hp < 1:
+                    boss.current_hp = 1
+                gold = 0
+                xp = 5 * level + 20
+
+                title = f"You were defeated by {boss.name}!"
+                header = f"They had {boss.current_hp} HP remaining."
+
+            # Create and send embed
+            embed = discord.Embed(title=title, color=Vars.ABLUE)
+            embed.add_field(
+                name=header,
+                value=(
+                    f"You received `{gold}` gold and `{xp}` xp from the battle."
+                ))
+            if weapon is not None:
+                embed.add_field(
+                    name="While fighting you found a weapon!",
+                    value=(
+                        f"`{weapon.weapon_id}`: **{weapon.name}**, a  "
+                        f"{weapon.rarity} {weapon.type} with {weapon.attack} "
+                        f"ATK and {weapon.crit} crit."),
+                    inline=False)
+            if armor is not None:
+                embed.add_field(
+                    name="After the battle you salvaged some armor.",
+                    value=(
+                        f"`{armor.id}`: **{armor.name}**, with {armor.defense} "
+                        f" defense!"),
+                    inline=False)
+
+            await author.give_gold(conn, gold)
+            await author.check_xp_increase(conn, ctx, xp)
+
+        await interaction.edit_original_message(embed=embed, view=None)
+
+
 
 
 def setup(bot):
