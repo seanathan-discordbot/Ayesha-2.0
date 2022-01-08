@@ -115,10 +115,22 @@ class Belligerent:
     def load_boss(cls, difficulty : int):
         """Create a belligerent object of the 'Boss' type """
         name = Vars.BOSSES[difficulty]
-        attack = difficulty * 15
-        crit = difficulty + 5
-        hp = difficulty * 50
-        defense = difficulty
+
+        if difficulty == 1:
+            attack = 1
+            crit = 0
+            hp = 50
+            defense = 10
+        elif difficulty < 25:
+            attack = difficulty * 10
+            crit = int(difficulty * 1.5) + 5
+            hp = difficulty * 75
+            defense = int(difficulty * 1.4)
+        else:
+            attack = difficulty * 20
+            crit = 65
+            hp = difficulty * 125
+            defense = 55
 
         return cls(name, "Boss", attack, crit, hp, defense)
 
@@ -355,13 +367,14 @@ class CombatInstance:
             # Leatherworkers get more defense in PvE
             agent.damage *= 0.85
 
+        # ON_COMBAT_END : After everything has been calculated
+        if self.turn == 3 and "Onion" in acolytes:
+            agent.crit *= 2
+        if "Ajar" in acolytes:
+            agent.attack += 20
+            agent.current_hp -= 50
+
         return agent, object
-
-    def on_combat_begin(self):
-        return
-
-    def on_combat_end(self):
-        return
 
     @staticmethod
     def on_turn_end(player1 : Belligerent, player2 : Belligerent):
