@@ -239,9 +239,11 @@ class CombatInstance:
             self.player2.attack, self.player2.attack + 20)
 
         # Determine critical strikes
-        if random.randint(1, 100) < self.player1.crit:
+        p1_crit_cond = player1.last_move in ("Attack", "Block", "Parry")
+        p2_crit_cond = player2.last_move in ("Attack", "Block", "Parry")
+        if p1_crit_cond and random.randint(1, 100) < self.player1.crit:
             self.player1 = self.on_critical_hit(self.player1)
-        if random.randint(1, 100) < self.player2.crit:
+        if p2_crit_cond and random.randint(1, 100) < self.player2.crit:
             self.player2 = self.on_critical_hit(self.player2)
 
         # Calculate damage multipliers based off action combinations
@@ -257,8 +259,17 @@ class CombatInstance:
             agent=self.player2, object=self.player1)
 
         # Cast everything to int
+        self.player1.attack = int(self.player1.attack)
+        self.player1.crit = int(self.player1.crit)
+        self.player1.current_hp = int(self.player1.current_hp)
+        self.player1.defense = int(self.player1.defense)
         self.player1.damage = int(self.player1.damage)
         self.player1.heal = int(self.player1.heal)
+
+        self.player2.attack = int(self.player2.attack)
+        self.player2.crit = int(self.player2.crit)
+        self.player2.current_hp = int(self.player2.current_hp)
+        self.player2.defense = int(self.player2.defense)
         self.player2.damage = int(self.player2.damage)
         self.player2.heal = int(self.player2.heal)
 
@@ -298,12 +309,28 @@ class CombatInstance:
 
     # Independent event as it happens during damage calculation
     def on_critical_hit(self, player : Belligerent):
+        # Base damage boost from critical strikes
+        bonus_occ = player.type == "Engineer"
+        player.damage *= 1.75 if bonus_occ else 1.5
+
+        # Applicable acolytes: Aulus, Ayesha
+        acolytes = [a.acolyte_name for a in (player.acolyte1, player.acolyte2)]
+        if "Aulus" in acolytes:
+            player.attack += 50
+        if "Ayesha" in acolytes:
+            player.heal += player.attack / 5
+
+        # Accessory Effects?
+        # Boss Effects?
+
         return player
 
     # Below events will all be part of on_damage
     def run_events(self, agent : Belligerent, object : Belligerent):
+        acolytes = [a.acolyte_name for a in (agent.acolyte1, agent.acolyte2)]
         # ON_DAMAGE : Any time the agent deals damage
-
+        if "Paterius" in acolytes:
+            agent.damage += 15
 
         # ON_ATTACK : Agent attacks
 
@@ -315,10 +342,18 @@ class CombatInstance:
 
 
         # ON_HEAL : Agent heals
-
+        if agent.last_move == "Heal":
+            agent.heal += agent.max_hp / 10
+            agent.heal *= 2 if agent.type == "Butcher" else 1
 
         # ON_BIDE : Agents bides
+        if agent.last_move == "Bide":
+            agent.attack *= 1.1
 
+        # GENERAL DAMAGE CALC
+        if agent.type == "Boss" and object.type == "Leatherworker":
+            # Leatherworkers get more defense in PvE
+            agent.damage *= 0.85
 
         return agent, object
 
