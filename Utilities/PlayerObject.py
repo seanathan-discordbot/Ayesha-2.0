@@ -569,6 +569,52 @@ class Player:
                 """
         await conn.execute(psql, adventure, destination, self.disc_id)
 
+    async def log_pve(self, conn : asyncpg.Connection, victory : bool):
+        """Increments the player's boss_fights counter, and boss_wins
+        if applicable.
+        """
+        if victory:
+            self.boss_fights += 1
+            self.boss_wins += 1
+            psql = """
+                    UPDATE players
+                    SET 
+                        bosswins = bosswins + 1,
+                        bossfights = bossfights + 1
+                    WHERE user_id = $1;
+                    """
+        else:
+            self.boss_fights += 1
+            psql = """
+                    UPDATE players
+                    SET bossfights = bossfights + 1
+                    WHERE user_id = $1;
+                    """
+        await conn.execute(psql, self.disc_id)
+
+    async def log_pvp(self, conn : asyncpg.Connection, victory : bool):
+        """Increments the player's pvp_fights counter, and pvp_wins
+        if applicable.
+        """
+        if victory:
+            self.pvp_fights += 1
+            self.pvp_wins += 1
+            psql = """
+                    UPDATE players
+                    SET 
+                        pvpwins = pvpwins + 1,
+                        pvpfights = pvpfights + 1
+                    WHERE user_id = $1;
+                    """
+        else:
+            self.pvp_fights += 1
+            psql = """
+                    UPDATE players
+                    SET pvpfights = pvpfights + 1
+                    WHERE user_id = $1;
+                    """
+        await conn.execute(psql, self.disc_id)
+
     def get_attack(self) -> int:
         """Returns the player's attack stat, calculated from all other sources.
         The value returned by this method is 'the final say' on the stat.
