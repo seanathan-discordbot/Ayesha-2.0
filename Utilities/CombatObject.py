@@ -117,7 +117,13 @@ class Belligerent:
         if difficulty <= 25:
             name = Vars.BOSSES[difficulty]
         else:
-            name = "REDACTED"
+            names = ( # credit to rea
+                "Spinning Sphinx", "Black Witch of the Prairie", "Crocc",
+                "James Juvenile", "Shorttimber King", "Darkness of the Dark",
+                "Sealed Demon Lord", "Elysia", "Three-headed Anaconda",
+                "Blood Tiger", "The Great Imyutarian", "Corrupted Dragon Slayer"
+            )
+            name = random.choice(names)
 
         if difficulty == 1:
             attack = 1
@@ -311,15 +317,19 @@ class CombatInstance:
         output = f"**Turn {self.turn}:** "
         for p in (self.player1, self.player2):
             if p.last_move in ("Attack", "Block", "Parry"):
+                temp = {
+                    "Attack" : "attacked",
+                    "Block" : "blocked",
+                    "Parry" : "parried"
+                }
                 output += (
-                    f"**{p.name}** decided to {p.last_move.lower()}, "
-                    f"and dealt **{p.damage}** damage. ")
+                    f"**{p.name}** {temp[p.last_move]} for **{p.damage}** "
+                    f"damage. ")
             elif p.last_move == "Heal":
-                output += f"**{p.name}** healed themselves for `{p.heal}` HP. "
+                output += f"**{p.name}** healed for **{p.heal}** HP. "
             else:
                 output += (
-                    f"**{p.name}** saved their strength for a turn and "
-                    f"received a 10% ATK boost! ")
+                    f"**{p.name}** bided their time. ")
         return output
 
     # Independent event as it happens during damage calculation
