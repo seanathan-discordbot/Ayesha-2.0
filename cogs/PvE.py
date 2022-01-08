@@ -91,6 +91,9 @@ class PvE(commands.Cog):
         # Main game loop
         interaction = await ctx.respond("Loading battle...")
         turn_counter = 1
+        boss_next_move = random.choices(
+            population=["Attack", "Block", "Parry", "Heal", "Bide"],
+            weights=[50, 20, 20, 3, 7])[0]
         # Stores string information to display to player
         recent_turns = [
             f"Battle begins between **{player.name}** and **{boss.name}**.",] 
@@ -127,11 +130,23 @@ class PvE(commands.Cog):
                     f"You fled the battle as you ran out of time to move.")
 
             player.last_move = view.choice
-            boss.last_move = random.choice(["Attack", "Block", "Parry"])
+            boss.last_move = boss_next_move
+            boss_next_move = random.choices(
+                population=["Attack", "Block", "Parry", "Heal", "Bide"],
+                weights=[50, 20, 20, 3, 7])[0]
 
             # Calculate damage based off actions
             combat_turn = CombatInstance(player, boss, turn_counter)
-            recent_turns.append(combat_turn.get_turn_str())
+            turn_msg = combat_turn.get_turn_str()
+            if random.randint(1,100) < 55: # ~60% chance of accurate prediction 
+                turn_msg += (
+                    f"**{boss.name}** seems poised to "
+                    f"**{boss_next_move}**!")
+            else: # Throw the player off with a lie (might be true though)
+                deception = random.choice(
+                    ["Attack", "Block", "Parry", "Heal", "Bide"])
+                turn_msg += f"**{boss.name}** seems poised to **{deception}**!"
+            recent_turns.append(turn_msg)
             player, boss = combat_turn.apply_damage() # Apply to belligerents
 
             # Check for victory
