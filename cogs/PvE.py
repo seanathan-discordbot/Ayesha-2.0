@@ -145,6 +145,7 @@ class PvE(commands.Cog):
             armor = None
 
             if boss.current_hp <= 0: # Win
+                victory = True
                 if player.current_hp < 1:
                     player.current_hp = 1
 
@@ -170,6 +171,7 @@ class PvE(commands.Cog):
                 header = f"You had {player.current_hp} HP remaining."
 
             else: # Loss
+                victory = False
                 if boss.current_hp < 1:
                     boss.current_hp = 1
                 gold = 0
@@ -203,6 +205,7 @@ class PvE(commands.Cog):
 
             await author.give_gold(conn, gold)
             await author.check_xp_increase(conn, ctx, xp)
+            await author.log_pve(conn, victory)
 
         await interaction.edit_original_message(embed=embed, view=None)
 
