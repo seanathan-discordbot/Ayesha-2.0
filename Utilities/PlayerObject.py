@@ -777,3 +777,33 @@ async def get_player_count(conn : asyncpg.Connection):
             FROM players;
             """
     return await conn.fetchval(psql)
+
+async def get_comptroller(conn : asyncpg.Connection):
+    """Returns a record containing the current comptrollers's ID and username.
+    Keys: officeholder, user_name
+    """
+    psql1 = """
+            SELECT officeholders.officeholder, players.user_name
+            FROM officeholders
+            INNER JOIN players
+                ON officeholders.officeholder = players.user_id
+            WHERE office = 'Comptroller'
+            ORDER BY id DESC
+            LIMIT 1;
+            """
+    return await conn.fetchrow(psql1)
+
+async def get_mayor(conn : asyncpg.Connection):
+    """Returns a record containing the current mayor's ID and username.
+    Keys: officeholder, user_name
+    """
+    psql1 = """
+            SELECT officeholders.officeholder, players.user_name
+            FROM officeholders
+            INNER JOIN players
+                ON officeholders.officeholder = players.user_id
+            WHERE office = 'Mayor'
+            ORDER BY id DESC
+            LIMIT 1;
+            """
+    return await conn.fetchrow(psql1)
