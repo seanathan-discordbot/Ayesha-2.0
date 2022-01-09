@@ -77,6 +77,7 @@ class Belligerent:
         self.assc = assc
         # For gameplay
         self.last_move = None
+        self.crit_hit = False
         self.damage = 0
         self.heal = 0
 
@@ -139,7 +140,7 @@ class Belligerent:
             attack = difficulty * 20
             crit = 65
             hp = difficulty * 125
-            defense = 55
+            defense = 60
 
         return cls(name, "Boss", attack, crit, hp, defense)
 
@@ -149,7 +150,7 @@ class ActionChoice(discord.ui.View):
     def __init__(self, author_id : int):
         self.author_id = author_id
         self.choice = None
-        super().__init__(timeout=10)
+        super().__init__(timeout=30)
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, 
             emoji="🗡️")
@@ -219,7 +220,7 @@ ACTION_COMBOS = {
     },
     "Parry" : {
         "Attack" : .5,
-        "Block" : 0,
+        "Block" : .25,
         "Parry" : .75,
         "Heal" : .75,
         "Bide" : .5
@@ -306,9 +307,11 @@ class CombatInstance:
         self.player1.last_move = None
         self.player1.damage = 0
         self.player1.heal = 0
+        self.player1.crit_hit = False
         self.player2.last_move = None
         self.player2.damage = 0
         self.player2.heal = 0
+        self.player2.crit_hit = False
 
         return self.player1, self.player2
 
@@ -322,9 +325,14 @@ class CombatInstance:
                     "Block" : "blocked",
                     "Parry" : "parried"
                 }
-                output += (
-                    f"**{p.name}** {temp[p.last_move]} for **{p.damage}** "
-                    f"damage. ")
+                if p.crit_hit:
+                    output += (
+                        f"**{p.name}** critically {temp[p.last_move]} for "
+                        f"**{p.damage}** damage. ")
+                else:
+                    output += (
+                        f"**{p.name}** {temp[p.last_move]} for **{p.damage}** "
+                        f"damage. ")
             elif p.last_move == "Heal":
                 output += f"**{p.name}** healed for **{p.heal}** HP. "
             else:
@@ -337,6 +345,7 @@ class CombatInstance:
         # Base damage boost from critical strikes
         bonus_occ = player.type == "Engineer"
         player.damage *= 1.75 if bonus_occ else 1.5
+        player.crit_hit = True
 
         # Applicable acolytes: Aulus, Ayesha
         acolytes = [a.acolyte_name for a in (player.acolyte1, player.acolyte2)]
@@ -392,39 +401,3 @@ class CombatInstance:
     @staticmethod
     def on_turn_end(player1 : Belligerent, player2 : Belligerent):
         return player1, player2
-
-
-
-
-
-
-# Outlined below is a general idea of how PvE was performed before
-"""
-Loads Player Battle Info
-	Discord ID
-	Attack, Crit, HP (current), Max_HP
-	Player's Class
-	Acolyte 1 and 2 (can become AcolyteObject)
-	Strategy
-Loads Enemy Battle Info
-
-Creates combat embed
-	Displays combat stats and action messages
-
-Battle begins with turn counter initialized at 0
-(Event) on game begin
-Chooses random player and enemy actions
-Calculates damage and heal amounts
-	(Event) acolytes dealing damage
-	Determines critical strike
-		(Event) Engineer class bonus
-		(Event) acolytes on crit
-		(Event) boss on crit
-(Event) acolytes on turn end
-(Event) boss on turn end
-Butcher and Leatherworker applied to damage and HP
-FINALLY actually changes participants stats accordingly
-Checks for victory/loss
-
-Also includes a strategy command (maybe unnecessary)
-"""
