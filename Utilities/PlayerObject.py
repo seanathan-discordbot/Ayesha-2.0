@@ -99,7 +99,7 @@ class Player:
         self.destination = record['destination']
         self.gravitas = record['gravitas']
         self.resources = None
-        self.daily_streak = record['daily_streak']
+        self.pve_limit = record['pve_limit']
 
     async def _load_equips(self, conn : asyncpg.Connection):
         """Converts object variables from their IDs into the proper objects.
@@ -124,10 +124,10 @@ class Player:
         Pass get_next as true to also get the xp needed to level up.
         """
         def f(x):
-            return int(20 * x**3 + 500)
+            return int(10 * x**3 + 500)
         
         def g(x):
-            return int(2/5 * x**4 + 250000)
+            return int(1/5 * x**4 + 108500)
 
         if self.xp <= 540500: # Simpler scaling for first 30 levels
             level = 0
@@ -569,11 +569,67 @@ class Player:
                 """
         await conn.execute(psql, adventure, destination, self.disc_id)
 
+    async def log_pve(self, conn : asyncpg.Connection, victory : bool):
+        """Increments the player's boss_fights counter, and boss_wins
+        if applicable.
+        """
+        if victory:
+            self.boss_fights += 1
+            self.boss_wins += 1
+            psql = """
+                    UPDATE players
+                    SET 
+                        bosswins = bosswins + 1,
+                        bossfights = bossfights + 1
+                    WHERE user_id = $1;
+                    """
+        else:
+            self.boss_fights += 1
+            psql = """
+                    UPDATE players
+                    SET bossfights = bossfights + 1
+                    WHERE user_id = $1;
+                    """
+        await conn.execute(psql, self.disc_id)
+
+    async def log_pvp(self, conn : asyncpg.Connection, victory : bool):
+        """Increments the player's pvp_fights counter, and pvp_wins
+        if applicable.
+        """
+        if victory:
+            self.pvp_fights += 1
+            self.pvp_wins += 1
+            psql = """
+                    UPDATE players
+                    SET 
+                        pvpwins = pvpwins + 1,
+                        pvpfights = pvpfights + 1
+                    WHERE user_id = $1;
+                    """
+        else:
+            self.pvp_fights += 1
+            psql = """
+                    UPDATE players
+                    SET pvpfights = pvpfights + 1
+                    WHERE user_id = $1;
+                    """
+        await conn.execute(psql, self.disc_id)
+
+    async def increment_pve_limit(self, conn : asyncpg.Connection):
+        """Increase the player's PVE limit by 1"""
+        self.pve_limit += 1
+        psql = """
+                UPDATE players
+                SET pve_limit = pve_limit + 1
+                WHERE user_id = $1;
+                """
+        await conn.execute(psql, self.disc_id)
+
     def get_attack(self) -> int:
         """Returns the player's attack stat, calculated from all other sources.
         The value returned by this method is 'the final say' on the stat.
         """
-        attack = 10 + int(self.level / 3)
+        attack = 10 + int(self.level / 2)
         attack += self.equipped_item.attack
         attack += self.acolyte1.get_attack()
         attack += self.acolyte2.get_attack()
@@ -610,7 +666,7 @@ class Player:
         """Returns the player's HP stat, calculated from all other sources.
         The value returned by this method is 'the final say' on the stat.
         """
-        hp = 500 + self.level
+        hp = 500 + self.level * 3
         hp += self.acolyte1.get_hp()
         hp += self.acolyte2.get_hp()
         hp += Vars.ORIGINS[self.origin]['hp_bonus']
@@ -660,7 +716,7 @@ async def get_player_by_id(conn : asyncpg.Connection, user_id : int) -> Player:
                 players.adventure,
                 players.destination,
                 players.gravitas,
-                players.daily_streak,
+                players.pve_limit,
                 equips.helmet,
                 equips.bodypiece,
                 equips.boots,

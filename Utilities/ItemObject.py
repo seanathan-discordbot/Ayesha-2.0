@@ -143,8 +143,8 @@ class Armor:
         Parameters
         ----------
         Optional[record] : asyncpg.Record
-            A record containing information from the armor table
-            Pass nothing to create an empty weapon
+            A record containing information from the armor table.
+            Pass nothing to create an empty armor piece.
         """
         if record is not None:
             self.is_empty = False

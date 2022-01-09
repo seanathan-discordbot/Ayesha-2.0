@@ -1,7 +1,7 @@
 ACOLYTE_LIST_PATH = r'F:\OneDrive\Python_Projects\Ayesha_Rewrite\Assets\Acolyte_List.json'
 # ACOLYTE_LIST_PATH = r'C:\Users\sebas\OneDrive\Python_Projects\Ayesha_Rewrite\Assets\Acolyte_List.json'
 
-ABLUE =  0xBEDCF6
+ABLUE = 0xBEDCF6
 
 ACCESSORY_BONUS = {
     'Lucky' : {
@@ -205,6 +205,34 @@ ARMOR_DEFENSE = {
         'Mysterious' : 15,
         'Dragonscale' : 18
     },
+}
+
+BOSSES = {
+    1 : "Bortoise",
+    2 : "Tavern Drunkard",
+    3 : "Thief",
+    4 : "Wild Boar",
+    5 : "Sean",
+    6 : "Roadside Brigands",
+    7 : "Verricosus",
+    8 : "Corrupt Knight",
+    9 : "Rabid Bear",
+    10 : "Maritimialan Shaman",
+    11 : "Apprecenticeship Loan Debt Collector",
+    12 : "Maritimialana Blood Oathsworn",
+    13 : "Moonlight Wolf Pack",
+    14 : "Cursed Huntress",
+    15 : "Crumidian Warriors",
+    16 : "Naysayers of the Larry Almighty",
+    17 : "John",
+    18 : "Osprey Imperial Assassin",
+    19 : "Arquitenio",
+    20 : "Tomyris",
+    21 : "Lucius Porcius Magnus Dux",
+    22 : "Laidirix",
+    23 : "Sanguirix",
+    24 : "Supreme Ducc",
+    25 : "Draconicus Rex"
 }
 
 DEFAULT_ICON = "https://upload.wikimedia.org/wikipedia/commons/a/ac/White_flag_of_surrender.svg"
