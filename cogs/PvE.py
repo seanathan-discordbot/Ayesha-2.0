@@ -4,14 +4,13 @@ from discord.commands.commands import Option, OptionChoice
 from discord.ext import commands, pages
 from discord.ext.commands import BucketType, cooldown
 
-import asyncio
 import random
 
 from Utilities import Checks, CombatObject, ItemObject, PlayerObject, Vars
 from Utilities.CombatObject import CombatInstance
 
 class PvE(commands.Cog):
-    """Association Text"""
+    """PvE Text"""
 
     def __init__(self, bot):
         self.bot = bot
@@ -71,6 +70,7 @@ class PvE(commands.Cog):
     # COMMANDS
     @commands.slash_command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
+    @cooldown(1, 15, BucketType.user)
     async def pve(self, ctx,
             level : Option(int,
                 description="The difficulty level of your opponent",
@@ -150,8 +150,7 @@ class PvE(commands.Cog):
             player, boss = combat_turn.apply_damage() # Apply to belligerents
 
             # Check for victory
-            end_condition = boss.current_hp <= 0 or player.current_hp <= 0 
-            if end_condition or turn_counter > 50:
+            if boss.current_hp <= 0 or player.current_hp <= 0:
                 break
 
             # Set up for next turn
