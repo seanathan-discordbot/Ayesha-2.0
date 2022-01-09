@@ -59,7 +59,8 @@ class Ayesha(commands.AutoShardedBot):
             "cogs.Gacha",
             "cogs.Occupations",
             "cogs.Associations",
-            "cogs.PvE"
+            "cogs.PvE",
+            "cogs.PvP"
         )
 
         for cog in self.init_cogs:
