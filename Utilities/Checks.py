@@ -2,6 +2,8 @@ import discord
 
 from discord.ext import commands
 
+from Utilities.config import ADMINS
+
 class HasChar(commands.CheckFailure):
     def __init__(self, user, *args, **kwargs):
         self.user = user
@@ -130,6 +132,9 @@ class InvalidRankName(Exception):
         self.rank = rank
 
 class NonexistentPlayer(Exception):
+    pass
+
+class NotAdmin(Exception):
     pass
 
 # --- NOW FOR THE ACTUAL CHECKS :) ---
@@ -261,3 +266,9 @@ async def is_assc_officer(ctx):
     if rank not in ("Leader", "Officer"):
         raise IncorrectAssociationRank("Officer")
     return True
+
+def is_admin(ctx):
+    if ctx.author.id in ADMINS:
+        return True
+    else:
+        raise NotAdmin

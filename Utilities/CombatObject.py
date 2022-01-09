@@ -221,9 +221,9 @@ ACTION_COMBOS = {
     "Parry" : {
         "Attack" : .5,
         "Block" : .25,
-        "Parry" : .75,
-        "Heal" : .75,
-        "Bide" : .5
+        "Parry" : .67,
+        "Heal" : .67,
+        "Bide" : .10
     },
     "Heal" : {
         "Attack" : 0,
@@ -365,6 +365,10 @@ class CombatInstance:
         # ON_DAMAGE : Any time the agent deals damage
         if "Paterius" in acolytes:
             agent.damage += 15
+
+        if self.turn == 1 and agent.type == "Hunter":
+            # Hunters get first hit bonus
+            agent.damage += agent.attack
 
         # ON_ATTACK : Agent attacks
 
