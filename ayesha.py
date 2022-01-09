@@ -60,7 +60,8 @@ class Ayesha(commands.AutoShardedBot):
             "cogs.Occupations",
             "cogs.Associations",
             "cogs.PvE",
-            "cogs.PvP"
+            "cogs.PvP",
+            "cogs.Raid"
         )
 
         for cog in self.init_cogs:
@@ -77,6 +78,11 @@ class Ayesha(commands.AutoShardedBot):
     async def on_ready(self):
         gp = "Slash commands added!"
         self.loop.create_task(self.change_presence(activity=discord.Game(gp)))
+
+        self.announcement_channel = await self.fetch_channel(
+            Vars.ANNOUNCEMENT_CHANNEL)
+        self.raider_role = self.announcement_channel.guild.get_role(
+            Vars.RAIDER_ROLE)
 
         print("Ayesha is online.")
 
