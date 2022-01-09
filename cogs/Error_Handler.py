@@ -76,6 +76,17 @@ class Error_Handler(commands.Cog):
                 "You can only have 1 instance of this command running at once.")
             print_traceback = False
 
+        if isinstance(error, CommandOnCooldown):
+            if error.retry_after >= 3600:
+                cd_length = time.strftime(
+                    "%H:%M:%S", time.gmtime(error.retry_after))
+            else:
+                cd_length = time.strftime(
+                    "%M:%S", time.gmtime(error.retry_after))
+            message = (f"You are on cooldown for `{cd_length}`.")
+            await ctx.respond(message)
+            print_traceback = False
+
         # --- COMMAND ERRORS ---
         if isinstance(error, ApplicationCommandInvokeError):
             # --- COOLDOWN ERRORS ---
@@ -143,6 +154,11 @@ class Error_Handler(commands.Cog):
             if isinstance(error.original, Checks.NotArmorOwner):
                 message = f"You do not own the armor with this ID."
                 await ctx.respond(message)
+                print_traceback = False
+
+            if isinstance(error.original, Checks.NotAdmin):
+                message = f"This command is reserved for admins."
+                await ctx.respond(message, ephemeral=True)
                 print_traceback = False
 
             # --- ASSOCIATIONS ---

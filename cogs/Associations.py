@@ -656,7 +656,7 @@ class Associations(commands.Cog):
     @commands.check(Checks.in_guild)
     @cooldown(1, 7200, BucketType.user)
     async def invest(self, ctx, capital : Option(int,
-            description="The amount of money you are investing",
+            description="The amount of money you are investing, up to 250000",
             min_value=100,
             max_value=250000)):
         """Invest in a nearby project and gain/lose some money."""

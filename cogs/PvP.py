@@ -1,5 +1,4 @@
 import discord
-from discord import player
 from discord.commands.commands import Option, OptionChoice
 
 from discord.ext import commands, pages
