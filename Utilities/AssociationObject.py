@@ -341,9 +341,14 @@ class Association:
         if player.assc.id != self.id:
             raise Checks.PlayerNotInSpecifiedAssociation("Brotherhood")
 
-        current = self.get_champions(conn)
-        current_ids = [p.disc_id for p in current]
-        if player.id in current_ids:
+        current = await self.get_champions(conn)
+        current_ids = []
+        for champ in current:
+            try:
+                current_ids.append(champ.disc_id)
+            except AttributeError: # no champion, so no disc ID
+                pass
+        if player.disc_id in current_ids:
             raise Checks.PlayerAlreadyChampion
 
         if slot == 1:
@@ -396,6 +401,15 @@ class Association:
             raise discord.InvalidArgument
 
         await conn.execute(psql, self.id)
+
+    async def set_territory_controller(self, conn : asyncpg.Connection, 
+            area : str):
+        """Sets the guild to be the controller of the given territory."""
+        psql = """
+                INSERT INTO area_control (area, owner)
+                VALUES ($1, $2);
+                """
+        await conn.execute(psql, area, self.id)
 
 
 async def get_assc_by_id(conn : asyncpg.Connection, 
