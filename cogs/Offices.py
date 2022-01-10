@@ -9,7 +9,7 @@ import asyncio
 import random
 import schedule
 
-from Utilities import Checks, Finances, ItemObject, PlayerObject, Vars
+from Utilities import AssociationObject, Checks, Finances, ItemObject, PlayerObject, Vars
 
 class Offices(commands.Cog):
     """Offices Text"""
@@ -119,6 +119,54 @@ class Offices(commands.Cog):
         embed.set_image(url="https://i.imgur.com/jpLztYK.jpg")
 
         await ctx.respond(embed=embed)
+
+    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_mayor)
+    @cooldown(1, 43200, BucketType.user)
+    async def tax(self, ctx, tax_rate : Option(float,
+            description="The new tax rate as a percentage (0-9.99)",
+            min_value=0,
+            max_value=9.99)):
+        """Set the tax rate over Aramythia, earning you a small percentage."""
+        tax_rate = round(tax_rate, 2)
+        async with self.bot.db.acquire() as conn:
+            await Finances.set_tax_rate(conn, tax_rate, ctx.author.id)
+        await ctx.respond("You have changed the tax rate.")
+        await self.bot.announcement_channel.send(
+            f"Mayor {ctx.author.mention} has set the tax rate to `{tax_rate}%`."
+        )
+
+    @commands.slash_command(guild_ids=[762118688567984151])
+    async def territories(self, ctx):
+        """See which brotherhoods control the outlying areas of the map."""
+        async with self.bot.db.acquire() as conn:
+            # Tuple with area and the accompanying owner Association Object
+            te_list = [
+                (area, await AssociationObject.get_territory_controller(
+                    conn, area))
+                for area in Vars.TRAVEL_LOCATIONS]
+            
+            embed = discord.Embed(
+                title="Territories Controlled by a Brotherhood",
+                description=(
+                    "Brotherhoods in control of a territory get a 50% bonus "
+                    "to rewards from `/work` in that territory."),
+                color=Vars.ABLUE)
+            
+            for assc in te_list:
+                text = assc[1].name
+                if not assc[1].is_empty:
+                    text += f" (ID: `{assc[1].id}`)"
+                embed.add_field(name=assc[0], value=text)
+
+            await ctx.respond(embed=embed)
+
+
+
+            
+
+
+            
 
     
 

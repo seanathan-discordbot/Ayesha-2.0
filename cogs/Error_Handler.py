@@ -188,6 +188,20 @@ class Error_Handler(commands.Cog):
                 await ctx.respond(message)
                 print_traceback = False
 
+        # --- OFFICES ---
+        if isinstance(error, Checks.NotMayor):
+            message = (
+                "This command is reserved to the mayor only. Join a "
+                "college and get a lot of gravitas to become elected one.")
+            await ctx.respond(message)
+            print_traceback = False
+
+        if isinstance(error, Checks.NotComptroller):
+            message = (
+                "This command is reserved to the comptroller only. Join a "
+                "guild and become the richest player to become one.")
+            await ctx.respond(message)
+            print_traceback = False
 
         # --- ARGUMENT ERRORS ---
         if isinstance(error, Checks.ExcessiveCharacterCount):
