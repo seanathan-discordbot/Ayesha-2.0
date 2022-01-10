@@ -188,6 +188,20 @@ class Error_Handler(commands.Cog):
                 await ctx.respond(message)
                 print_traceback = False
 
+            if isinstance(error.original, Checks.PlayerAlreadyChampion):
+                message = (
+                    f"The player you have specified is already oen of your "
+                    f"brotherhood's champions.")
+                await ctx.respond(message)
+                print_traceback = False
+
+            if isinstance(
+                    error.original, Checks.PlayerNotInSpecifiedAssociation):
+                message = (
+                    f"This player is not in your {error.original.type}.")
+                await ctx.respond(message)
+                print_traceback = False
+
         # --- OFFICES ---
         if isinstance(error, Checks.NotMayor):
             message = (
