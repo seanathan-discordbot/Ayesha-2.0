@@ -454,3 +454,16 @@ async def create_assc(conn : asyncpg.Connection, name : str, type : str,
     if type == "Brotherhood":
         await conn.execute(psql3, assc_id)
     return await get_assc_by_id(conn, assc_id)
+
+async def get_territory_controller(conn : asyncpg.Connection, area : str):
+    """Returns the Association object of the brotherhood in control of 
+    the given area.
+    """
+    psql = """
+            SELECT owner
+            FROM area_control
+            WHERE area = $1
+            ORDER BY id DESC
+            LIMIT 1;
+            """
+    return await get_assc_by_id(conn, await conn.fetchval(psql, area))
