@@ -144,7 +144,7 @@ class Offices(commands.Cog):
             te_list = [
                 (area, await AssociationObject.get_territory_controller(
                     conn, area))
-                for area in Vars.TRAVEL_LOCATIONS]
+                for area in Vars.TERRITORIES]
             
             embed = discord.Embed(
                 title="Territories Controlled by a Brotherhood",
@@ -160,15 +160,6 @@ class Offices(commands.Cog):
                 embed.add_field(name=assc[0], value=text)
 
             await ctx.respond(embed=embed)
-
-
-
-            
-
-
-            
-
-    
 
 
 def setup(bot):

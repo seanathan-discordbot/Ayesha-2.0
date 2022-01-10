@@ -7,7 +7,7 @@ import json
 import random
 import time
 
-from Utilities import AcolyteObject, Checks, PlayerObject, ItemObject, Vars
+from Utilities import AcolyteObject, AssociationObject, Checks, PlayerObject, ItemObject, Vars
 from Utilities.Finances import Transaction
 
 class Travel(commands.Cog):
@@ -315,7 +315,11 @@ class Travel(commands.Cog):
                 bonus = 1.5
             else:
                 bonus = .5
-            # TODO: Implement Brotherhood Map Control Bonus
+            # Brotherhood Map Control Bonus
+            bonus_bh = await AssociationObject.get_territory_controller(
+                conn, player.location)
+            if player.assc.id == bonus_bh.id:
+                bonus += .5
 
             if workplace == "Smalltown Gig":
                 employer = random.choice((
