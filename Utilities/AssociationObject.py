@@ -481,3 +481,13 @@ async def get_territory_controller(conn : asyncpg.Connection, area : str):
             LIMIT 1;
             """
     return await get_assc_by_id(conn, await conn.fetchval(psql, area))
+
+async def log_area_attack(conn : asyncpg.Connection, area : str,
+        attacker : int, defender : int, winner : int):
+    """Log an area attack."""
+    psql = """
+            INSERT INTO area attacks
+                (area, attacker, defender, winner)
+            VALUES ($1, $2, $3, $4);
+            """
+    await conn.execute(psql, area, attacker, defender, winner)
