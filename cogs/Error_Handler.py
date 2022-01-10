@@ -171,7 +171,7 @@ class Error_Handler(commands.Cog):
                 else:
                     message = (
                         f"You need to be in a {error.original.req} to use this "
-                        f"command!\n Ask for an invitation to one or found "
+                        f"command!\nAsk for an invitation to one or found "
                         f"your own with `/association create`!")
                 await ctx.respond(message)
                 print_traceback = False

@@ -152,6 +152,7 @@ class Offices(commands.Cog):
                     "Brotherhoods in control of a territory get a 50% bonus "
                     "to rewards from `/work` in that territory."),
                 color=Vars.ABLUE)
+            embed.set_image(url="https://i.imgur.com/jpLztYK.jpg")
             
             for assc in te_list:
                 text = assc[1].name
