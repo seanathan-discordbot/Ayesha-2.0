@@ -699,6 +699,8 @@ TRAVEL_LOCATIONS = {
         }
     }
 }
+TERRITORIES = [t for t in TRAVEL_LOCATIONS 
+    if TRAVEL_LOCATIONS[t]["Biome"] not in ("City", "Town")]
 
 WEAPON_TYPES = ['Spear', 'Sword', 'Dagger', 'Bow', 'Trebuchet', 'Gauntlets', 
                 'Staff', 'Greatsword', 'Axe', 'Sling', 'Javelin', 'Falx', 
