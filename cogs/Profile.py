@@ -213,6 +213,9 @@ class Profile(commands.Cog):
                 await Analytics.get_xp_rank(conn, player.id))
             pve_rank = Analytics.stringify_rank(
                 await Analytics.get_bosswins_rank(conn, player.id))
+            pvelvl_rank = Analytics.stringify_rank(
+                await Analytics.get_boss_level_rank(conn, player.id)
+            )
             pvp_rank = Analytics.stringify_rank(
                 await Analytics.get_pvpwins_rank(conn, player.id))
             
@@ -259,6 +262,8 @@ class Profile(commands.Cog):
             page2.add_field(name="Reputation",
                 value=(
                     f"Bosses Defeated: `{profile.boss_wins}` (`{pve_rank}`)\n"
+                    f"Highest Level Reached: `{profile.pve_limit}` "
+                    f"(`{pvelvl_rank}`)\n"
                     f"Pvp Wins: `{profile.pvp_wins}` (`{pvp_rank}`)\n"),
                 inline=True)
             page2.add_field(name=f"Equips",
