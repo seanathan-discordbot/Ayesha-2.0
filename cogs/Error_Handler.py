@@ -156,6 +156,11 @@ class Error_Handler(commands.Cog):
                 await ctx.respond(message)
                 print_traceback = False
 
+            if isinstance(error.original, Checks.NotAccessoryOwner):
+                message = f"You do not own the accessory with this ID."
+                await ctx.respond(message)
+                print_traceback = False
+
             if isinstance(error.original, Checks.NotAdmin):
                 message = f"This command is reserved for admins."
                 await ctx.respond(message, ephemeral=True)

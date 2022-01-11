@@ -327,7 +327,6 @@ class Items(commands.Cog):
             paginator.customize_button("last", button_label=">>", 
                 button_style=discord.ButtonStyle.blurple)
             await paginator.send(ctx, ephemeral=False)
-                
 
     @commands.slash_command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
@@ -336,7 +335,8 @@ class Items(commands.Cog):
                 description="Equip either a weapon or armor",
                 choices=[
                     OptionChoice("Equip a Weapon"), 
-                    OptionChoice("Equip Armor")]),
+                    OptionChoice("Equip Armor"),
+                    OptionChoice("Equip an Accessory")]),
             id : Option(int, 
                 description="The ID of the item you want to equip.",
                 required=False)):
@@ -356,13 +356,21 @@ class Items(commands.Cog):
                 await ctx.respond((
                     f"Equipped armor `{armor.id}`: {armor.name} "
                     f"(DEF: `{armor.defense}%`)"))
+            elif equip == "Equip an Accessory" and id is not None:
+                await player.equip_accessory(conn, id)
+                await ctx.respond((
+                    f"Equipped accessory `{player.accessory.id}`: "
+                    f"{player.accessory.name}."))
 
             elif equip == "Equip a Weapon" and id is None:
                 await player.unequip_item(conn)
                 await ctx.respond("Unequipped your item.")
-            else:
+            elif equip == "Equip Armor" and id is None:
                 await player.unequip_armor(conn)
                 await ctx.respond("Unequipped all your armor.")
+            else:
+                await player.unequip_accessory(conn)
+                await ctx.respond("Unequipped your accessory.")
 
     @commands.slash_command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
