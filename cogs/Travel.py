@@ -2,6 +2,7 @@ import discord
 from discord.commands.commands import Option, OptionChoice
 
 from discord.ext import commands
+from discord.ext.commands import BucketType, cooldown
 
 import json
 import random
@@ -192,6 +193,7 @@ class Travel(commands.Cog):
             else: # End the expedition, nothing really matters for this one
                 # Calculate what to give
                 elapsed = int(time.time() - player.adventure)
+
                 hours = 168 if elapsed > 604800 else elapsed / 3600
 
                 if hours < 1: # 100 gold/hr, 50 xp/hr, no gravitas
@@ -302,6 +304,7 @@ class Travel(commands.Cog):
 
     @commands.slash_command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
+    @cooldown(1, 30, BucketType.user)
     async def work(self, ctx, 
             workplace : Option(str,
                 description="What type of work you want to do",
@@ -335,7 +338,7 @@ class Travel(commands.Cog):
                     "blacksmith", "cartographer's study", "library", "manor",
                     "doctor's office", "carpenter's studio", "art studio",
                     "farm", "general goods store", "bar", "tailor", "mill"))
-                income = random.randint(20, 40) # No cooldowns so low income :/
+                income = random.randint(80, 800) # No cooldowns so low income :/
                 await player.give_gold(conn, income)
                 await ctx.respond((f"You did a job at a nearby {employer} and "
                     f"made `{income}` gold."))
@@ -357,9 +360,9 @@ class Travel(commands.Cog):
                 elif player.equipped_item.type == "Javelin":
                     bonus += .25
 
-                income = int(random.randint(1, 10) * bonus)
-                fur = int(random.randint(3, 8) * bonus)
-                bone = int(random.randint(2, 6) * bonus)
+                income = int(random.randint(10, 100) * bonus)
+                fur = int(random.randint(30, 80) * bonus)
+                bone = int(random.randint(20, 60) * bonus)
                 await player.give_gold(conn, income)
                 await player.give_resource(conn, "fur", fur)
                 await player.give_resource(conn, "bone", bone)
@@ -384,9 +387,9 @@ class Travel(commands.Cog):
                 elif player.equipped_item.type in ("Greatsword", "Axe", "Mace"):
                     bonus += .25
 
-                income = int(random.randint(1,10) * bonus)
-                iron = int(random.randint(7, 12) * bonus)
-                silver = int(random.randint(2, 8) * bonus)
+                income = int(random.randint(10,100) * bonus)
+                iron = int(random.randint(70, 120) * bonus)
+                silver = int(random.randint(20, 80) * bonus)
                 await player.give_gold(conn, income)
                 await player.give_resource(conn, "iron", iron)
                 await player.give_resource(conn, "silver", silver)
@@ -401,25 +404,25 @@ class Travel(commands.Cog):
                         f"nothing but trash. Get outside of an urban area!"))
                 elif player.location in ("Fernheim", "Croire"):
                     res = "wheat"
-                    amount = random.randint(5, 12)
+                    amount = random.randint(50, 120)
                 elif player.location in ("Sunset Prairie", "Glakelys"):
                     res = "oat"
-                    amount = random.randint(2, 6)
+                    amount = random.randint(20, 60)
                 elif location_biome == "Forest":
                     res = "wood"
-                    amount = random.randint(3, 10)
+                    amount = random.randint(30, 100)
                 elif location_biome == "Marsh":
                     res = "reeds"
-                    amount = random.randint(12, 24)
+                    amount = random.randint(120, 240)
                 elif location_biome == "Taiga":
                     res = random.choices(["pine", "moss"], [2, 1])[0]
-                    amount = random.randint(9, 13)
+                    amount = random.randint(90, 130)
                 elif location_biome == "Hills":
                     res = "iron"
-                    amount = random.randint(7, 12)
+                    amount = random.randint(70, 120)
                 elif location_biome == "Jungle":
                     res = "cacao"
-                    amount = random.randint(2, 4)
+                    amount = random.randint(20, 40)
 
                 if player.occupation == "Traveller":
                     bonus += 1
@@ -444,23 +447,23 @@ class Travel(commands.Cog):
                 if result == "nothing":
                     await ctx.respond("You waited but did not catch anything.")
                 elif result == '🦦':
-                    await player.give_gold(conn, 1000)
+                    await player.give_gold(conn, 10000)
                     await ctx.respond(
                         f"You caught {result}? It gave you a gold coin before "
                         f"jumping back into the water.")
                 else:
                     if result == '🐟':
-                        gold = random.randint(3, 9)
+                        gold = random.randint(30, 90)
                     elif result == '🐠':
-                        gold = random.randint(9, 18)
+                        gold = random.randint(90, 180)
                     elif result == '🐡':
-                        gold = random.randint(6, 15)
+                        gold = random.randint(60, 150)
                     elif result == '🦈':
-                        gold = random.randint(300, 400)
+                        gold = random.randint(3000, 4000)
                     
                     await player.give_gold(conn, gold)
                     await ctx.respond((
-                        f"You caught a {result}! You sould your prize for "
+                        f"You caught a {result}! You sold your prize for "
                         f"`{gold}` gold."))
             
     @commands.slash_command(guild_ids=[762118688567984151])
