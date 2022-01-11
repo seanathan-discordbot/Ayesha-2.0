@@ -225,6 +225,10 @@ class PvE(commands.Cog):
                 xp = int(xp * 1.2)
             if "Spartacus" in acolytes:
                 gold += 200
+            if player.accessory.prefix == "Lucky":
+                mult = Vars.ACCESSORY_BONUS["Lucky"][player.accessory.type]
+                xp = int(xp * (mult / 100.0))
+                gold = int(gold * (mult / 100.0))
 
             # Create and send embed
             embed = discord.Embed(title=title, color=Vars.ABLUE)
