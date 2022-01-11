@@ -109,20 +109,20 @@ ACCESSORY_BONUS = {
         'Emerald' : 6,
         'Black Opal' : 7
     },
-    'Regal' : { # Get x% more gold from sell
-        'Wood' : 40,
-        'Glass' : 45,
-        'Copper' : 50,
-        'Jade' : 55,
-        'Pearl' : 60,
-        'Aquamarine' : 65,
-        'Sapphire' : 70,
-        'Amethyst' : 75,
-        'Ruby' : 80,
-        'Garnet' : 90,
-        'Diamond' : 100,
-        'Emerald' : 120,
-        'Black Opal' : 150
+    'Regal' : { # Pay x% less taxes 
+        'Wood' : 5,
+        'Glass' : 5,
+        'Copper' : 7,
+        'Jade' : 8,
+        'Pearl' : 10,
+        'Aquamarine' : 12,
+        'Sapphire' : 13,
+        'Amethyst' : 15,
+        'Ruby' : 16,
+        'Garnet' : 18,
+        'Diamond' : 20,
+        'Emerald' : 23,
+        'Black Opal' : 27
     },
     'Demonic' : { # ATK increase
         'Wood' : 25,

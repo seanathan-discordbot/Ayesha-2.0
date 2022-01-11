@@ -676,6 +676,8 @@ class Player:
             attack += int(lvl * (lvl + 1) / 4)
         attack += Vars.OCCUPATIONS[self.occupation]['atk_bonus']
         attack = int(attack * 1.1) if self.occupation == "Soldier" else attack
+        if self.accessory.prefix == "Demonic":
+            attack += Vars.ACCESSORY_BONUS["Demonic"][self.accessory.type]
         # TODO implement comptroller bonus
 
         return attack
@@ -692,6 +694,8 @@ class Player:
         if self.assc.type == "Brotherhood":
             crit += self.assc.get_level()
         crit += Vars.OCCUPATIONS[self.occupation]['crit_bonus']
+        if self.accessory.prefix == "Flexible":
+            crit += Vars.ACCESSORY_BONUS["Flexible"][self.accessory.type]
         # TODO implement comptroller bonus
 
         return crit
@@ -705,6 +709,8 @@ class Player:
         hp += self.acolyte2.get_hp()
         hp += Vars.ORIGINS[self.origin]['hp_bonus']
         hp += Vars.OCCUPATIONS[self.occupation]['hp_bonus']
+        if self.accessory.prefix == "Thick":
+            hp += Vars.ACCESSORY_BONUS["Thick"][self.accessory.type]
         # TODO implement comptroller bonus
 
         return hp
@@ -721,6 +727,8 @@ class Player:
                 base += 3
             if not self.boots.is_empty:
                 base += 3
+        if self.accessory.prefix == "Strong":
+            base += Vars.ACCESSORY_BONUS["Strong"][self.accessory.type]
         return base
 
 

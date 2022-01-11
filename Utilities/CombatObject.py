@@ -269,9 +269,11 @@ class CombatInstance:
         p1_crit_cond = player1.last_move in ("Attack", "Block", "Parry")
         p2_crit_cond = player2.last_move in ("Attack", "Block", "Parry")
         if p1_crit_cond and random.randint(1, 100) < self.player1.crit:
-            self.player1 = self.on_critical_hit(self.player1)
+            self.player1, self.player2 = self.on_critical_hit(
+                agent=self.player1, object=self.player2)
         if p2_crit_cond and random.randint(1, 100) < self.player2.crit:
-            self.player2 = self.on_critical_hit(self.player2)
+            self.player2 , self.player1 = self.on_critical_hit(
+                agent=self.player2, object=self.player1)
 
         # Calculate damage multipliers based off action combinations
         self.player1.damage *= ACTION_COMBOS[self.player1.last_move]\
@@ -346,23 +348,30 @@ class CombatInstance:
         return output
 
     # Independent event as it happens during damage calculation
-    def on_critical_hit(self, player : Belligerent):
+    def on_critical_hit(self, agent : Belligerent, object : Belligerent):
         # Base damage boost from critical strikes
-        bonus_occ = player.type == "Engineer"
-        player.damage *= 1.75 if bonus_occ else 1.5
-        player.crit_hit = True
+        bonus_occ = agent.type == "Engineer"
+        crit_bonus = .75 if bonus_occ else .5
+        agent.crit_hit = True
 
         # Applicable acolytes: Aulus, Ayesha
-        acolytes = [a.acolyte_name for a in (player.acolyte1, player.acolyte2)]
+        acolytes = [a.acolyte_name for a in (agent.acolyte1, agent.acolyte2)]
         if "Aulus" in acolytes:
-            player.attack += 50
+            agent.attack += 50
         if "Ayesha" in acolytes:
-            player.heal += player.attack / 5
+            agent.heal += agent.attack / 5
 
-        # Accessory Effects?
+        # Accessory Effects
+        if object.accessory.prefix == "Shiny": # reduce crit dmg
+            mult = Vars.ACCESSORY_BONUS["Shiny"][object.accessory.type] / 100.0
+            crit_bonus *= 1 - mult
+
         # Boss Effects?
 
-        return player
+        # Apply crit bonuses
+        agent.damage *= 1 + crit_bonus
+
+        return agent, object
 
     # Below events will all be part of on_damage
     def run_events(self, agent : Belligerent, object : Belligerent):
@@ -404,6 +413,9 @@ class CombatInstance:
         if agent.type == "Boss" and object.type == "Leatherworker":
             # Leatherworkers get more defense in PvE
             agent.damage *= 0.85
+        if agent.accessory.prefix == "Thorned":
+            mult = Vars.ACCESSORY_BONUS["Thorned"][agent.accessory.type] / 100.0
+            agent.damage += object.damage * mult # Thorned reflects damage
 
         # ON_COMBAT_END : After everything has been calculated
         if self.turn == 3 and "Onion" in acolytes:

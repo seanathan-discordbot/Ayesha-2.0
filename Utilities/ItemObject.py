@@ -244,8 +244,9 @@ class Accessory:
                 f"`{Vars.ACCESSORY_BONUS[self.prefix][self.type]}` gravitas."
             ),
             "Regal" : (
-                f"The gold you gain from `/sell` and `/work` is increased by "
-                f"`{Vars.ACCESSORY_BONUS[self.prefix][self.type]}%`."
+                f"You pay "
+                f"`{Vars.ACCESSORY_BONUS[self.prefix][self.type]}%` less "
+                f"in taxes."
             ),
             "Demonic" : (
                 f"Increases your attack by "
