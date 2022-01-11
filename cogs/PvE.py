@@ -1,3 +1,4 @@
+from os import access
 import discord
 from discord.commands.commands import Option, OptionChoice
 
@@ -138,7 +139,7 @@ class PvE(commands.Cog):
             # Calculate damage based off actions
             combat_turn = CombatInstance(player, boss, turn_counter)
             turn_msg = combat_turn.get_turn_str()
-            if random.randint(1,100) < 55: # ~60% chance of accurate prediction 
+            if random.randint(1,100) < 60: # ~65% chance of accurate prediction 
                 turn_msg += (
                     f"**{boss.name}** seems poised to "
                     f"**{boss_next_move}**!")
@@ -162,6 +163,7 @@ class PvE(commands.Cog):
         async with self.bot.db.acquire() as conn:
             weapon = None
             armor = None
+            accessory = None
 
             if boss.current_hp <= 0: # Win
                 victory = True
@@ -176,15 +178,18 @@ class PvE(commands.Cog):
 
                 # Possibly get weapons + armor
                 item_rarities = self.level_to_rewards(level)
-                if random.randint(1, 4) == 1 or player.type == "Merchant":
+                if random.randint(1, 10) == 1 or player.type == "Merchant":
                     weapon = await ItemObject.create_weapon(
                         conn, author.disc_id, item_rarities["weapon"])
 
-                if random.randint(1, 100) < 6: # 5% chance at armor
+                if random.randint(1, 20) == 1:
                     armor = await ItemObject.create_armor(
                         conn=conn, user_id=author.disc_id,
                         type=random.choice(("Helmet", "Bodypiece", "Boots")),
                         material=item_rarities['armor'])
+
+                if random.randint(1, 20) == 1:
+                    accessory = True
 
                 title = f"You have defeated {boss.name}!"
                 header = f"You had {player.current_hp} HP remaining."
