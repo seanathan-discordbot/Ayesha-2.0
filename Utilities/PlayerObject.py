@@ -1,6 +1,7 @@
 import discord
 
 import asyncpg
+import time
 
 from Utilities import Checks, ItemObject, Vars, AcolyteObject, AssociationObject
 from Utilities.ItemObject import Weapon
@@ -118,6 +119,14 @@ class Player:
             conn, self.acolyte2)
         self.assc = await AssociationObject.get_assc_by_id(conn, self.assc)
         self.resources = dict(await self.get_backpack(conn))
+
+        # Radishes changes expedition time
+        on_expedition = self.destination == "EXPEDITION"
+        radishes_equipped = "Radishes" in (a.acolyte_name 
+            for a in (self.acolyte1, self.acolyte2))
+        if on_expedition and radishes_equipped:
+            time_bonus = int((time.time() - self.adventure) / 10)
+            self.adventure -= time_bonus # Effectively increases length
 
     def get_level(self, get_next = False) -> int:
         """Returns the player's level.
