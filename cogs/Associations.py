@@ -5,9 +5,12 @@ from discord.ext import commands, pages
 from discord.ext.commands import BucketType, cooldown
 
 from aiohttp import InvalidURL
+from datetime import datetime
 import random
+import time
 
-from Utilities import AcolyteObject, AssociationObject, Checks, PlayerObject, Vars
+from Utilities import AssociationObject, Checks, PlayerObject, Vars
+from Utilities.CombatObject import Belligerent, CombatInstance
 from Utilities.ConfirmationMenu import ConfirmationMenu
 from Utilities.Finances import Transaction
 
@@ -588,24 +591,202 @@ class Associations(commands.Cog):
 
             if champion is None: # Unequip champion in given slot
                 await assc.remove_champion(conn, slot)
-                await ctx.respond(f"Removed the champion in slot {slot}.")
-            else:
-                target = await PlayerObject.get_player_by_id(conn, champion.id)
-                if target.assc.id != player.assc.id:
+                return await ctx.respond(
+                    f"Removed the champion in slot {slot}.")
+            
+            # Make sure player is in the brotherhood
+            target = await PlayerObject.get_player_by_id(conn, champion.id)
+            # if target.assc.id != player.assc.id:
+            #     return await ctx.respond(
+            #         "This player is not in your association.")
+            # Otherwise sets the champion
+            await assc.set_champion(conn, target.disc_id, slot)
+            await ctx.respond(
+                f"Added {target.char_name} to your the brotherhood's "
+                f"roster of champions.")
+
+    @b.command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_player)
+    @commands.check(Checks.in_brotherhood)
+    @commands.check(Checks.is_assc_officer)
+    async def attack(self, ctx):
+        """Challenge another brotherhood to take over an outlying territory."""
+        async with self.bot.db.acquire() as conn:
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+            attacker = player.assc
+
+            # See if territory is available for attack. 1 attack per 3 hours
+            psql = """
+                    SELECT battle_date
+                    FROM area_attacks
+                    WHERE area = $1
+                    ORDER BY id DESC
+                    LIMIT 1;
+                    """
+            last_battle = await conn.fetchval(psql, attacker.base)
+            if last_battle is not None:
+                time_diff = datetime.now() - last_battle
+                if time_diff.total_seconds() < 10800:
+                    time_left = 10800 - time_diff
+                    fseconds = time.gmtime(time_left)
                     return await ctx.respond(
-                        "This player is not in your association.")
-                current = await assc.get_champions(conn)
-                if target.disc_id in [player.disc_id for player in current]:
-                    return await ctx.respond(
-                        "This player is already one of your champions.")
-                await assc.set_champion(conn, target.disc_id, slot)
-                await ctx.respond(
-                    f"Added {target.char_name} to your the brotherhood's "
-                    f"roster of champions.")
+                        f"**{attacker.base}** has already suffered a recent "
+                        f" attack. Please try again in "
+                        f"`{time.strftime('%H:%M:%S', fseconds)}`.")
 
-    # TODO: Implement area attack when a combat system is developed
+            # Load defender and see if attack can be ended prematurely
+            defender = await AssociationObject.get_territory_controller(
+                conn, attacker.base)
+            if defender.is_empty: # Unowned, give to attacker peacefully
+                await attacker.set_territory_controller(conn, attacker.base)
+                await self.bot.announcement_channel.send(
+                    f"**{attacker.name}** (ID: `{attacker.id}`) has seized "
+                    f"control over **{attacker.base}**.")
+                return await ctx.respond(
+                    f"Your guild successfully occupied **{attacker.base}**.")
+            elif attacker.id == defender.id:
+                return await ctx.respond(
+                    f"Your brotherhood is already in control of "
+                    f"**{attacker.base}**!")
 
+            # Load champions from brotherhoods
+            att_team = await attacker.get_champions(conn)
+            def_team = await defender.get_champions(conn)
 
+        # Check for valid fighters or premature victory
+        if att_team == [None]*len(att_team): # See if its no champs
+            return await ctx.respond(
+                "Your brotherhood has no champions. Set some using "
+                "`/brotherhood champion`.")
+            
+        if def_team == [None]*len(def_team):
+            # If defender has no champions, give it away
+            await attacker.set_territory_controller(conn, attacker.base)
+            await self.bot.announcement_channel.send(
+                f"**{attacker.name}** (ID: `{attacker.id}`) has defeated "
+                f"**{defender.name}** (ID: `{defender.id}`) and seized "
+                f"control over **{attacker.base}**!")
+            return await ctx.respond(
+                f"Your guild successfully occupied **{attacker.base}**.")
+
+        # Sort and fill teams, checking for repeats
+        for team in (att_team, def_team):
+            empties = team.count(None)
+            for _ in range(empties):
+                team.remove(None)
+                team.append(team[0])
+
+        # Change to Belligerents for easier stat changes
+        for i in range(len(att_team)):
+            att_team[i] = Belligerent.load_player(att_team[i])
+            def_team[i] = Belligerent.load_player(def_team[i])
+
+        # Nerf repeat characters
+        for team in (att_team, def_team):
+            for i in range(1,len(team)):
+                if team[i].disc_id == team[i-1].disc_id:
+                    team[i].attack = int(team[i].attack * .75)
+                    team[i].current_hp = int(team[i].current_hp * .75)
+                if i == 2 and team[i].disc_id == team[i-2].disc_id:
+                    team[i].attack = int(team[i].attack * .75)
+                    team[i].current_hp = int(team[i].current_hp * .75)
+
+        # Conduct PvP operations between champions
+        attacker_wins = 0
+        defender_wins = 0
+        battle_results = []
+
+        for i in range(len(att_team)): # Always 3
+            turn_counter = 0
+            battle_log = []
+            while True:
+                moves = random.choices( # Determine player moves
+                    population=["Attack", "Block", "Parry"],
+                    weights=[50, 25, 25],
+                    k=2)
+                att_team[i].last_move = moves[0]
+                def_team[i].last_move = moves[1]
+                # SImulate the battle
+                combat = CombatInstance(att_team[i], def_team[i], turn_counter)
+                battle_log.append(combat.get_turn_str())
+                att_team[i], def_team[i] = combat.apply_damage()
+
+                # Break loop under these victory conditions
+                if turn_counter > 5 or att_team[i].current_hp <= 0:
+                    defender_wins += 1
+                    break
+                elif def_team[i].current_hp <= 0:
+                    attacker_wins += 1
+                    break
+                
+                turn_counter += 1
+            # With battle over, create embed displaying results
+            embed = discord.Embed(
+                title=f"Battle for {attacker.base}: {i+1}",
+                color=Vars.ABLUE)
+            embed.add_field(
+                name=att_team[i].name,
+                value=(
+                    f"ATK: `{att_team[i].attack}` | CRIT: `{att_team[i].crit}%`"
+                    f"\nHP: `{att_team[i].current_hp}` | DEF: "
+                    f"`{att_team[i].defense}%`"))  
+            embed.add_field(
+                name=def_team[i].name,
+                value=(
+                    f"ATK: `{def_team[i].attack}` | CRIT: `{def_team[i].crit}%`"
+                    f"\nHP: `{def_team[i].current_hp}` | DEF: "
+                    f"`{def_team[i].defense}%`"))
+            embed.add_field(
+                name="Battle Log", 
+                value="\n\n".join(battle_log),
+                inline=False)
+            battle_results.append(embed)
+
+        # Log battle and change controller
+        if attacker_wins > defender_wins:
+            embed = discord.Embed(
+                title=
+                    f"{attacker.name} has seized control over {attacker.base}!",
+                description=(
+                    f"**{attacker.name}** have bested **{defender.name}** "
+                    f"in a trial of combat, becoming the prominent gang of "
+                    f"the region.\n"
+                    f"View the following pages to see the results of the "
+                    f"battles between both brotherhood's champions."),
+                color=Vars.ABLUE)
+            await attacker.set_territory_controller(conn, attacker.base)
+            winner = attacker.id
+
+        else:
+            embed = discord.Embed(
+                title=
+                    f"{defender.name} retains control over {attacker.base}!",
+                description=(
+                    f"**{defender.name}** have bested **{attacker.name}** "
+                    f"in a trial of combat, protecting their status as the "
+                    f"prominent gang of the region.\n"
+                    f"View the following pages to see the results of the "
+                    f"battles between both brotherhood's champions."),
+                color=Vars.ABLUE)
+            winner = defender.id
+
+        await AssociationObject.log_area_attack(
+            conn, attacker.base, attacker.id, defender.id, winner)
+
+        embed.set_image(url="https://i.imgur.com/jpLztYK.jpg")
+        battle_results.insert(0, embed)
+
+        # Output pages
+        paginator = pages.Paginator(pages=battle_results, timeout=30)
+        paginator.customize_button("next", button_label=">", 
+            button_style=discord.ButtonStyle.green)
+        paginator.customize_button("prev", button_label="<", 
+            button_style=discord.ButtonStyle.green)
+        paginator.customize_button("first", button_label="<<", 
+            button_style=discord.ButtonStyle.blurple)
+        paginator.customize_button("last", button_label=">>", 
+            button_style=discord.ButtonStyle.blurple)
+        await paginator.send(ctx, ephemeral=False)
 
     # --------------------------------------
     # ----- COLLEGE EXCLUSIVE COMMANDS -----

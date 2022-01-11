@@ -341,9 +341,14 @@ class Association:
         if player.assc.id != self.id:
             raise Checks.PlayerNotInSpecifiedAssociation("Brotherhood")
 
-        current = self.get_champions(conn)
-        current_ids = [p.disc_id for p in current]
-        if player.id in current_ids:
+        current = await self.get_champions(conn)
+        current_ids = []
+        for champ in current:
+            try:
+                current_ids.append(champ.disc_id)
+            except AttributeError: # no champion, so no disc ID
+                pass
+        if player.disc_id in current_ids:
             raise Checks.PlayerAlreadyChampion
 
         if slot == 1:
@@ -396,6 +401,15 @@ class Association:
             raise discord.InvalidArgument
 
         await conn.execute(psql, self.id)
+
+    async def set_territory_controller(self, conn : asyncpg.Connection, 
+            area : str):
+        """Sets the guild to be the controller of the given territory."""
+        psql = """
+                INSERT INTO area_control (area, owner)
+                VALUES ($1, $2);
+                """
+        await conn.execute(psql, area, self.id)
 
 
 async def get_assc_by_id(conn : asyncpg.Connection, 
@@ -454,3 +468,26 @@ async def create_assc(conn : asyncpg.Connection, name : str, type : str,
     if type == "Brotherhood":
         await conn.execute(psql3, assc_id)
     return await get_assc_by_id(conn, assc_id)
+
+async def get_territory_controller(conn : asyncpg.Connection, area : str):
+    """Returns the Association object of the brotherhood in control of 
+    the given area.
+    """
+    psql = """
+            SELECT owner
+            FROM area_control
+            WHERE area = $1
+            ORDER BY id DESC
+            LIMIT 1;
+            """
+    return await get_assc_by_id(conn, await conn.fetchval(psql, area))
+
+async def log_area_attack(conn : asyncpg.Connection, area : str,
+        attacker : int, defender : int, winner : int):
+    """Log an area attack."""
+    psql = """
+            INSERT INTO area attacks
+                (area, attacker, defender, winner)
+            VALUES ($1, $2, $3, $4);
+            """
+    await conn.execute(psql, area, attacker, defender, winner)

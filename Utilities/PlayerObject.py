@@ -291,6 +291,40 @@ class Player:
                 """
         await conn.execute(psql, self.disc_id)
 
+    async def is_accessory_owner(self, conn : asyncpg.Connection, 
+            item_id : int) -> bool:
+        """Returns true/false depending on whether the accessory with the given 
+        ID is in this player's wardrobe.
+        """
+        psql = """
+                SELECT accessory_id FROM accessories
+                WHERE user_id = $1 AND accessory_id = $2;
+                """
+        return await conn.fetchval(psql, self.disc_id, item_id) is not None
+
+    async def equip_accessory(self, conn : asyncpg.Connection, item_id : int):
+        """Equips an accessory on the player."""
+        if not await self.is_accessory_owner(conn, item_id):
+            raise Checks.NotAccessoryOwner
+
+        self.accessory = await ItemObject.get_accessory_by_id(conn, item_id)
+
+        psql = """
+                UPDATE equips 
+                SET accessory = $1
+                WHERE user_id = $2;
+                """
+        await conn.execute(psql, item_id, self.disc_id)
+
+    async def unequip_accessory(self, conn : asyncpg.Connection):
+        """Unequips the accessory the player is currently wearing."""
+        psql = """
+                UPDATE equips 
+                SET accessory = NULL
+                WHERE user_id = $1;
+                """
+        await conn.execute(psql, self.disc_id)
+
     async def is_acolyte_owner(self, conn : asyncpg.Connection, 
             a_id : int) -> bool:
         """Returns true/false depending on whether the acolyte with the given
@@ -642,6 +676,8 @@ class Player:
             attack += int(lvl * (lvl + 1) / 4)
         attack += Vars.OCCUPATIONS[self.occupation]['atk_bonus']
         attack = int(attack * 1.1) if self.occupation == "Soldier" else attack
+        if self.accessory.prefix == "Demonic":
+            attack += Vars.ACCESSORY_BONUS["Demonic"][self.accessory.type]
         # TODO implement comptroller bonus
 
         return attack
@@ -658,6 +694,8 @@ class Player:
         if self.assc.type == "Brotherhood":
             crit += self.assc.get_level()
         crit += Vars.OCCUPATIONS[self.occupation]['crit_bonus']
+        if self.accessory.prefix == "Flexible":
+            crit += Vars.ACCESSORY_BONUS["Flexible"][self.accessory.type]
         # TODO implement comptroller bonus
 
         return crit
@@ -671,6 +709,8 @@ class Player:
         hp += self.acolyte2.get_hp()
         hp += Vars.ORIGINS[self.origin]['hp_bonus']
         hp += Vars.OCCUPATIONS[self.occupation]['hp_bonus']
+        if self.accessory.prefix == "Thick":
+            hp += Vars.ACCESSORY_BONUS["Thick"][self.accessory.type]
         # TODO implement comptroller bonus
 
         return hp
@@ -687,6 +727,8 @@ class Player:
                 base += 3
             if not self.boots.is_empty:
                 base += 3
+        if self.accessory.prefix == "Strong":
+            base += Vars.ACCESSORY_BONUS["Strong"][self.accessory.type]
         return base
 
 
@@ -777,3 +819,33 @@ async def get_player_count(conn : asyncpg.Connection):
             FROM players;
             """
     return await conn.fetchval(psql)
+
+async def get_comptroller(conn : asyncpg.Connection):
+    """Returns a record containing the current comptrollers's ID and username.
+    Keys: officeholder, user_name
+    """
+    psql1 = """
+            SELECT officeholders.officeholder, players.user_name
+            FROM officeholders
+            INNER JOIN players
+                ON officeholders.officeholder = players.user_id
+            WHERE office = 'Comptroller'
+            ORDER BY id DESC
+            LIMIT 1;
+            """
+    return await conn.fetchrow(psql1)
+
+async def get_mayor(conn : asyncpg.Connection):
+    """Returns a record containing the current mayor's ID and username.
+    Keys: officeholder, user_name
+    """
+    psql1 = """
+            SELECT officeholders.officeholder, players.user_name
+            FROM officeholders
+            INNER JOIN players
+                ON officeholders.officeholder = players.user_id
+            WHERE office = 'Mayor'
+            ORDER BY id DESC
+            LIMIT 1;
+            """
+    return await conn.fetchrow(psql1)

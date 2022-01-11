@@ -1,6 +1,6 @@
 import asyncpg
 
-from Utilities import Checks, PlayerObject
+from Utilities import Checks, PlayerObject, Vars
 
 class Transaction:
     """A transaction class to streamline purchasing/selling things that
@@ -71,6 +71,9 @@ class Transaction:
             multiplier -= .15
         elif player.gravitas >= 1000:
             multiplier -= .25
+        if player.accessory.prefix == "Regal":
+            a_mult = Vars.ACCESSORY_BONUS["Regal"][player.accessory.type]
+            multiplier -= a_mult / 100.0
         tax_rate = float(await get_tax_rate(conn)) * multiplier
         tax_amount = int(subtotal * tax_rate / 100)
 

@@ -28,43 +28,56 @@ class PvE(commands.Cog):
         if level < 2:
             weapon = "Common"
             armor = "Cloth"
+            accessory = random.choice(["Wood", "Glass", "Copper"])
         elif level < 5:
             weapon = "Common"
             armor = "Leather"
+            accessory = random.choice(["Glass", "Copper", "Jade"])
         elif level < 9:
             weapon = "Common"
             armor = "Gambeson"
+            accessory = random.choice(["Copper", "Jade", "Pearl"])
         elif level == 9:
             weapon = "Uncommon"
             armor = "Bearskin"
+            accessory = random.choice(["Copper", "Jade", "Pearl"])
         elif level == 13:
             weapon = "Uncommon"
             armor = "Wolfskin"
+            accessory = random.choice(["Pearl", "Aquamarine", "Sappire"])
         elif level < 15:
             weapon = "Uncommon"
             armor = "Bronze"
+            accessory = "Sapphire"
         elif level < 18:
             weapon = "Rare"
             armor = "Ceramic Plate"
+            accessory = random.choice(["Sapphire", "Amethyst"])
         elif level < 21:
             weapon = "Rare"
             armor = "Chainmail"
+            accessory = random.choice(["Sapphire", "Amethyst", "Ruby"])
         elif level < 25:
             weapon = "Rare"
             armor = "Iron"
+            accessory = random.choice(["Ruby", "Garnet"])
         elif level < 40:
             weapon = "Epic"
             armor = "Steel"
+            accessory = random.choice(["Ruby", "Garnet", "Diamond"])
         elif level < 50:
             weapon = "Epic"
             armor = "Mysterious"
+            accessory = random.choice(["Garnet", "Diamond", "Emerald"])
         else:
             weapon = "Legendary"
             armor = "Dragonscale"
+            accessory = random.choice(["Emerald", "Black Opal"])
 
         return {
             "weapon" : weapon,
-            "armor" : armor
+            "armor" : armor,
+            "accessory" : accessory
         }
 
     # COMMANDS
@@ -138,7 +151,7 @@ class PvE(commands.Cog):
             # Calculate damage based off actions
             combat_turn = CombatInstance(player, boss, turn_counter)
             turn_msg = combat_turn.get_turn_str()
-            if random.randint(1,100) < 55: # ~60% chance of accurate prediction 
+            if random.randint(1,100) < 60: # ~65% chance of accurate prediction 
                 turn_msg += (
                     f"**{boss.name}** seems poised to "
                     f"**{boss_next_move}**!")
@@ -162,6 +175,7 @@ class PvE(commands.Cog):
         async with self.bot.db.acquire() as conn:
             weapon = None
             armor = None
+            accessory = None
 
             if boss.current_hp <= 0: # Win
                 victory = True
@@ -176,15 +190,20 @@ class PvE(commands.Cog):
 
                 # Possibly get weapons + armor
                 item_rarities = self.level_to_rewards(level)
-                if random.randint(1, 4) == 1 or player.type == "Merchant":
+                if random.randint(1, 10) == 1 or player.type == "Merchant":
                     weapon = await ItemObject.create_weapon(
                         conn, author.disc_id, item_rarities["weapon"])
 
-                if random.randint(1, 100) < 6: # 5% chance at armor
+                if random.randint(1, 20) == 1:
                     armor = await ItemObject.create_armor(
                         conn=conn, user_id=author.disc_id,
                         type=random.choice(("Helmet", "Bodypiece", "Boots")),
                         material=item_rarities['armor'])
+
+                if random.randint(1, 20) == 1:
+                    accessory = await ItemObject.create_accessory(
+                        conn, author.disc_id, item_rarities['accessory'],
+                        random.choice(list(Vars.ACCESSORY_BONUS)))
 
                 title = f"You have defeated {boss.name}!"
                 header = f"You had {player.current_hp} HP remaining."
@@ -206,6 +225,13 @@ class PvE(commands.Cog):
                 xp = int(xp * 1.2)
             if "Spartacus" in acolytes:
                 gold += 200
+            if player.accessory.prefix == "Lucky":
+                mult = Vars.ACCESSORY_BONUS["Lucky"][player.accessory.type]
+                xp = int(xp * (mult / 100.0))
+                gold = int(gold * (mult / 100.0))
+            if player.accessory.prefix == "Old" and level >= 25:
+                gravitas = Vars.ACCESSORY_BONUS["Old"][player.accessory.type]
+                await author.give_gravitas(conn, gravitas)
 
             # Create and send embed
             embed = discord.Embed(title=title, color=Vars.ABLUE)
@@ -228,6 +254,12 @@ class PvE(commands.Cog):
                     value=(
                         f"`{armor.id}`: **{armor.name}**, with {armor.defense} "
                         f" defense!"),
+                    inline=False)
+            if accessory is not None:
+                embed.add_field(
+                    name="You also retrieved a beautiful accessory!",
+                    value=(
+                        f"`{accessory.id}`: **{accessory.name}**"),
                     inline=False)
 
             await author.give_gold(conn, gold)

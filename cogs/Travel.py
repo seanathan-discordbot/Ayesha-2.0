@@ -7,7 +7,7 @@ import json
 import random
 import time
 
-from Utilities import AcolyteObject, Checks, PlayerObject, ItemObject, Vars
+from Utilities import AcolyteObject, AssociationObject, Checks, PlayerObject, ItemObject, Vars
 from Utilities.Finances import Transaction
 
 class Travel(commands.Cog):
@@ -158,6 +158,10 @@ class Travel(commands.Cog):
                 if player.occupation == "Traveler":
                     gold *= 3
                     xp *= 3
+                if player.accessory.prefix == "Lucky":
+                    mult = Vars.ACCESSORY_BONUS["Lucky"][player.accessory.type]
+                    xp = int(xp * (mult / 100.0))
+                    gold = int(gold * (mult / 100.0))
                 if rewards['weapon'] >= random.randint(1,100):
                     new_weapon = await ItemObject.create_weapon(
                         conn=conn,
@@ -231,6 +235,11 @@ class Travel(commands.Cog):
                 if player.occupation == "Farmer":
                     gravitas = int(gravitas * 1.2)
                     gravitas_decay *= 1/2
+                # Accessory bonus
+                if player.accessory.prefix == "Lucky":
+                    mult = Vars.ACCESSORY_BONUS["Lucky"][player.accessory.type]
+                    xp = int(xp * (mult / 100.0))
+                    gold = int(gold * (mult / 100.0))
 
                 # Create the embed to send
                 embed = discord.Embed(title="Expedition Complete!", 
@@ -315,7 +324,11 @@ class Travel(commands.Cog):
                 bonus = 1.5
             else:
                 bonus = .5
-            # TODO: Implement Brotherhood Map Control Bonus
+            # Brotherhood Map Control Bonus
+            bonus_bh = await AssociationObject.get_territory_controller(
+                conn, player.location)
+            if player.assc.id == bonus_bh.id:
+                bonus += .5
 
             if workplace == "Smalltown Gig":
                 employer = random.choice((

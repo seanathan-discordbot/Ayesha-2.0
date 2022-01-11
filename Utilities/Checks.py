@@ -48,6 +48,14 @@ class IncorrectAssociationRank(commands.CheckFailure):
         self.rank = rank
         super().__init__(*args, **kwargs)
 
+class NotMayor(commands.CheckFailure):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+class NotComptroller(commands.CheckFailure):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
 class EmptyObject(Exception):
     pass
 
@@ -64,6 +72,9 @@ class InvalidArmorType(Exception):
     pass
 
 class InvalidArmorMaterial(Exception):
+    pass
+
+class NotAccessoryOwner(Exception):
     pass
 
 class InvalidAccessoryPrefix(Exception):
@@ -272,3 +283,29 @@ def is_admin(ctx):
         return True
     else:
         raise NotAdmin
+
+async def is_mayor(ctx):
+    psql = """
+            SELECT officeholder
+            FROM officeholders
+            WHERE office = 'Mayor'
+            ORDER BY id DESC
+            LIMIT 1;
+            """
+    async with ctx.bot.db.acquire() as conn:
+        if ctx.author.id == await conn.fetchval(psql):
+            return True
+        raise NotMayor
+
+async def is_comptroller(ctx):
+    psql = """
+            SELECT officeholder
+            FROM officeholders
+            WHERE office = 'Comptroller'
+            ORDER BY id DESC
+            LIMIT 1;
+            """
+    async with ctx.bot.db.acquire() as conn:
+        if ctx.author.id == await conn.fetchval(psql):
+            return True
+        raise NotComptroller

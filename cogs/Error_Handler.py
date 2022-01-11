@@ -156,6 +156,11 @@ class Error_Handler(commands.Cog):
                 await ctx.respond(message)
                 print_traceback = False
 
+            if isinstance(error.original, Checks.NotAccessoryOwner):
+                message = f"You do not own the accessory with this ID."
+                await ctx.respond(message)
+                print_traceback = False
+
             if isinstance(error.original, Checks.NotAdmin):
                 message = f"This command is reserved for admins."
                 await ctx.respond(message, ephemeral=True)
@@ -171,7 +176,7 @@ class Error_Handler(commands.Cog):
                 else:
                     message = (
                         f"You need to be in a {error.original.req} to use this "
-                        f"command!\n Ask for an invitation to one or found "
+                        f"command!\nAsk for an invitation to one or found "
                         f"your own with `/association create`!")
                 await ctx.respond(message)
                 print_traceback = False
@@ -188,6 +193,34 @@ class Error_Handler(commands.Cog):
                 await ctx.respond(message)
                 print_traceback = False
 
+            if isinstance(error.original, Checks.PlayerAlreadyChampion):
+                message = (
+                    f"The player you have specified is already oen of your "
+                    f"brotherhood's champions.")
+                await ctx.respond(message)
+                print_traceback = False
+
+            if isinstance(
+                    error.original, Checks.PlayerNotInSpecifiedAssociation):
+                message = (
+                    f"This player is not in your {error.original.type}.")
+                await ctx.respond(message)
+                print_traceback = False
+
+        # --- OFFICES ---
+        if isinstance(error, Checks.NotMayor):
+            message = (
+                "This command is reserved to the mayor only. Join a "
+                "college and get a lot of gravitas to become elected one.")
+            await ctx.respond(message)
+            print_traceback = False
+
+        if isinstance(error, Checks.NotComptroller):
+            message = (
+                "This command is reserved to the comptroller only. Join a "
+                "guild and become the richest player to become one.")
+            await ctx.respond(message)
+            print_traceback = False
 
         # --- ARGUMENT ERRORS ---
         if isinstance(error, Checks.ExcessiveCharacterCount):
