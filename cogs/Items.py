@@ -88,6 +88,20 @@ class Items(commands.Cog):
             start += 1
         
         return embed
+
+    def create_accessory_embed(self, start, inv):
+        embed = discord.Embed(title="Your Wardrobe", color=Vars.ABLUE)
+
+        iteration = 0
+        while start < len(inv) and iteration < 5:
+            embed.add_field(
+                name=f"{inv[start].name}: `{inv[start].id}`",
+                value="Effect goes here",
+                inline=False)
+            iteration += 1
+            start += 1
+
+        return embed
     
     # COMMANDS
     @commands.slash_command(guild_ids=[762118688567984151])
@@ -249,6 +263,71 @@ class Items(commands.Cog):
             paginator.customize_button("last", button_label=">>", 
                 button_style=discord.ButtonStyle.blurple)
             await paginator.send(ctx, ephemeral=False)
+
+    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_player)
+    async def wardrobe(self, ctx, 
+            prefix : Option(str,
+                description="Sort for a specific effect",
+                required=False,
+                choices=[OptionChoice(p) for p in Vars.ACCESSORY_BONUS]),
+            material : Option(str,
+                description="Sort for a specific core material",
+                required=False,
+                choices=[OptionChoice(m) for m in Vars.ACCESSORY_BONUS['Lucky']]
+            )):
+        """Your wardrobe contains all your accessories. View them here."""
+        async with self.bot.db.acquire() as conn:
+            psql = """
+                    SELECT accessory_id
+                    FROM accessories
+                    WHERE user_id = $1 
+                    """
+            if prefix is not None and material is not None:
+                psql += """
+                        AND prefix = $2 AND accessory_type = $3
+                        ORDER BY accessory_id;
+                        """
+                inv = await conn.fetch(psql, ctx.author.id, prefix, material)
+            elif prefix is None and material is not None:
+                psql += """
+                        AND accessory_type = $2
+                        ORDER BY accessory_id;
+                        """
+                inv = await conn.fetch(psql, ctx.author.id, material)
+            elif prefix is not None and material is None:
+                psql += """
+                        AND prefix = $2
+                        ORDER BY accessory_id;
+                        """
+                inv = await conn.fetch(psql, ctx.author.id, prefix)
+            else:
+                psql += " ORDER BY accessory_id;"
+                inv = await conn.fetch(psql, ctx.author.id)
+
+            if len(inv) == 0:
+                return await ctx.respond("Your wardrobe is empty!")
+
+            inv = [await ItemObject.get_accessory_by_id(
+                        conn, record['accessory_id'])
+                    for record in inv] # Turn them into objects (for the name)
+
+        embeds = [self.create_accessory_embed(i, inv)
+            for i in range(0, len(inv), 5)]
+        if len(embeds) == 1:
+            await ctx.respond(embed=embeds[0])
+        else:
+            paginator = pages.Paginator(pages=embeds, timeout=30)
+            paginator.customize_button("next", button_label=">", 
+                button_style=discord.ButtonStyle.green)
+            paginator.customize_button("prev", button_label="<", 
+                button_style=discord.ButtonStyle.green)
+            paginator.customize_button("first", button_label="<<", 
+                button_style=discord.ButtonStyle.blurple)
+            paginator.customize_button("last", button_label=">>", 
+                button_style=discord.ButtonStyle.blurple)
+            await paginator.send(ctx, ephemeral=False)
+                
 
     @commands.slash_command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
