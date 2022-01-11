@@ -381,12 +381,19 @@ class CombatInstance:
 
         # ON_HEAL : Agent heals
         if agent.last_move == "Heal":
-            agent.heal += agent.max_hp / 10
-            agent.heal *= 2 if agent.type == "Butcher" else 1
+            if agent.type != "Boss":
+                agent.heal += agent.max_hp / 5
+                agent.heal *= 2 if agent.type == "Butcher" else 1
+            else:
+                agent.heal += agent.max_hp / 10
 
         # ON_BIDE : Agents bides
         if agent.last_move == "Bide":
-            agent.attack *= 1.1
+            if agent.type != "Boss":
+                agent.attack *= 1.15
+            else:
+                agent.attack *= 1.05
+                
 
         # GENERAL DAMAGE CALC
         if agent.type == "Boss" and object.type == "Leatherworker":
