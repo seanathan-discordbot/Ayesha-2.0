@@ -96,7 +96,7 @@ class Items(commands.Cog):
         while start < len(inv) and iteration < 5:
             embed.add_field(
                 name=f"{inv[start].name}: `{inv[start].id}`",
-                value="Effect goes here",
+                value=inv[start].bonus,
                 inline=False)
             iteration += 1
             start += 1
@@ -360,7 +360,7 @@ class Items(commands.Cog):
                 await player.equip_accessory(conn, id)
                 await ctx.respond((
                     f"Equipped accessory `{player.accessory.id}`: "
-                    f"{player.accessory.name}."))
+                    f"{player.accessory.name}: {player.accessory.bonus}."))
 
             elif equip == "Equip a Weapon" and id is None:
                 await player.unequip_item(conn)
