@@ -1,4 +1,3 @@
-from os import access
 import discord
 from discord.commands.commands import Option, OptionChoice
 
@@ -29,43 +28,56 @@ class PvE(commands.Cog):
         if level < 2:
             weapon = "Common"
             armor = "Cloth"
+            accessory = random.choice(["Wood", "Glass", "Copper"])
         elif level < 5:
             weapon = "Common"
             armor = "Leather"
+            accessory = random.choice(["Glass", "Copper", "Jade"])
         elif level < 9:
             weapon = "Common"
             armor = "Gambeson"
+            accessory = random.choice(["Copper", "Jade", "Pearl"])
         elif level == 9:
             weapon = "Uncommon"
             armor = "Bearskin"
+            accessory = random.choice(["Copper", "Jade", "Pearl"])
         elif level == 13:
             weapon = "Uncommon"
             armor = "Wolfskin"
+            accessory = random.choice(["Pearl", "Aquamarine", "Sappire"])
         elif level < 15:
             weapon = "Uncommon"
             armor = "Bronze"
+            accessory = "Sapphire"
         elif level < 18:
             weapon = "Rare"
             armor = "Ceramic Plate"
+            accessory = random.choice(["Sapphire", "Amethyst"])
         elif level < 21:
             weapon = "Rare"
             armor = "Chainmail"
+            accessory = random.choice(["Sapphire", "Amethyst", "Ruby"])
         elif level < 25:
             weapon = "Rare"
             armor = "Iron"
+            accessory = random.choice(["Ruby", "Garnet"])
         elif level < 40:
             weapon = "Epic"
             armor = "Steel"
+            accessory = random.choice(["Ruby", "Garnet", "Diamond"])
         elif level < 50:
             weapon = "Epic"
             armor = "Mysterious"
+            accessory = random.choice(["Garnet", "Diamond", "Emerald"])
         else:
             weapon = "Legendary"
             armor = "Dragonscale"
+            accessory = random.choice(["Emerald", "Black Opal"])
 
         return {
             "weapon" : weapon,
-            "armor" : armor
+            "armor" : armor,
+            "accessory" : accessory
         }
 
     # COMMANDS
@@ -189,7 +201,9 @@ class PvE(commands.Cog):
                         material=item_rarities['armor'])
 
                 if random.randint(1, 20) == 1:
-                    accessory = True
+                    accessory = await ItemObject.create_accessory(
+                        conn, author.disc_id, item_rarities['accessory'],
+                        random.choice(list(Vars.ACCESSORY_BONUS)))
 
                 title = f"You have defeated {boss.name}!"
                 header = f"You had {player.current_hp} HP remaining."
@@ -233,6 +247,12 @@ class PvE(commands.Cog):
                     value=(
                         f"`{armor.id}`: **{armor.name}**, with {armor.defense} "
                         f" defense!"),
+                    inline=False)
+            if accessory is not None:
+                embed.add_field(
+                    name="You also retrieved a beautiful accessory!",
+                    value=(
+                        f"`{accessory.id}`: **{accessory.name}**"),
                     inline=False)
 
             await author.give_gold(conn, gold)
