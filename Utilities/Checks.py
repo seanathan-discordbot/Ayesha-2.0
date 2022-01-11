@@ -74,6 +74,9 @@ class InvalidArmorType(Exception):
 class InvalidArmorMaterial(Exception):
     pass
 
+class NotAccessoryOwner(Exception):
+    pass
+
 class InvalidAccessoryPrefix(Exception):
     pass
 

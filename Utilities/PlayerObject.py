@@ -291,6 +291,40 @@ class Player:
                 """
         await conn.execute(psql, self.disc_id)
 
+    async def is_accessory_owner(self, conn : asyncpg.Connection, 
+            item_id : int) -> bool:
+        """Returns true/false depending on whether the accessory with the given 
+        ID is in this player's wardrobe.
+        """
+        psql = """
+                SELECT accessory_id FROM accessories
+                WHERE user_id = $1 AND accessory_id = $2;
+                """
+        return await conn.fetchval(psql, self.disc_id, item_id) is not None
+
+    async def equip_accessory(self, conn : asyncpg.Connection, item_id : int):
+        """Equips an accessory on the player."""
+        if not await self.is_accessory_owner(conn, item_id):
+            raise Checks.NotAccessoryOwner
+
+        self.accessory = await ItemObject.get_accessory_by_id(conn, item_id)
+
+        psql = """
+                UPDATE equips 
+                SET accessory = $1
+                WHERE user_id = $2;
+                """
+        await conn.execute(psql, item_id, self.disc_id)
+
+    async def unequip_accessory(self, conn : asyncpg.Connection):
+        """Unequips the accessory the player is currently wearing."""
+        psql = """
+                UPDATE equips 
+                SET accessory = NULL
+                WHERE user_id = $1;
+                """
+        await conn.execute(psql, self.disc_id)
+
     async def is_acolyte_owner(self, conn : asyncpg.Connection, 
             a_id : int) -> bool:
         """Returns true/false depending on whether the acolyte with the given
