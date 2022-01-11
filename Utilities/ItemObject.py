@@ -330,7 +330,7 @@ async def create_accessory(conn : asyncpg.Connection, user_id : int,
             SELECT accessory_id FROM rows;
             """
     accessory_id = await conn.fetchval(psql, type, name, user_id, prefix)
-    return await get_accessory_by_id(accessory_id)
+    return await get_accessory_by_id(conn, accessory_id)
 
 def _get_random_name() -> str:
     """Returns a str: random combination of words up to 20 characters."""

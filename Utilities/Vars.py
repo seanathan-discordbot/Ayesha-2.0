@@ -288,7 +288,7 @@ OCCUPATIONS = {
         'Name' : 'Merchant',
         'Desc' : 'Screw you, exploiter of others\' labor.',
         'Passive' : 'Gain 50% increased gold from the `/sell` command.',
-        'Command' : 'Guaranteed item upon defeating a boss in PvE.',
+        'Command' : 'Guaranteed weapon upon defeating a boss in PvE.',
         'atk_bonus' : 0,
         'crit_bonus' : 0,
         'hp_bonus' : 0,
