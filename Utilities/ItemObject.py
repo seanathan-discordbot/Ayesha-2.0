@@ -200,6 +200,7 @@ class Accessory:
                          f"{record['accessory_name']}")
             self.owner_id = record['user_id']
             self.prefix = record['prefix']
+            self.bonus = self._get_bonus()
         else:
             self.is_empty = True
             self.id = None
@@ -207,6 +208,51 @@ class Accessory:
             self.name = "No Accessory"
             self.owner_id = None
             self.prefix = "None"
+            self.bonus = "No bonus"
+
+    def _get_bonus(self):
+        """Returns str outlining the bonus this accessory gives."""
+        bonus = {
+            "Lucky" : (
+                f"This accessory gives a "
+                f"`{Vars.ACCESSORY_BONUS[self.prefix][self.type]}%` bonus to "
+                f"gold and xp rewards from PvE, Travel, and Expeditions."),
+            "Thorned" : (
+                f"This accessory reflects "
+                f"`{Vars.ACCESSORY_BONUS[self.prefix][self.type]}%` of the "
+                f"damage taken in PvE and PvP back to your enemy."
+            ),
+            "Strong" : (
+                f"This accessory gives "
+                f"`{Vars.ACCESSORY_BONUS[self.prefix][self.type]}%` defense."
+            ),
+            "Shiny" : (
+                f"The additional damage you take when an enemy lands a "
+                f"critical strike on you is reduced by "
+                f"`{Vars.ACCESSORY_BONUS[self.prefix][self.type]}%`."
+            ),
+            "Flexible" : (
+                f"Increase your crit rate by "
+                f"`{Vars.ACCESSORY_BONUS[self.prefix][self.type]}%`."
+            ),
+            "Thick" : (
+                f"Increases your HP by "
+                f"`{Vars.ACCESSORY_BONUS[self.prefix][self.type]}%`."
+            ),
+            "Old" : (
+                f"When you defeat a boss at level 25 or higher in PvE, gain ",
+                f"`{Vars.ACCESSORY_BONUS[self.prefix][self.type]}` gravitas."
+            ),
+            "Regal" : (
+                f"The gold you gain from `/sell` and `/work` is increased by "
+                f"`{Vars.ACCESSORY_BONUS[self.prefix][self.type]}%`."
+            ),
+            "Demonic" : (
+                f"Increases your attack by "
+                f"`{Vars.ACCESSORY_BONUS[self.prefix][self.type]}`."
+            )
+        }
+        return bonus[self.prefix]
 
 
 async def get_weapon_by_id(conn : asyncpg.Connection, item_id : int) -> Weapon:
