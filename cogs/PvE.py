@@ -229,6 +229,9 @@ class PvE(commands.Cog):
                 mult = Vars.ACCESSORY_BONUS["Lucky"][player.accessory.type]
                 xp = int(xp * (mult / 100.0))
                 gold = int(gold * (mult / 100.0))
+            if player.accessory.prefix == "Old" and level >= 25:
+                gravitas = Vars.ACCESSORY_BONUS["Old"][player.accessory.type]
+                await author.give_gravitas(conn, gravitas)
 
             # Create and send embed
             embed = discord.Embed(title=title, color=Vars.ABLUE)
