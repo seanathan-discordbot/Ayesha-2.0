@@ -5,7 +5,7 @@ import random
 from Utilities import PlayerObject, Vars
 from Utilities.AcolyteObject import Acolyte
 from Utilities.AssociationObject import Association
-from Utilities.ItemObject import Weapon, Armor
+from Utilities.ItemObject import Accessory, Weapon, Armor
 
 
 class Belligerent:
@@ -23,6 +23,7 @@ class Belligerent:
             hp : int, defense : int, disc_id : int = None, 
             weapon : Weapon = Weapon(), helmet : Armor = Armor(),
             bodypiece : Armor = Armor(), boots : Armor = Armor(),
+            accessory : Accessory = Accessory(),
             acolyte1 : Acolyte = Acolyte(), acolyte2 : Acolyte = Acolyte(),
             assc : Association = Association()):
         """
@@ -50,6 +51,8 @@ class Belligerent:
             The armor object that the person has equipped in Bodypiece slot
         boots : Optional[ItemObject.Armor]
             The armor object that the person has equipped in Boots slot
+        accessory : Optional[ItemObject.Accessory]
+            The accessory object that the person has equipped
         acolyte1 : Optional[AcolyteObject.Acolyte]
             The acolyte object that the person has equipped in slot 1
         acolyte2 : Optional[AcolyteObject.Acolyte]
@@ -72,6 +75,7 @@ class Belligerent:
         self.helmet = helmet
         self.bodypiece = bodypiece
         self.boots = boots
+        self.accessory = accessory
         self.acolyte1 = acolyte1
         self.acolyte2 = acolyte2
         self.assc = assc
@@ -104,13 +108,14 @@ class Belligerent:
         helmet = player.helmet
         bodypiece = player.bodypiece
         boots = player.boots
+        accessory = player.accessory
         acolyte1 = player.acolyte1
         acolyte2 = player.acolyte2
         assc = player.assc
 
         return cls(
             name, occ, attack, crit, hp, defense, disc_id, weapon, helmet,
-            bodypiece, boots, acolyte1, acolyte2, assc)
+            bodypiece, boots, accessory, acolyte1, acolyte2, assc)
 
     @classmethod
     def load_boss(cls, difficulty : int):
