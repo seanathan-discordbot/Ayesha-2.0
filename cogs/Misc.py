@@ -5,6 +5,7 @@ from discord.ext import commands, pages
 from discord.ext.commands import BucketType, cooldown
 
 import asyncio
+import random
 import schedule
 import time
 
@@ -302,7 +303,90 @@ class Misc(commands.Cog):
         view = discord.ui.View(timeout=30.0)
         view.add_item(LeaderboardMenu(author, embeds))
         await ctx.respond(embed=information, view=view)
-    
+
+    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_player)
+    @cooldown(1, 21600, BucketType.user)
+    async def influence(self, ctx,
+            action : Option(str,
+                description="Praise or insult another player",
+                choices=[
+                    OptionChoice(name="Praise a Friend", value="Praise"),
+                    OptionChoice(name="Insult an Enemy", value="Insult")]),
+            target : Option(discord.Member,
+                description="The person you want to influence",
+                converter=commands.MemberConverter()),
+            gravitas : Option(int,
+                description="The amount of gravitas you are sacrificing",
+                min_value=20,
+                max_value=1000)):
+        """Praise or insult another player to affect their gravitas."""
+        async with self.bot.db.acquire() as conn:
+            agent = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+            if agent.gravitas < gravitas:
+                raise Checks.NotEnoughResources(
+                    "gravitas", gravitas, agent.gravitas)
+
+            object = await PlayerObject.get_player_by_id(conn, target.id)
+            success = random.randint(1, 10)
+
+            if action == "Praise":
+                # Gravitas spending should have about 80% efficiency on average
+                if success <= 6: # Regular success (60-80% efficiency)
+                    gain = int(gravitas * (random.randint(60, 80) / 100))
+                    message = (
+                        f"Your attempts to assist {target.mention} went well "
+                        f"and they gained `{gain}` gravitas.")
+                elif success <= 8: # Major success (90-120% efficiency)
+                    gain = int(gravitas * (random.randint(90, 120) / 100))
+                    message = (
+                        f"Everyone stopped to here your praise for "
+                        f"{target.mention}, and they gained `{gain}` gravitas. "
+                        f"They owe you one now.")
+                elif success == 9: # Failure (20-50% efficiency)
+                    gain = int(gravitas * (random.randint(20, 50) / 100))
+                    message = (
+                        f"Few people turned their heads to what you had to "
+                        f"say about {target.mention}. They gained `{gain}` "
+                        f"gravitas.")
+                else: # Critical Failure (-10-20% efficiency)
+                    gain = int(gravitas * (random.randint(10, 20) / 100) * -1)
+                    message = (
+                        f"Anyone who had you as their public speaking "
+                        f"instructor is probably in jail now, as your praise "
+                        f"actually resulted in {target.mention} *losing* "
+                        f"`{gain*-1}` gravitas. Yikes.")
+                await object.give_gravitas(conn, gain)
+
+            else:
+                if success <= 6: # Regular success (50-65% efficiency)
+                    loss = int(gravitas * (random.randint(50, 65) / 100))
+                    message = (
+                        f"When you spoke to the crowd at the detriment of "
+                        f"{target.mention}, they began to murmur in "
+                        f"agreement. {target.mention} has lost `{loss}` "
+                        f"gravitas.")
+                elif success <= 8: # Critical success (75-90% efficiency)
+                    loss = int(gravitas * (random.randint(75, 90) / 100))
+                    message = (
+                        f"You shared your hate for {target.mention} and "
+                        f"everyone agreed. They lost `{loss}` gravitas.")
+                elif success == 9: # Failure (25-40% efficiency)
+                    loss = int(gravitas * (random.randint(25, 40) / 100))
+                    message = (
+                        f"No one cares about your negativity, and no one cares "
+                        f"about what you think about {target.mention}. They "
+                        f"lost `{loss}` gravitas.")
+                else: # Critical Failure (-10-20% efficiency)
+                    loss = int(gravitas * (random.randint(10, 20) / 100) * -1)
+                    message = (
+                        f"You are so unpopular that insulting {target.mention} "
+                        f"netted them {loss*-1} gravitas. Nice going.")
+                await object.give_gravitas(conn, loss * -1)
+
+            await agent.give_gravitas(conn, gravitas * -1)
+            await ctx.respond(message)
+
 
 def setup(bot):
     bot.add_cog(Misc(bot))
