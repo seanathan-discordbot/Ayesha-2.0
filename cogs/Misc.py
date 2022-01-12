@@ -5,13 +5,35 @@ from discord.ext import commands, pages
 from discord.ext.commands import BucketType, cooldown
 
 import asyncio
-from discord.ext.commands.flags import F
 import schedule
 import time
 
-from Utilities import Checks, CombatObject, PlayerObject, Vars
-from Utilities.CombatObject import CombatInstance
-from Utilities.ConfirmationMenu import OfferMenu
+from Utilities import Analytics, Checks, PlayerObject, Vars
+
+class LeaderboardMenu(discord.ui.Select):
+    def __init__(self, author : PlayerObject.Player, embeds : dict):
+        self.author = author
+        self.embeds = embeds
+        # Exclude last entry; its the empty occupation (Name = None)
+        options = [
+            discord.SelectOption(label="Bot Information", value="Info"),
+            discord.SelectOption(label="Most Experienced Players", 
+                value="Experience"),
+            discord.SelectOption(label="Wealthiest Players", value="Gold"),
+            discord.SelectOption(label="Most Bosses Defeated", value="PvE"),
+            discord.SelectOption(label="Most PvP Wins", value="PvP"),
+            discord.SelectOption(label="Most Influential Players", 
+                value="Gravitas")
+        ]
+        super().__init__(placeholder="View Leaderboards", options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.edit_message(
+            embed=self.embeds[self.values[0]])
+
+    async def interaction_check(self, 
+            interaction : discord.Interaction) -> bool:
+        return interaction.user.id == self.author.disc_id
 
 class Misc(commands.Cog):
     """Non-gameplay related commands"""
@@ -35,6 +57,35 @@ class Misc(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         print("Misc is ready.")
+
+    # AUXILIARY FUNCTIONS
+    def format_leaderboard(self, lb, author_name : str, author_rank : int, 
+            author_val : int) -> str:
+        """Returns a formatted block of text showing the leaderboard.
+        lb must be an asyncpg.Record or list. 
+        The first column must be the names of the people on the leaderboard.
+        The second column must be the value being ranked.
+        """
+        # Make all the names equal width
+        names = [record[0] for record in lb]
+        names.append(author_name)
+        name_length = len(max(names, key=len))
+        names = [name + " "*(name_length - len(name)) for name in names]
+
+        ranks = []
+        for i, record in enumerate(lb):
+            if i+1 < 10: # Make all ranks equal width
+                j = "0"+str(i+1)
+            else:
+                j = "10"
+            ranks.append(f"{j} | {names[i]} | {record[1]}")
+            
+        if author_rank < 10:
+            author_rank = "0" + str(author_rank)
+
+        return "```" + "\n".join(ranks) + (
+            f"\n{'-'*len(max(ranks, key=len))}\n"
+            f"{author_rank} | {names[-1]} | {author_val}```")
 
     # COMMANDS
     @commands.slash_command(guild_ids=[762118688567984151])
@@ -129,7 +180,124 @@ class Misc(commands.Cog):
             inline=False)
 
         await ctx.respond(embed=embed)
-        
+
+    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_player)
+    async def leaderboard(self, ctx):
+        """See the leaderboards and other cool information."""
+        async with self.bot.db.acquire() as conn:
+            author = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+            # Meta information
+            servers = len(ctx.bot.guilds)
+            players = await PlayerObject.get_player_count(conn)
+            econ_info = await Analytics.get_econ_info(conn)
+            acolyte_info = await Analytics.get_acolyte_info(conn)
+            combat_info = await Analytics.get_combat_info(conn)
+            # Top xp
+            top_xp = await Analytics.get_top_xp(conn)
+            player_xp = await Analytics.get_xp_rank(conn, ctx.author.id)
+            # Top Gold
+            top_gold = await Analytics.get_top_gold(conn)
+            player_gold = await Analytics.get_gold_rank(conn, ctx.author.id)
+            # Top PvE
+            top_pve = await Analytics.get_top_pve(conn)
+            player_pve = await Analytics.get_bosswins_rank(conn, ctx.author.id)
+            # Top PvP
+            top_pvp = await Analytics.get_top_pvp(conn)
+            player_pvp = await Analytics.get_pvpwins_rank(conn, ctx.author.id)
+            # Top Gravitas
+            top_grav = await Analytics.get_top_gravitas(conn)
+            player_grav = await Analytics.get_gravitas_rank(conn, ctx.author.id)
+
+        # Meta Embed
+        information = discord.Embed(
+            title="Ayesha Bot Information",
+            color=Vars.ABLUE)
+        information.add_field(
+            name="Meta Stats",
+            value=(
+                f"**Servers:** {servers}\n"
+                f"**Players:** {players}"))
+        information.add_field(
+            name="Economy Stats",
+            value=(
+                f"**Gold:** {econ_info['g']}\n"
+                f"**Rubidics:** {econ_info['r']}\n"
+                f"**Average Pity:** {round(econ_info['p'] / 80 * 100, 2)}%"))
+        information.add_field(
+            name="Gameplay Stats",
+            value=(
+                f"**Bosses Defeated:** {combat_info['b']}\n"
+                f"**PvP Fights:** {combat_info['p']}"),
+            inline=False)
+        information.add_field(
+            name="Most Used Acolytes",
+            value=(
+                f"```1 | {acolyte_info[0]['acolyte_name']}: "
+                f"{acolyte_info[0]['c']}\n"
+                f"2 | {acolyte_info[1]['acolyte_name']}: "
+                f"{acolyte_info[1]['c']}\n"
+                f"3 | {acolyte_info[2]['acolyte_name']}: "
+                f"{acolyte_info[2]['c']}```"),
+            inline=False)
+        information.set_thumbnail(url=self.bot.user.avatar.url)
+
+        # EXP Rank Embed
+        lb_text = self.format_leaderboard(
+            top_xp, author.char_name, player_xp, author.xp)
+        xp_lb = discord.Embed(
+            title="Ayesha Leaderboards: Experience",
+            description=lb_text,
+            color=Vars.ABLUE)
+        xp_lb.set_thumbnail(url=self.bot.user.avatar.url)
+
+        # Gold Rank Embed
+        gold_text = self.format_leaderboard(
+            top_gold, author.char_name, player_gold, author.gold)
+        gold_lb = discord.Embed(
+            title="Ayesha Leaderboards: Gold",
+            description=gold_text,
+            color=Vars.ABLUE)
+        gold_lb.set_thumbnail(url=self.bot.user.avatar.url)
+
+        # PvE Rank Embed
+        pve_text = self.format_leaderboard(
+            top_pve, author.char_name, player_pve, author.boss_wins)
+        pve_lb = discord.Embed(
+            title="Ayesha Leaderboards: Bosses Defeated",
+            description=pve_text,
+            color=Vars.ABLUE)
+        pve_lb.set_thumbnail(url=self.bot.user.avatar.url)
+
+        # PvP Rank Embed
+        pvp_text = self.format_leaderboard(
+            top_pvp, author.char_name, player_pvp, author.pvp_wins)
+        pvp_lb = discord.Embed(
+            title="Ayesha Leaderboards: PvP Wins",
+            description=pvp_text,
+            color=Vars.ABLUE)
+        pvp_lb.set_thumbnail(url=self.bot.user.avatar.url)
+
+        # Gravitas Rank Embed
+        grav_text = self.format_leaderboard(
+            top_grav, author.char_name, player_grav, author.gravitas)
+        grav_lb = discord.Embed(
+            title="Ayesha Leaderboards: Gravitas",
+            description=grav_text,
+            color=Vars.ABLUE)
+        grav_lb.set_thumbnail(url=self.bot.user.avatar.url)
+
+        embeds = {
+            "Info" : information,
+            "Experience" : xp_lb,
+            "Gold" : gold_lb,
+            "PvE" : pve_lb,
+            "PvP" : pvp_lb,
+            "Gravitas" : grav_lb
+        }
+        view = discord.ui.View(timeout=30.0)
+        view.add_item(LeaderboardMenu(author, embeds))
+        await ctx.respond(embed=information, view=view)
 
 def setup(bot):
     bot.add_cog(Misc(bot))
