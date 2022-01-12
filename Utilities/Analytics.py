@@ -15,16 +15,6 @@ async def get_xp_rank(conn : asyncpg.Connection, user_id : int) -> int:
             """
     return await conn.fetchval(psql, user_id, timeout=0.2)
 
-async def xp_leaderboard(conn : asyncpg.Connection, 
-        user_id : int, amount : int = 10):
-    """Orders all players by xp and returns a"""
-    psql = """
-            SELECT ROW_NUMBER() OVER (ORDER BY xp DESC) AS rank, 
-                user_id, user_name, xp
-            FROM players
-            LIMIT 10;
-            """
-
 async def get_gold_rank(conn : asyncpg.Connection, user_id : int) -> int:
     """Returns the rank in gold for the player given"""
     psql = """
@@ -159,3 +149,58 @@ async def get_combat_info(conn : asyncpg.Connection):
             FROM players;
             """
     return await conn.fetchrow(psql)
+
+async def get_top_xp(conn : asyncpg.Connection):
+    """Returns a list of records containing the top 10 players by xp
+    Record: user_name, xp 
+    """
+    psql = """
+            SELECT user_name, xp
+            FROM players
+            ORDER BY xp DESC LIMIT 10;
+            """
+    return await conn.fetch(psql)
+
+async def get_top_gold(conn : asyncpg.Connection):
+    """Returns a list of records containing the top 10 players by gold
+    Record: user_name, gold
+    """
+    psql = """
+            SELECT user_name, gold
+            FROM players
+            ORDER BY gold DESC LIMIT 10;
+            """
+    return await conn.fetch(psql)
+
+async def get_top_pve(conn : asyncpg.Connection):
+    """Returns a list of records containing the top 10 players by PvE wins
+    Record: user_name, bosswins
+    """
+    psql = """
+            SELECT user_name, bosswins
+            FROM players
+            ORDER BY bosswins DESC LIMIT 10;
+            """
+    return await conn.fetch(psql)
+
+async def get_top_pvp(conn : asyncpg.Connection):
+    """Returns a list of records containing the top 10 players by PvP wins
+    Record: user_name, pvpwins
+    """
+    psql = """
+            SELECT user_name, pvpwins
+            FROM players
+            ORDER BY pvpwins DESC LIMIT 10;
+            """
+    return await conn.fetch(psql)
+
+async def get_top_gravitas(conn : asyncpg.Connection):
+    """Returns a list of records containing the top 10 players by gravitas
+    Record: user_name, gravitas
+    """
+    psql = """
+            SELECT user_name, gravitas
+            FROM players
+            ORDER BY gravitas DESC LIMIT 10;
+            """
+    return await conn.fetch(psql)
