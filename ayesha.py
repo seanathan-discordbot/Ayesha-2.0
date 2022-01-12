@@ -62,7 +62,8 @@ class Ayesha(commands.AutoShardedBot):
             "cogs.PvE",
             "cogs.PvP",
             "cogs.Raid",
-            "cogs.Offices"
+            "cogs.Offices",
+            "cogs.Misc"
         )
 
         for cog in self.init_cogs:
@@ -94,7 +95,26 @@ class Ayesha(commands.AutoShardedBot):
 
         return await super().on_interaction(interaction)
 
+
 bot = Ayesha()
+
+# Connect to database
+async def create_db_pool():
+    bot.db = await asyncpg.create_pool(database = config.DATABASE['name'],
+                                       user = config.DATABASE['user'],
+                                       password = config.DATABASE['password'])
+
+bot.loop.run_until_complete(create_db_pool())
+
+# Ping command
+@bot.slash_command(guild_ids=[762118688567984151])
+async def ping(ctx):
+    """Ping to see if bot is working."""
+    fmt = f"Latency is {bot.latency * 1000:.2f} ms"
+    embed = discord.Embed(title="Pong!", 
+                           description=fmt, 
+                           color=Vars.ABLUE)
+    await ctx.respond(embed=embed)
 
 # Cog-loading commands
 # @bot.slash_command(guild_ids=[762118688567984151])
@@ -115,40 +135,5 @@ bot = Ayesha()
 # async def unload(ctx, extension):
 #     bot.unload_extension(f"cogs.{extension}")
 #     await ctx.respond("Unloaded.")
-
-# Connect to database
-async def create_db_pool():
-    bot.db = await asyncpg.create_pool(database = config.DATABASE['name'],
-                                       user = config.DATABASE['user'],
-                                       password = config.DATABASE['password'])
-
-bot.loop.run_until_complete(create_db_pool())
-
-# Guild join and remove event handling
-# @bot.event
-# async def on_guild_join(guild):
-#     async with bot.db.acquire() as conn:
-#         psql = """
-#                 INSERT INTO prefixes (server, prefix)
-#                 VALUES ($1, '%')
-#                 ON CONFLICT (server)
-#                 DO UPDATE SET prefix = '%'
-#                 """
-#         await conn.execute(psql, guild.id)
-
-# @bot.event
-# async def on_guild_remove(guild):
-#     async with bot.pg_con.acquire() as conn:
-#         await conn.execute("DELETE FROM prefixes WHERE server = $1", guild.id)
-
-# Ping command
-@bot.slash_command(guild_ids=[762118688567984151])
-async def ping(ctx):
-    """Ping to see if bot is working."""
-    fmt = f"Latency is {bot.latency * 1000:.2f} ms"
-    embed = discord.Embed(title="Pong!", 
-                           description=fmt, 
-                           color=Vars.ABLUE)
-    await ctx.respond(embed=embed)
 
 bot.run(config.TOKEN)
