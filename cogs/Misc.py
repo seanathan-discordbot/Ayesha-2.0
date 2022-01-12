@@ -387,6 +387,39 @@ class Misc(commands.Cog):
             await agent.give_gravitas(conn, gravitas * -1)
             await ctx.respond(message)
 
+    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_player)
+    @cooldown(1, 7200, BucketType.user)
+    async def crime(self, ctx):
+        """We do a little trolling. Organize a heist."""
+        result = random.choices(
+            ["critical success", "success", "failure"], 
+            [5, 55, 40])[0]
+        if result == "critical success":
+            gain = random.randint(5, 8) / 100
+        elif result == "success":
+            gain = random.randint(2, 4) / 100
+        else:
+            gain = random.randint(10, 15) / 100 * -1
+
+        place = random.choice(
+            ("bank", "guild", "blacksmith", "quarry", "farmer", "merchant", 
+            "store", "passerby", "prison", "foreign trader", "church"))
+
+        async with self.bot.db.acquire() as conn:
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+            gold_delta = int(player.gold * gain) + 1
+            await player.give_gold(conn, gold_delta)
+
+        if result == "failure":
+            await ctx.respond(
+                f"Your heist at {place} was a {result}! You were fined "
+                f"`{gold_delta*-1}` gold.")
+        else:
+            await ctx.respond(
+                f"Your heist at {place} was a {result}! You ran off with "
+                f"`{gold_delta}` gold.")
+
 
 def setup(bot):
     bot.add_cog(Misc(bot))
