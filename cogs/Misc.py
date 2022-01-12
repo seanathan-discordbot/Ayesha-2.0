@@ -126,6 +126,9 @@ class Misc(commands.Cog):
     async def cooldowns(self, ctx):
         """View any of your active cooldowns."""
         # Iterate through commands to get cooldowns
+        counter = 0
+        for _ in self.bot.walk_application_commands():
+            counter += 1
         cooldowns = []
 
         async with self.bot.db.acquire() as conn:
@@ -178,6 +181,7 @@ class Misc(commands.Cog):
             name="Daily Status",
             value=daily,
             inline=False)
+        embed.set_footer(text=f"Ayesha has {counter} commands!")
 
         await ctx.respond(embed=embed)
 
@@ -298,12 +302,6 @@ class Misc(commands.Cog):
         view = discord.ui.View(timeout=30.0)
         view.add_item(LeaderboardMenu(author, embeds))
         await ctx.respond(embed=information, view=view)
-
-    @commands.slash_command(guild_ids=[762118688567984151])
-    async def cmd(self, ctx):
-        for command in self.bot.walk_application_commands():
-            print(command.name)
-        await ctx.respond("k")
     
 
 def setup(bot):
