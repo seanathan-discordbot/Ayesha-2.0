@@ -133,15 +133,7 @@ class Associations(commands.Cog):
 
         # Paginate and send association information
             paginator = pages.Paginator(pages=embeds, timeout=30)
-            paginator.customize_button("next", button_label=">", 
-                button_style=discord.ButtonStyle.green)
-            paginator.customize_button("prev", button_label="<", 
-                button_style=discord.ButtonStyle.green)
-            paginator.customize_button("first", button_label="<<", 
-                button_style=discord.ButtonStyle.blurple)
-            paginator.customize_button("last", button_label=">>", 
-                button_style=discord.ButtonStyle.blurple)
-            await paginator.send(ctx, ephemeral=False)
+            await paginator.respond(ctx.interaction)
 
     # COMMANDS
     @a.command(guild_ids=[762118688567984151])
@@ -778,15 +770,7 @@ class Associations(commands.Cog):
 
         # Output pages
         paginator = pages.Paginator(pages=battle_results, timeout=30)
-        paginator.customize_button("next", button_label=">", 
-            button_style=discord.ButtonStyle.green)
-        paginator.customize_button("prev", button_label="<", 
-            button_style=discord.ButtonStyle.green)
-        paginator.customize_button("first", button_label="<<", 
-            button_style=discord.ButtonStyle.blurple)
-        paginator.customize_button("last", button_label=">>", 
-            button_style=discord.ButtonStyle.blurple)
-        await paginator.send(ctx, ephemeral=False)
+        await paginator.respond(ctx.interaction)
 
     # --------------------------------------
     # ----- COLLEGE EXCLUSIVE COMMANDS -----

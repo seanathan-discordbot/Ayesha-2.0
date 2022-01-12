@@ -193,15 +193,7 @@ class Items(commands.Cog):
                 for i in range(0, len(inventory), 5)]
 
             paginator = pages.Paginator(pages=embeds, timeout=30)
-            paginator.customize_button("next", button_label=">", 
-                button_style=discord.ButtonStyle.green)
-            paginator.customize_button("prev", button_label="<", 
-                button_style=discord.ButtonStyle.green)
-            paginator.customize_button("first", button_label="<<", 
-                button_style=discord.ButtonStyle.blurple)
-            paginator.customize_button("last", button_label=">>", 
-                button_style=discord.ButtonStyle.blurple)
-            await paginator.send(ctx, ephemeral=False)
+            await paginator.respond(ctx.interaction)
 
     @commands.slash_command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
@@ -254,15 +246,7 @@ class Items(commands.Cog):
             await ctx.respond(embed=embeds[0])
         else:
             paginator = pages.Paginator(pages=embeds, timeout=30)
-            paginator.customize_button("next", button_label=">", 
-                button_style=discord.ButtonStyle.green)
-            paginator.customize_button("prev", button_label="<", 
-                button_style=discord.ButtonStyle.green)
-            paginator.customize_button("first", button_label="<<", 
-                button_style=discord.ButtonStyle.blurple)
-            paginator.customize_button("last", button_label=">>", 
-                button_style=discord.ButtonStyle.blurple)
-            await paginator.send(ctx, ephemeral=False)
+            await paginator.respond(ctx.interaction)
 
     @commands.slash_command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
@@ -318,15 +302,7 @@ class Items(commands.Cog):
             await ctx.respond(embed=embeds[0])
         else:
             paginator = pages.Paginator(pages=embeds, timeout=30)
-            paginator.customize_button("next", button_label=">", 
-                button_style=discord.ButtonStyle.green)
-            paginator.customize_button("prev", button_label="<", 
-                button_style=discord.ButtonStyle.green)
-            paginator.customize_button("first", button_label="<<", 
-                button_style=discord.ButtonStyle.blurple)
-            paginator.customize_button("last", button_label=">>", 
-                button_style=discord.ButtonStyle.blurple)
-            await paginator.send(ctx, ephemeral=False)
+            await paginator.respond(ctx.interaction)
 
     @commands.slash_command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)

@@ -59,7 +59,7 @@ class Travel(commands.Cog):
                 description="The type of adventure you will go on",
                 choices = [OptionChoice("Travel Somewhere New"), 
                     OptionChoice("Go on an Expedition")],
-                default="Travel"),
+                required=True),
             destination : Option(str,
                 description="The part of the map you are travelling to",
                 choices = [

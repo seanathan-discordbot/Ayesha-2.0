@@ -340,15 +340,7 @@ class Profile(commands.Cog):
 
         # Output pages
         paginator = pages.Paginator(pages=embeds, timeout=30)
-        paginator.customize_button("next", button_label=">", 
-            button_style=discord.ButtonStyle.green)
-        paginator.customize_button("prev", button_label="<", 
-            button_style=discord.ButtonStyle.green)
-        paginator.customize_button("first", button_label="<<", 
-            button_style=discord.ButtonStyle.blurple)
-        paginator.customize_button("last", button_label=">>", 
-            button_style=discord.ButtonStyle.blurple)
-        await paginator.send(ctx, ephemeral=False)
+        await paginator.respond(ctx.interaction)
 
     # COMMANDS
     @commands.slash_command(guild_ids=[762118688567984151])
@@ -399,13 +391,13 @@ class Profile(commands.Cog):
 
     @commands.slash_command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
-    async def rename(self, ctx, *, 
+    async def rename(self, ctx, 
             target : Option(str,
                 description="Rename either your character or weapon",
                 choices=[
                     OptionChoice(name="Rename Character"),
                     OptionChoice(name="Rename Weapon")],
-                default=""),
+                required=True),
             name : Option(str, description="The new name.", required=True),
             weapon : Option(int, 
                 description="Put the ID of the weapon you are renaming",

@@ -174,16 +174,6 @@ class Gacha(commands.Cog):
 
             # Paginate embeds if pulls > 1 and print them
             if len(result_list) > 1:
-                # paginator = pages.Paginator(pages=embed_list, timeout=60)
-                # paginator.customize_button("next", button_label=">", 
-                #     button_style=discord.ButtonStyle.green)
-                # paginator.customize_button("prev", button_label="<", 
-                #     button_style=discord.ButtonStyle.green)
-                # paginator.customize_button("first", button_label="<<", 
-                #     button_style=discord.ButtonStyle.blurple)
-                # paginator.customize_button("last", button_label=">>", 
-                #     button_style=discord.ButtonStyle.blurple)
-                # await paginator.send(ctx, ephemeral=False)
                 view = discord.ui.View()
                 view.add_item(SummonDropdown(result_list, player.disc_id))
                 await ctx.respond(embed=result_list[0][1], view=view)

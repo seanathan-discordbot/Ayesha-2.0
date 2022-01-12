@@ -36,7 +36,7 @@ class LeaderboardMenu(discord.ui.Select):
         return interaction.user.id == self.author.disc_id
 
 class Misc(commands.Cog):
-    """Non-gameplay related commands"""
+    """General, non-cog-related commands"""
 
     def __init__(self, bot):
         self.bot = bot
@@ -298,6 +298,13 @@ class Misc(commands.Cog):
         view = discord.ui.View(timeout=30.0)
         view.add_item(LeaderboardMenu(author, embeds))
         await ctx.respond(embed=information, view=view)
+
+    @commands.slash_command(guild_ids=[762118688567984151])
+    async def cmd(self, ctx):
+        for command in self.bot.walk_application_commands():
+            print(command.name)
+        await ctx.respond("k")
+    
 
 def setup(bot):
     bot.add_cog(Misc(bot))
