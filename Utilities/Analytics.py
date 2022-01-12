@@ -119,3 +119,43 @@ def stringify_rank(rank : int) -> str:
         output += "th"
 
     return output
+
+async def get_econ_info(conn : asyncpg.Connection):
+    """Returns a record containing some information about the bot economy.
+    Keys: g (total gold), r (total rubidics), p (average pitycounter)
+    """
+    psql = """
+            SELECT 
+                SUM(gold) as g,
+                SUM(rubidics) AS r,
+                AVG(pitycounter) as p
+            FROM players;
+            """
+    return await conn.fetchrow(psql)
+
+async def get_acolyte_info(conn : asyncpg.Connection):
+    """Returns a list of records containing most equipped acolytes.
+    Length of the list is 3.
+    Keys: acolyte_name, c (amount of people with said acolyte equipped)
+    """
+    psql = """
+            SELECT acolytes.acolyte_name, COUNT(acolytes.acolyte_name) as c
+            FROM acolytes
+            RIGHT JOIN players
+                ON acolytes.acolyte_id = players.acolyte1
+                    OR acolytes.acolyte_id = players.acolyte2
+            GROUP BY acolytes.acolyte_name
+            ORDER BY c DESC
+            LIMIT 3;
+            """
+    return await conn.fetch(psql)
+
+async def get_combat_info(conn : asyncpg.Connection):
+    """Returns idk
+    Keys: b (total bosswins), p (total pvpfights)
+    """
+    psql = """
+            SELECT SUM(bosswins) AS b, SUM(pvpfights)/2 AS p
+            FROM players;
+            """
+    return await conn.fetchrow(psql)
