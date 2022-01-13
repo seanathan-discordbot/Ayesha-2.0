@@ -124,7 +124,7 @@ class Acolyte:
         return level
 
     async def check_xp_increase(self, conn : asyncpg.Connection, 
-            ctx : discord.context, xp : int):
+            ctx : discord.ApplicationContext, xp : int):
         """Increases the acolyte's xp by the given amount.
         If the xp increase results in a level-up, prints this out to Discord.        
         """

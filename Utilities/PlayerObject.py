@@ -343,7 +343,7 @@ class Player:
                 SELECT acolyte_id FROM acolytes
                 WHERE user_id = $1 AND acolyte_id = $2;
                 """
-        val = await conn.fetchval(self.disc_id, a_id)
+        val = await conn.fetchval(psql, self.disc_id, a_id)
 
         return val is not None
 
@@ -356,7 +356,7 @@ class Player:
             raise Checks.InvalidAcolyteEquip
             # Check this first because its inexpensive and won't waste time
 
-        if not self.is_acolyte_owner(conn, acolyte_id):
+        if not await self.is_acolyte_owner(conn, acolyte_id):
             raise Checks.NotAcolyteOwner
 
         a = acolyte_id == self.acolyte1.acolyte_id
@@ -365,14 +365,16 @@ class Player:
             raise Checks.InvalidAcolyteEquip
 
         if slot == 1:
-            self.acolyte1 = AcolyteObject.get_acolyte_by_id(conn, acolyte_id)
+            self.acolyte1 = await AcolyteObject.get_acolyte_by_id(
+                conn, acolyte_id)
             psql = """
                     UPDATE players
                     SET acolyte1 = $1
                     WHERE user_id = $2;
                     """
         elif slot == 2:
-            self.acolyte2 = AcolyteObject.get_acolyte_by_id(conn, acolyte_id)
+            self.acolyte2 = await AcolyteObject.get_acolyte_by_id(
+                conn, acolyte_id)
             psql = """
                     UPDATE players
                     SET acolyte2 = $1
