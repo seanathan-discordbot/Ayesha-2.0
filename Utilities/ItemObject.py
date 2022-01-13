@@ -365,7 +365,7 @@ async def create_accessory(conn : asyncpg.Connection, user_id : int,
 
     name = random.choice(
         ["Necklace", "Pendant", "Earring", "Belt", "Ring", "Bracelet", 
-         "Anklet", "Locket", "Lavaliere", "Pin", "Ribbon"])
+         "Anklet", "Locket", "Lavaliere", "Pin", "Ribbon", "Dentures"])
 
     psql = """
             WITH rows AS (
