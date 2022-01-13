@@ -64,7 +64,8 @@ class Ayesha(commands.AutoShardedBot):
             "cogs.Raid",
             "cogs.Offices",
             "cogs.Misc",
-            "cogs.Acolytes"
+            "cogs.Acolytes",
+            "cogs.Help"
         )
 
         for cog in self.init_cogs:
