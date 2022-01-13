@@ -141,11 +141,16 @@ class Belligerent:
             crit = int(difficulty * 1.5) + 5
             hp = difficulty * 75
             defense = int(difficulty * 1.4)
-        else:
+        elif difficulty < 50:
             attack = difficulty * 20
             crit = 65
             hp = difficulty * 125
             defense = 60
+        else:
+            attack = difficulty * 25
+            crit = 75
+            hp = difficulty * 140
+            defense = 67
 
         return cls(name, "Boss", attack, crit, hp, defense)
 

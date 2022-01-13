@@ -231,12 +231,12 @@ async def create_acolyte(conn : asyncpg.Connection, owner_id : int,
     acolyte_id = await conn.fetchval(psql, owner_id, acolyte)
 
     if acolyte_id is not None: # Then increment duplicate count
-        aco_obj = get_acolyte_by_id(conn, acolyte_id)
-        aco_obj.add_duplicate(conn)
+        aco_obj = await get_acolyte_by_id(conn, acolyte_id)
+        await aco_obj.add_duplicate(conn)
         return aco_obj
 
     else: # Then create a new acolyte and add it to their tavern
-        psql = """"
+        psql = """
                 WITH rows AS (
                     INSERT INTO acolytes (user_id, acolyte_name)
                     VALUES ($1, $2)
@@ -246,4 +246,4 @@ async def create_acolyte(conn : asyncpg.Connection, owner_id : int,
                 """
         acolyte_id = await conn.fetchval(psql, owner_id, acolyte)
 
-        return get_acolyte_by_id(conn, acolyte_id)
+        return await get_acolyte_by_id(conn, acolyte_id)
