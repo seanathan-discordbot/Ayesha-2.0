@@ -95,10 +95,10 @@ class Misc(commands.Cog):
         """Get 2 rubidics daily. Resets everyday at 12 a.m. EST."""
         if ctx.author.id not in self.bot.recent_voters:
             self.bot.recent_voters[ctx.author.id] = 0
-            # async with self.bot.db.acquire() as conn:
-            #     player = await PlayerObject.get_player_by_id(
-            #         conn, ctx.author.id)
-            #     await player.give_rubidics(conn, 2)
+            async with self.bot.db.acquire() as conn:
+                player = await PlayerObject.get_player_by_id(
+                    conn, ctx.author.id)
+                await player.give_rubidics(conn, 2)
             title = "You claimed 2 Rubidics from your daily!"
         else:
             title = "You already claimed your daily today."

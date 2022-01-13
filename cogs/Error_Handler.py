@@ -145,6 +145,11 @@ class Error_Handler(commands.Cog):
                 await ctx.respond(message)
                 print_traceback = False
 
+            if isinstance(error.original, Checks.InvalidAcolyteEquip):
+                message = f"This acolyte is already equipped."
+                await ctx.respond(message)
+                print_traceback = False
+
             # --- OWNERSHIP ---
             if isinstance(error.original, Checks.NotWeaponOwner):
                 message = f"You do not own a weapon with this ID."
@@ -164,6 +169,11 @@ class Error_Handler(commands.Cog):
             if isinstance(error.original, Checks.NotAdmin):
                 message = f"This command is reserved for admins."
                 await ctx.respond(message, ephemeral=True)
+                print_traceback = False
+
+            if isinstance(error.original, Checks.NotAcolyteOwner):
+                message = f"You do not own an acolyte with this ID."
+                await ctx.respond(message)
                 print_traceback = False
 
             # --- ASSOCIATIONS ---

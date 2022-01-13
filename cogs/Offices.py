@@ -127,7 +127,7 @@ class Offices(commands.Cog):
             description="The new tax rate as a percentage (0-9.99)",
             min_value=0,
             max_value=9.99)):
-        """Set the tax rate over Aramythia, earning you a small percentage."""
+        """[MAYOR] Set the tax rate over Aramythia, earning you a small percentage."""
         tax_rate = round(tax_rate, 2)
         async with self.bot.db.acquire() as conn:
             await Finances.set_tax_rate(conn, tax_rate, ctx.author.id)
@@ -135,6 +135,23 @@ class Offices(commands.Cog):
         await self.bot.announcement_channel.send(
             f"Mayor {ctx.author.mention} has set the tax rate to `{tax_rate}%`."
         )
+
+    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_mayor)
+    @cooldown(1, 172800, BucketType.user) # 2 days
+    async def dictate(self, ctx, announcement : Option(str,
+            description="Your announcement. Max 300 characters.")):
+        """[MAYOR] Send an announcement to the world through the announcement channel."""
+        if len(announcement) > 300:
+            ctx.command.reset_cooldown(ctx)
+            return await ctx.respond(
+                f"Please limit your announcement to 300 characters. Your "
+                f"message is currently {len(announcement)} characters.")
+        
+        await self.bot.announcement_channel.send(
+            f"__**MAYOR {ctx.author.mention} has an announcement for "
+            f"everyone! **__\n\n{announcement}")
+        await ctx.respond("Message sent", ephemeral=True)
 
     @commands.slash_command(guild_ids=[762118688567984151])
     async def territories(self, ctx):
