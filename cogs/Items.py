@@ -1,5 +1,5 @@
 import discord
-from discord.commands.commands import Option, OptionChoice
+from discord import Option, OptionChoice
 
 from discord.ext import commands, pages
 

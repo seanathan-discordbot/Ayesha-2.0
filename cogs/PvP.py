@@ -1,7 +1,7 @@
 import discord
-from discord.commands.commands import Option, OptionChoice
+from discord import Option
 
-from discord.ext import commands, pages
+from discord.ext import commands
 from discord.ext.commands import BucketType, cooldown
 
 import asyncio

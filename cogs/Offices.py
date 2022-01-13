@@ -1,12 +1,10 @@
 import discord
-from discord.commands.commands import Option, OptionChoice
-from discord.commands.context import ApplicationContext
+from discord import Option
 
-from discord.ext import commands, pages
+from discord.ext import commands
 from discord.ext.commands import BucketType, cooldown
 
 import asyncio
-import random
 import schedule
 
 from Utilities import AssociationObject, Checks, Finances, ItemObject, PlayerObject, Vars

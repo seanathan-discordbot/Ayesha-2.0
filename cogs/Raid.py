@@ -1,8 +1,8 @@
 import discord
-from discord.commands.commands import Option, OptionChoice
+from discord import Option, OptionChoice
 from discord.commands.context import ApplicationContext
 
-from discord.ext import commands, pages
+from discord.ext import commands
 from discord.ext.commands import BucketType, cooldown
 
 import random

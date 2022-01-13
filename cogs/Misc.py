@@ -1,5 +1,5 @@
 import discord
-from discord.commands.commands import Option, OptionChoice
+from discord import Option, OptionChoice
 
 from discord.ext import commands, pages
 from discord.ext.commands import BucketType, cooldown
@@ -39,7 +39,7 @@ class LeaderboardMenu(discord.ui.Select):
 class Misc(commands.Cog):
     """General, non-cog-related commands"""
 
-    def __init__(self, bot):
+    def __init__(self, bot : commands.Bot):
         self.bot = bot
         self.daily_scheduler = schedule.Scheduler()
 
@@ -127,10 +127,26 @@ class Misc(commands.Cog):
     async def cooldowns(self, ctx):
         """View any of your active cooldowns."""
         # Iterate through commands to get cooldowns
-        counter = 0
-        for _ in self.bot.walk_application_commands():
+        cooldowns = [] # Player's list of cooldowns
+        counter = 0 # Get amount of commands in bot
+        for command in self.bot.walk_application_commands():
+            if isinstance(command, discord.SlashCommandGroup):
+                continue
+
+            if command.parent is not None:
+                name = f"{command.parent.name} {command.name}"
+            else:
+                name = command.name
+
+            if command.is_on_cooldown(ctx):
+                seconds = time.gmtime(command.get_cooldown_retry_after(ctx))
+                if command.get_cooldown_retry_after(ctx) >= 3600: 
+                    cd = f"`{name}`: {time.strftime('%H:%M:%S', seconds)}"
+                else:
+                    cd = f"`{name}`: {time.strftime('%M:%S', seconds)}"
+                cooldowns.append(cd)
+
             counter += 1
-        cooldowns = []
 
         async with self.bot.db.acquire() as conn:
             player = await PlayerObject.get_player_by_id(conn, ctx.author.id)

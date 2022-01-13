@@ -1,5 +1,6 @@
 import discord
-from discord.commands.commands import Option, OptionChoice
+from discord import Option, OptionChoice
+from discord import user
 
 from discord.ext import commands, pages
 from discord.ext.commands import BucketType, cooldown
@@ -459,6 +460,7 @@ class Associations(commands.Cog):
     @a.command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
     @commands.check(Checks.not_in_association)
+    @cooldown(2, 86400, BucketType.user)
     async def join(self, ctx, association : Option(int,
             description="the ID of the association you want to join")):
         """Join an open association"""

@@ -1,9 +1,8 @@
 import discord
-from discord.commands.commands import Option
+from discord import Option, OptionChoice
 import asyncpg
 from discord.ext import commands, pages
 from discord.ext.commands import converter
-from discord.commands.commands import Option, OptionChoice
 from Utilities import Checks, Vars, Analytics, AcolyteObject,PlayerObject
 
 def acolyte_equipped(player,acolyte_id):
