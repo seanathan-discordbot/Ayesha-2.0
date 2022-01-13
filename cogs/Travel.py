@@ -388,7 +388,7 @@ class Travel(commands.Cog):
                     bonus += .25
 
                 income = int(random.randint(10,100) * bonus)
-                iron = int(random.randint(70, 120) * bonus)
+                iron = int(random.randint(200, 400) * bonus)
                 silver = int(random.randint(20, 80) * bonus)
                 await player.give_gold(conn, income)
                 await player.give_resource(conn, "iron", iron)

@@ -134,9 +134,9 @@ class Misc(commands.Cog):
                 continue
 
             if command.parent is not None:
-                name = f"{command.parent.name} {command.name}"
+                name = f"/{command.parent.name} {command.name}"
             else:
-                name = command.name
+                name = "/" + command.name
 
             if command.is_on_cooldown(ctx):
                 seconds = time.gmtime(command.get_cooldown_retry_after(ctx))
