@@ -292,6 +292,10 @@ class CombatInstance:
         self.player2, self.player1 = self.run_events(
             agent=self.player2, object=self.player1)
 
+        # Reduce damage by opponent defense
+        self.player1.damage *= (100 - self.player2.defense) / 100
+        self.player2.damage *= (100 - self.player1.defense) / 100
+
         # Cast everything to int
         self.player1.attack = int(self.player1.attack)
         self.player1.crit = int(self.player1.crit)
