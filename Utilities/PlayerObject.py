@@ -740,6 +740,9 @@ class Player:
                 base += 3
         if self.accessory.prefix == "Strong":
             base += Vars.ACCESSORY_BONUS["Strong"][self.accessory.type]
+        acolytes = (self.acolyte1.acolyte_name, self.acolyte2.acolyte_name)
+        if "Sophytes" in acolytes:
+            base += 5
         return base
 
 
