@@ -240,7 +240,7 @@ class Accessory:
                 f"`{Vars.ACCESSORY_BONUS[self.prefix][self.type]}%`."
             ),
             "Old" : (
-                f"When you defeat a boss at level 25 or higher in PvE, gain ",
+                f"When you defeat a boss at level 25 or higher in PvE, gain "
                 f"`{Vars.ACCESSORY_BONUS[self.prefix][self.type]}` gravitas."
             ),
             "Regal" : (
