@@ -176,10 +176,7 @@ class Help(commands.Cog):
             default="Quick-Start Guide",
             choices=[
                 OptionChoice("Quick-Start Guide"),
-                OptionChoice("Combat"),
-                OptionChoice("Acolytes"),
-                OptionChoice("Items"),
-                OptionChoice("Travel")])):
+                OptionChoice("Combat")])):
         """Learn how to play!"""
         if topic == "Quick-Start Guide":
             page1 = (
