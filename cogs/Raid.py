@@ -30,7 +30,7 @@ class Raid(commands.Cog):
 
     # COMMANDS
     r = discord.commands.SlashCommandGroup("raid", 
-        "Commands related to the raid mechanic", guild_ids=[762118688567984151])
+        "Commands related to the raid mechanic", )
 
     @r.command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)

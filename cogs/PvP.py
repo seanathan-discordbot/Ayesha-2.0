@@ -157,7 +157,7 @@ class PvP(commands.Cog):
         await self.run_pvp(ctx, ctx.author, opponent)
 
     @commands.user_command(name="Challenge to PvP", 
-        guild_ids=[762118688567984151])
+        )
     @commands.check(Checks.is_player)
     @cooldown(1, 15, BucketType.user)
     async def other_pvp(self, ctx, member: discord.Member):

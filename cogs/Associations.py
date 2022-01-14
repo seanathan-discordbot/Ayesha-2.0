@@ -35,19 +35,19 @@ class Associations(commands.Cog):
         print("Associations is ready.")
 
     a = discord.commands.SlashCommandGroup("association", 
-        "Commands related to coop gameplay", guild_ids=[762118688567984151])
+        "Commands related to coop gameplay", )
 
     b = discord.commands.SlashCommandGroup("brotherhood",
         "Association commands exclusive to brotherhood members", 
-        guild_ids=[762118688567984151])
+        )
 
     c = discord.commands.SlashCommandGroup("college",
         "Association commands exclusive to college members", 
-        guild_ids=[762118688567984151])
+        )
 
     g = discord.commands.SlashCommandGroup("guild",
         "Association commands exclusive to guild members", 
-        guild_ids=[762118688567984151])
+        )
 
     # AUXILIARY FUNCTIONS
     def write_member_page(self, start, members):
@@ -197,7 +197,7 @@ class Associations(commands.Cog):
         await self.view_association(ctx, assc)
 
     @commands.user_command(name="View Association", 
-        guild_ids=[762118688567984151])
+        )
     async def view_other_assc(self, ctx, member : discord.Member):
         async with self.bot.db.acquire() as conn:
             psql = """

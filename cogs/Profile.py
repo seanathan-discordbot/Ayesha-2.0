@@ -373,7 +373,7 @@ class Profile(commands.Cog):
             await ctx.respond(f"You cancelled :(")
         await msg.delete_original_message()
 
-    @commands.slash_command(name="profile", guild_ids=[762118688567984151])
+    @commands.slash_command(name="profile", )
     async def self_profile(self, ctx, player : Option(discord.Member,
                 description="Another player whose profile you want to see",
                 required=False,
@@ -384,7 +384,7 @@ class Profile(commands.Cog):
         else:
             await self.view_profile(ctx, ctx.author)
 
-    @commands.user_command(name="View Profile", guild_ids=[762118688567984151])
+    @commands.user_command(name="View Profile", )
     async def other_profile(self, ctx, member: discord.Member):
         await self.view_profile(ctx, member)
 

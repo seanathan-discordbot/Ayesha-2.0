@@ -61,7 +61,7 @@ class Acolytes(commands.Cog):
                         f"**Level:** {inv[start].level}, " 
                         f"**Attack:** {inv[start].get_attack()}, **Crit:** "
                         f"{inv[start].get_crit()}, **Dupes:** "
-                        f"{inv[start].dupes}\n **Effect:** {info['Effect']}"),
+                        f"{inv[start].dupes}\n**Effect:** {info['Effect']}"),
                     inline=False)
             else:
                 embed.add_field(
@@ -109,15 +109,14 @@ class Acolytes(commands.Cog):
             inline=False)
         embed.add_field(name="Stats",
             value=(
-                f"Attack: `{acolyte_info['Attack']}` \n "
-                f"Crit: `{acolyte_info['Crit']}` \n"
-                f"HP: `{acolyte_info['HP']}` \n "),
-            inline=False)
+                f"Attack: {acolyte_info['Attack']} + {acolyte_info['Scale']}"
+                f"/lvl \n"
+                f"Crit: {acolyte_info['Crit']} \n"
+                f"HP: {acolyte_info['HP']}"))
         embed.add_field(name="Details",
             value=(
-                f"Rarity: `{acolyte_info['Rarity']}`\u2B50\n"
-                f"Upgrade Material: `{acolyte_info['Mat']}` \n"),
-            inline=True)
+                f"Rarity: {acolyte_info['Rarity']}\u2B50\n"
+                f"Upgrade Material: {acolyte_info['Mat'].title()}"))
         await ctx.respond(embed=embed)
 
     @commands.slash_command(guild_ids=[762118688567984151])

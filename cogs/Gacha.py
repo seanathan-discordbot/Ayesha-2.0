@@ -79,7 +79,8 @@ class Gacha(commands.Cog):
                 f"{acolyte.acolyte_name} ({acolyte.gen_dict['Rarity']}⭐) has "
                 f"entered the tavern!"),
             color=Vars.ABLUE)
-        embed.set_thumbnail(url=acolyte.gen_dict['Image'])
+        if acolyte.gen_dict['Image'] is not None:
+            embed.set_thumbnail(url=acolyte.gen_dict['Image'])
         embed.add_field(name="Attack",
             value=f"{acolyte.gen_dict['Attack']} + {acolyte.gen_dict['Scale']}")
         embed.add_field(name="Crit", value = acolyte.gen_dict['Crit'])
