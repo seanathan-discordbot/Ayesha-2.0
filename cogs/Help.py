@@ -6,7 +6,7 @@ from discord.ext import commands, pages
 
 from typing import List
 
-from Utilities import Vars, config
+from Utilities import CombatObject, Vars, config
 
 class Help(commands.Cog):
     """Get help with the bot!"""
@@ -324,6 +324,157 @@ class Help(commands.Cog):
                     color=Vars.ABLUE)
                 embed.set_thumbnail(url=self.bot.user.avatar.url)
                 embeds.append(embed)
+
+            paginator = pages.Paginator(pages=embeds, timeout=30)
+            await paginator.respond(ctx.interaction)
+
+        elif topic == "Combat":
+            page1 = (
+                f"Welcome to the Ayesha Combat Tutorial! In the next few "
+                f"pages, I will be divulging into some technical information "
+                f"about the combat system, so if you know nothing about combat "
+                f"or the bot, I suggest you look at the `Quick-Start Guide` "
+                f"instead.\n\n"
+                f"__Some Quick History__\n"
+                f"Ayesha was a fairly rushed bot written during the creators' "
+                f"winter break of 2020-2021. Like most of the individual "
+                f"modules, PvE was written in 2 days, but you are not playing "
+                f"that version now ;). When 1.0 was released later that year, "
+                f"Aramythia had written a more robust system that properly "
+                f"integrated acolyte and boss effects, although it was still "
+                f"largely a copy-paste job (and thus poorly integrated next to "
+                f"PvP). A year later, the PvE was rewritten with the rest of "
+                f"the bot into Ayesha 2.0. It is a vast improvement, running "
+                f"on the same foundations as PvP and brotherhood attack, "
+                f"although it was made by a random college student so y'know. "
+                f"Anyway, what this means is that the real tutorial is really "
+                f"in the "
+                f"[code](https://github.com/seanathan-discordbot/Ayesha-2.0), "
+                f"and its details will be found on the next page."
+            )
+            page2 = (
+                f"If you look at the code, in `Utilities/CombatObject.py`, "
+                f"under `ACTION_COMBOS`, you will find the dictionary that "
+                f"determines how damage is calculated. It covers every "
+                f"possible combination of attacks two players can perform. "
+                f"The first dictionary is the agent's action (the attacker), "
+                f"the second is the object's (the defender), meaning that "
+                f"your damage is based not only what you do, but also what "
+                f"your opponent does.\n\n"
+                f"Let's say you attack, and your opponent blocks. You look "
+                f"at the first dictionary for attack, then go to block, where "
+                f"you find the number "
+                f"`{CombatObject.ACTION_COMBOS['Attack']['Block']}`, or if "
+                f"you can read Python, "
+                f"`CombatObject.ACTION_COMBOS['Attack']['Block']`. "
+                f"Your flat damage is a random number, somewhere around your "
+                f"base ATK as found at the top of the PvE or PvP embed. "
+                f"This damage amount is then multiplied by the amount given by "
+                f"the dictionary. You attack, they block, you deal only "
+                f"a small percentage of that initial damage. Your opponent's "
+                f"damage is the converse, Block->Attack = "
+                f"{CombatObject.ACTION_COMBOS['Block']['Attack']}, and their "
+                f"own randomly calculated amount of damage is this amount.\n\n"
+                f"Then, these damage numbers are changed depending on "
+                f"your acolyte and accessory effects.\n\n"
+                f"DEF is a percentage of damage reduction and is applied "
+                f"to the calculated damage last.\n\n"
+                f"When the turn is registered and damage is actually applied, "
+                f"it occurs simultaneously from a gameplay perspective. "
+                f"But there are no ties, so what happens? In PvE, you win. "
+                f"In PvP, there are ties. In `/brotherhood attack`, "
+                f"the defender wins."
+            )
+            page3 = (
+                f"Another historical tidbit: before the days of slash "
+                f"commands, menus, and buttons, bot devs were forced to using "
+                f"reactions to get a player's input. But Discord limited "
+                f"adding reactions to messages, and so the interactive PvE "
+                f"of today was once a boring, automatic PvE, like PvP.\n\n"
+                f"The fact above brings the question of how attacks are "
+                f"determined. In the past, there existed a `%strategy` command "
+                f"in which you set the proportion of each action. Now, bosses "
+                f"and PvP still have to choose actions based off some "
+                f"proportion. And here it is:\n"
+                f"Attack: 50%\nBlock: 20%\nParry: 20%\nHeal: 3%\nBide: 7%\n\n"
+                f"Each turn an action is randomly chosen based off these "
+                f"weights, and you can note that in your PvE battle log, "
+                f"you are even told what the boss will do on the next turn! "
+                f"You may have also wisely deduced that the I, Ayesha, am also "
+                f"a liar. You can find in `cogs/PvE.py`, the  "
+                f"[calculation](https://github.com/seanathan-discordbot/Ayesha-2.0/blob/main/cogs/PvE.py) "
+                f"that only 60% of the time I am telling the truth. In the "
+                f"rest of the cases, I select another random action to "
+                f"display, but since that random choice can also be the "
+                f"correct once, the real probability is a little above 60%."
+            )
+            page4 = (
+                f"Did you ever see one of the higher levelled players get "
+                f"over 100,000 xp from beating a boss? Did you ever wonder why "
+                f"you got 10,000 xp from beating a boss one time, but only "
+                f"2,000 when you beat them a second time? The calculation for "
+                f"xp is as follows:\n`f(x, y) = 2^(x/10) * (x+10)^2 * "
+                f"((y + 750) + .02)`, where x = the level of the boss, and y = "
+                f"the *HP you have remaining* upon victory. So the stronger "
+                f"the boss, the more xp you gain on an *exponential* level, "
+                f"and wider the margin you win by, the more xp you gain. "
+                f"I beg you to appreciate the complex and equitable "
+                f"reward calculation Ayesha has in comparison to other games "
+                f"lol.\n\n"
+                f"Gold calculation is rather unimaginative though, although "
+                f"(history lesson!) it was based off the cosine function in "
+                f"Ayesha 1.0.\n\n"
+                f"Upon victory, you also have a flat...\n"
+                f"10% chance to gain a weapon\n"
+                f"6.67% (1/15) chance to get a piece of armor\n"
+                f"5% chance to get an accessory\n"
+                f"You can gain none, one, or multiple of these items on any "
+                f"given victory. The [code](https://github.com/seanathan-discordbot/Ayesha-2.0/blob/main/cogs/PvE.py) "
+                f"does not lie. The code is probably bugged, because for "
+                f"some reason, I (Aramythia) never get any armor! >:( "
+                f"The last few pages will give the exact rarities of "
+                f"the drops you may potentially gain."
+            )
+
+            messages = [
+                ("Combat Tutorial: Overview", page1),
+                ("Damage Calculation", page2),
+                ("Action Determination", page3),
+                ("Rewards Chances", page4)
+            ]
+            embeds = []
+            for page in messages:
+                embed = discord.Embed(
+                    title=page[0],
+                    description=page[1],
+                    color=Vars.ABLUE)
+                embed.set_thumbnail(url=self.bot.user.avatar.url)
+                embeds.append(embed)
+            rarity_embed = discord.Embed(
+                title="PvE Loot Rarities and Materials",
+                color=Vars.ABLUE)
+            rarity_embed.add_field(
+                name="Weapon Rarity",
+                value=(
+                    f"Common: 1-8\nUncommon: 9-14\nRare: 15-24\nEpic: 25-49\n"
+                    f"Legendary: 50+"))
+            rarity_embed.add_field(
+                name="Armor Material",
+                value=(
+                    f"Cloth: 1\nLeather: 2-4\nGambeson: 5-8\nBearskin: 9\n"
+                    f"Wolfskin: 13\n Bronze: [10, 12]U[14]\nCeramic Plate: "
+                    f"16-17\nChainmail: 18-20\nIron: 21-24\nSteel: 25-49\n"
+                    f"Mysterious: 40+\nDragonscale: 50+"),
+                inline=False)
+            rarity_embed.add_field(
+                name="Armor Material",
+                value=(
+                    f"Wood: 1\nGlass: 1-4\nCopper: 1-8\nJade: 2-9\nPearl: "
+                    f"[6, 9]U[13]\nAquamarine: 13\nSapphire: 13-24\nAmethyst: "
+                    f"15-20\nRuby:18-39\nGarnet: 21-49\nDiamond: 25-49\n"
+                    f"Emerald: 40+\nBlack Opal: 50+"),
+                inline=False)
+            embeds.append(rarity_embed)
 
             paginator = pages.Paginator(pages=embeds, timeout=30)
             await paginator.respond(ctx.interaction)
