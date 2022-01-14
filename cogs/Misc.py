@@ -344,6 +344,8 @@ class Misc(commands.Cog):
                     "gravitas", gravitas, agent.gravitas)
 
             object = await PlayerObject.get_player_by_id(conn, target.id)
+            if agent.disc_id == object.disc_id:
+                return await ctx.respond("Don't do that.")
             success = random.randint(1, 10)
 
             if action == "Praise":
