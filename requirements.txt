@@ -3,3 +3,4 @@ asyncpg==0.25.0
 aiohttp==3.7.4.post0
 coolname==1.1.0
 schedule==1.1.0
+dblpy==0.4.0
