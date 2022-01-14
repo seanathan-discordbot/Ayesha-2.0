@@ -1,16 +1,20 @@
 import discord
 from discord import Option, OptionChoice
-import asyncpg
+
 from discord.ext import commands, pages
-from discord.ext.commands import converter
-from Utilities import Checks, Vars, Analytics, AcolyteObject,PlayerObject
+
+import asyncpg
+from typing import List
+
+from Utilities import Checks, Vars, AcolyteObject, PlayerObject
 
 def acolyte_equipped(player,acolyte_id):
     id_1=player.acolyte1.acolyte_id
     id_2=player.acolyte2.acolyte_id
     return (acolyte_id==id_1 or acolyte_id==id_2)
 
-async def get_all_acolytes(conn : asyncpg.Connection, user_id : int):
+async def get_all_acolytes(conn : asyncpg.Connection, 
+        user_id : int) -> List[AcolyteObject.Acolyte]:
     """Returns a list of 'AcolyteObject.Acolyte's the player with the ID owns"""
     psql = """
           SELECT acolyte_id
@@ -35,7 +39,8 @@ class Acolytes(commands.Cog):
         print("Acolyte is ready.")
 
     #add logic to add when not equipped 
-    def write(self, start, inv, player):
+    def write(self, start : int, inv: List[AcolyteObject.Acolyte], 
+            player : PlayerObject.Player) -> discord.Embed:
         """
         A helper function that creates the embeds for the tavern method
         """
@@ -49,30 +54,31 @@ class Acolytes(commands.Cog):
             if acolyte_equipped(player,inv[start].acolyte_id):
                 embed.add_field(
                     name=( 
-                        f"({info['Rarity']}\u2B50) {info['Name']} "
+                        f"({info['Rarity']}\u2B50) {info['Name']}: "
                         f"`{inv[start].acolyte_id}` [EQUIPPED]"),
                     value=( 
                         f"**Level:** {inv[start].level}, " 
-                        f"**Attack:** {info['Attack']}, **Crit:** "
-                        f"{info['Crit']}, **Dupes:** {inv[start].dupes}\n "
-                        f"**Effect:** {info['Effect']}"),
-                    inline=False
-                )
+                        f"**Attack:** {inv[start].get_attack()}, **Crit:** "
+                        f"{inv[start].get_crit()}, **Dupes:** "
+                        f"{inv[start].dupes}\n **Effect:** {info['Effect']}"),
+                    inline=False)
             else:
                 embed.add_field(
                     name=( 
-                        f"({info['Rarity']}\u2B50) {info['Name']} `{inv[start].acolyte_id}`"),
+                        f"({info['Rarity']}\u2B50) {info['Name']}: "
+                        f"`{inv[start].acolyte_id}`"),
                     value=( 
-                        f"**Level:** {inv[start].level}," 
-                        f" **Attack:** {info['Attack']}, **Crit:** {info['Crit']}," 
-                        f" **Dupes:** {inv[start].dupes}\n**Effect:** {info['Effect']}"),
-                    inline=False
-                )
+                        f"**Level:** {inv[start].level}, " 
+                        f"**Attack:** {inv[start].get_attack()}, "
+                        f"**Crit:** {inv[start].get_crit()}, " 
+                        f"**Dupes:** {inv[start].dupes}\n"
+                        f"**Effect:** {info['Effect']}"),
+                    inline=False)
             iteration += 1
             start += 1
         return embed
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     async def acolyte(self, ctx,
         name : Option(str, 
             description="The name of the acolyte you are viewing")):
@@ -109,10 +115,10 @@ class Acolytes(commands.Cog):
             value=(
                 f"Rarity: `{acolyte_info['Rarity']}`\u2B50\n"
                 f"Upgrade Material: `{acolyte_info['Mat']}` \n"),
-            inline=False)
+            inline=True)
         await ctx.respond(embed=embed)
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command(guild_ids=[196465885148479489])
     @commands.check(Checks.is_player)
     async def tavern(self, ctx):
         """View a list of all your owned acolytes."""
@@ -124,11 +130,13 @@ class Acolytes(commands.Cog):
                 embeds.append(self.write(i, acolytes, player))
             if len(embeds) == 0:
                 await ctx.reply('Your tavern is empty!')
+            elif len(embeds) == 1:
+                await ctx.respond(embed=embeds[0])
             else:
                 paginator = pages.Paginator(pages=embeds, timeout=30)
                 await paginator.respond(ctx.interaction)
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     async def recruit(self, ctx,
             slot : Option(int, 
@@ -155,7 +163,7 @@ class Acolytes(commands.Cog):
                 await ctx.respond(
                     f"Equipped acolyte: {player.acolyte2.acolyte_name}")
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     async def train(self, ctx, 
             instance_id : Option(int, description="The acolyte's ID"), 
