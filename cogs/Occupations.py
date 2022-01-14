@@ -2,10 +2,10 @@ import discord
 from discord import Option, OptionChoice
 
 from discord.ext import commands
+from discord.ext.commands import BucketType, cooldown
 
 from Utilities import Checks, PlayerObject, Vars
 from Utilities.ConfirmationMenu import ConfirmationMenu
-from Utilities.Finances import Transaction
 
 class OccupationMenu(discord.ui.Select):
     def __init__(self, author):
@@ -67,6 +67,7 @@ class Occupations(commands.Cog):
     # COMMANDS
     @commands.slash_command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
+    @cooldown(3, 259200, BucketType.user)
     async def lore(self, ctx, 
             setting : Option(str,
                 description="The aspect of your profile to change",
