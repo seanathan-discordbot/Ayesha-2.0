@@ -397,6 +397,8 @@ class CombatInstance:
 
 
         # ON_BLOCK : Agent blocks
+        if "Demi" in acolytes and object.last_move == "Attack":
+            agent.damage += agent.defense * 2
 
 
         # ON_PARRY : Agent parries
@@ -432,6 +434,18 @@ class CombatInstance:
         if "Ajar" in acolytes:
             agent.attack += 20
             agent.current_hp -= 50
+        if "Lauren" in acolytes and object.damage < 100:
+            agent.attack *= 1.08
+        if "Thorp" in acolytes:
+            choice = random.randint(1,4)
+            if choice == 1:
+                agent.attack *= 1.02
+            elif choice == 2:
+                agent.crit *= 1.05
+            elif choice == 3:
+                agent.current_hp *= 1.01
+            else:
+                agent.defense *= 1.05
 
         return agent, object
 
