@@ -1,3 +1,4 @@
+from email.policy import default
 import discord
 from discord import Option, OptionChoice
 
@@ -78,7 +79,7 @@ class Acolytes(commands.Cog):
             start += 1
         return embed
 
-    @commands.slash_command()
+    @commands.slash_command(guild_ids=[762118688567984151])
     async def acolyte(self, ctx,
         name : Option(str, 
             description="The name of the acolyte you are viewing")):
@@ -118,12 +119,35 @@ class Acolytes(commands.Cog):
             inline=True)
         await ctx.respond(embed=embed)
 
-    @commands.slash_command(guild_ids=[196465885148479489])
+    @commands.slash_command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
-    async def tavern(self, ctx):
+    async def tavern(self, ctx,
+            order : Option(str,
+                description="Sorts your tavern in a specific way",
+                required=False,
+                default="Rarity",
+                choices=[
+                    OptionChoice("Order by Experience", "xp"),
+                    OptionChoice("Order by Rarity", "Rarity"),
+                    OptionChoice("Order by Attack", "Attack"),
+                    OptionChoice("Order by Crit", "Crit"),
+                    OptionChoice("Order by Duplicates", "Dupe")
+                ])):
         """View a list of all your owned acolytes."""
         async with self.bot.db.acquire() as conn:
             acolytes= await get_all_acolytes(conn, ctx.author.id)
+
+            if order == "xp":
+                pass
+            elif order == "Attack":
+                acolytes.sort(key=lambda a : a.get_attack(), reverse=True)
+            elif order == "Crit":
+                acolytes.sort(key=lambda a : a.get_crit(), reverse=True)
+            elif order == "Dupe":
+                acolytes.sort(key=lambda a : a.dupes, reverse=True)
+            else: # Order by rarity by default
+                acolytes.sort(key=lambda a : a.gen_dict["Rarity"], reverse=True)
+
             player=await PlayerObject.get_player_by_id(conn, ctx.author.id)
             embeds = []
             for i in range(0, len(acolytes), 5): #list 5 entries at a time
@@ -136,7 +160,7 @@ class Acolytes(commands.Cog):
                 paginator = pages.Paginator(pages=embeds, timeout=30)
                 await paginator.respond(ctx.interaction)
 
-    @commands.slash_command()
+    @commands.slash_command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
     async def recruit(self, ctx,
             slot : Option(int, 
@@ -163,7 +187,7 @@ class Acolytes(commands.Cog):
                 await ctx.respond(
                     f"Equipped acolyte: {player.acolyte2.acolyte_name}")
 
-    @commands.slash_command()
+    @commands.slash_command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
     async def train(self, ctx, 
             instance_id : Option(int, description="The acolyte's ID"), 
