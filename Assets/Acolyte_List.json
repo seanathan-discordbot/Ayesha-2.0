@@ -54,7 +54,7 @@
         "Crit": 5,
         "HP": 125,
         "Rarity": 5,
-        "Effect": "When fighting a boss, your crit is doubled on turn 3.",
+        "Effect": "Crit Rate is doubled after turn 3 in combat.",
         "Mat" : "cacao",
         "Story": "Onions.",
         "Image": "https://i.imgur.com/OlnEesM.jpg"
@@ -70,6 +70,30 @@
         "Mat" : "silver",
         "Story": "Ajar I Ophidias is the young king of Aramythia. Originally from Riverburn, the Ophidias family has increasingly been assimilating into southern Aramythian society. Yet untested, the timid Ajar is drafting plans for a campaign against the tribes of the far north. Its success will decide his reputation: will he make a great name for himself, or will he succumb to the influence of the Aramythian dukes?",
         "Image": "https://i.imgur.com/5fEdN3l.jpg"
+    },
+    "Demi": {
+        "Name" : "Demi",
+        "Attack": 10,
+        "Scale": 0.1,
+        "Crit": 0,
+        "HP": 250,
+        "Rarity": 5,
+        "Effect": "Blocking an Attack deals extra damage equal to twice your DEF.",
+        "Mat" : "iron",
+        "Story": "The demi-lord, who calls himself Demi, is an influential nobleman from Lunaris whose fief lies in the mountains bordering Maritimiala. His forces form the first line of defense against barbarian incursions into the fertile valleys of the south.",
+        "Image": null
+    },
+    "Lauren": {
+        "Name" : "Lauren",
+        "Attack": 16,
+        "Scale": 0.4,
+        "Crit": 7,
+        "HP": 100,
+        "Rarity": 5,
+        "Effect": "Increase ATK by 8% whenever you take less than 100 damage in a turn.",
+        "Mat" : "wheat",
+        "Story": "A travelling businesswoman from afar, Lauren Loo is the chairwoman of one of the largest Thenuille trading guilds, and an advisor to the Aramythian king in technical and economic affairs.",
+        "Image": null
     },
     "Octavia": {
         "Name" : "Octavia",
@@ -143,6 +167,30 @@
         "Story": "Spartacus was one of the most esteemed gladiators in Crumidia. He broke multiple records during his 42-win streak, making the elites very wealthy off the games he participated in. It was because of this that he was unable to buy his freedom, forcing him to kill his masters. He escaped to the jungles of southern Crumidia, seeking to rebuild society among fellow outlaws.",
         "Image": "https://i.imgur.com/RZdBsJc.jpg"
     },
+    "Sophytes": {
+        "Name" : "Sophytes",
+        "Attack": 10,
+        "Scale": 0.1,
+        "Crit": 0,
+        "HP": 200,
+        "Rarity": 4,
+        "Effect": "Gain 5% DEF.",
+        "Mat" : "wheat",
+        "Story": "Sophytes is the longest running personal guard to the mayor of Aramithea, serving the city for over twenty years. He longs for the day he can retire.",
+        "Image": null
+    },
+    "Thorp": {
+        "Name" : "Thorp",
+        "Attack": 0,
+        "Scale": 0.25,
+        "Crit": 10,
+        "HP": 75,
+        "Rarity": 4,
+        "Effect": "Boosts a random stat by 1% each turn.",
+        "Mat" : "moss",
+        "Story": "Codenamed Thorp, this mysterious man from Lunaris is on the mind of every Aramithean banker, hoping that they aren't the next target of one of his heists. Thorp spends much of his time alongside Anne looking to trick his way into a quick buck.",
+        "Image": null
+    },
     "Layla": {
         "Name" : "Layla",
         "Attack": 0,
@@ -190,6 +238,78 @@
         "Mat" : "fur",
         "Story": "Anne is a champion of poker. If you find yourself at the same table as him, you may want to leave.",
         "Image": "https://i.imgur.com/iJ0Nw4b.jpg"
+    },
+    "A Local Seal": {
+        "Name" : "A Local Seal",
+        "Attack": 0,
+        "Scale": 0.15,
+        "Crit": 3,
+        "HP": 175,
+        "Rarity": 3,
+        "Effect": null,
+        "Mat" : "pine",
+        "Story": "This seal thinks hes a master of trolling and trickery. Nah.",
+        "Image": "https://i.imgur.com/8aW320n.jpg"
+    },
+    "Corner Spider": {
+        "Name" : "Corner Spider",
+        "Attack": 40,
+        "Scale": 0,
+        "Crit": 0,
+        "HP": 10,
+        "Rarity": 3,
+        "Effect": null,
+        "Mat" : "wood",
+        "Story": "You open the door and see a spider set up camp in the corner of the room.",
+        "Image": null
+    },
+    "Juggernaut Jim": {
+        "Name" : "Juggernaut Jim",
+        "Attack": 20,
+        "Scale": 0.1,
+        "Crit": 0,
+        "HP": 120,
+        "Rarity": 3,
+        "Effect": null,
+        "Mat" : "bone",
+        "Story": "Juggernaut Jim was a famous wrestler in the Crumidian heartland, but joined Spartacus in his isolationist collective.",
+        "Image": null
+    },
+    "Bunger": {
+        "Name" : "Bunger",
+        "Attack": 0,
+        "Scale": 0.25,
+        "Crit": 3,
+        "HP": 90,
+        "Rarity": 3,
+        "Effect": null,
+        "Mat" : "reeds",
+        "Story": "bunger",
+        "Image": null
+    },
+    "A Chair": {
+        "Name" : "A Chair",
+        "Attack": 0,
+        "Scale": 0.08,
+        "Crit": 1,
+        "HP": 300,
+        "Rarity": 3,
+        "Effect": null,
+        "Mat" : "wood",
+        "Story": "That chair! Its just standing there...MENACINGLY!",
+        "Image": null
+    },
+    "Coin": {
+        "Name" : "Coin",
+        "Attack": 0,
+        "Scale": 0.13,
+        "Crit": 6,
+        "HP": 110,
+        "Rarity": 3,
+        "Effect": null,
+        "Mat" : "oat",
+        "Story": "suwoom",
+        "Image": null
     },
     "Bort": {
         "Name" : "Bort",
@@ -239,18 +359,6 @@
         "Story": "A traveling salesman from Crumidia, Joe Scammer is a master of disguise. A nice hat, a few shipments of lumber, or a 'rare' weapon, everyone takes the bait on Joe's antics. No one ever realizes they've been had, at least until they get their product. Opening the box, all they find is a note saying 'You just got Joe'd!'",
         "Image": "https://i.imgur.com/R41Z2aW.jpg"
     },
-    "A Local Seal": {
-        "Name" : "A Local Seal",
-        "Attack": 0,
-        "Scale": 0.15,
-        "Crit": 3,
-        "HP": 25,
-        "Rarity": 2,
-        "Effect": null,
-        "Mat" : "pine",
-        "Story": "This seal thinks hes a master of trolling and trickery. Nah.",
-        "Image": "https://i.imgur.com/8aW320n.jpg"
-    },
     "Shadwow Tisawode": {
         "Name" : "Shadwow Tisawode",
         "Attack": 2,
@@ -274,6 +382,54 @@
         "Mat" : "moss",
         "Story": "idk",
         "Image": "https://i.imgur.com/Ndady32.jpg"
+    },
+    "Robin": {
+        "Name" : "Robin",
+        "Attack": 10,
+        "Scale": 0,
+        "Crit": 0,
+        "HP": 100,
+        "Rarity": 2,
+        "Effect": null,
+        "Mat" : "moss",
+        "Story": "Random thief moment.",
+        "Image": null
+    },
+    "Whetstone Caretaker": {
+        "Name" : "Whetstone Caretaker",
+        "Attack": 0,
+        "Scale": 0.3,
+        "Crit": 2,
+        "HP": 66,
+        "Rarity": 2,
+        "Effect": null,
+        "Mat" : "iron",
+        "Story": "The whetstone caretaker is an avid collector of rocks.",
+        "Image": null
+    },
+    "Leeches": {
+        "Name" : "Leeches",
+        "Attack": 21,
+        "Scale": 0,
+        "Crit": 0,
+        "HP": 5,
+        "Rarity": 2,
+        "Effect": null,
+        "Mat" : "moss",
+        "Story": "Leave a jar of leeches on your shelf just in case you get sick.",
+        "Image": null
+    },
+    "Cheems": {
+        "Name" : "Cheems",
+        "Attack": 0,
+        "Scale": 0.17,
+        "Crit": 2,
+        "HP": 42,
+        "Rarity": 2,
+        "Effect": null,
+        "Mat" : "bone",
+        "Story": "Someone's being a little cheemy...",
+        "Image": null
     },
     "PrxRdr": {
         "Name" : "PrxRdr",
