@@ -100,7 +100,8 @@ class Acolytes(commands.Cog):
                 title=acolyte_info["Name"],
                 color=Vars.ABLUE)
 
-        embed.set_thumbnail(url=acolyte_info["Image"])
+        if acolyte_info["Image"] is not None:
+            embed.set_thumbnail(url=acolyte_info["Image"])
         embed.add_field(name="Backstory", value=acolyte_info["Story"])
         embed.add_field(
             name="Effect", 
