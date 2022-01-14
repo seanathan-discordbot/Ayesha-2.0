@@ -67,11 +67,11 @@ class PvE(commands.Cog):
             accessory = random.choice(["Ruby", "Garnet", "Diamond"])
         elif level < 50:
             weapon = "Epic"
-            armor = "Mysterious"
+            armor = random.choice(["Steel", "Mysterious"])
             accessory = random.choice(["Garnet", "Diamond", "Emerald"])
         else:
             weapon = "Legendary"
-            armor = "Dragonscale"
+            armor = random.choice(["Mysterious", "Dragonscale"])
             accessory = random.choice(["Emerald", "Black Opal"])
 
         return {
@@ -81,7 +81,7 @@ class PvE(commands.Cog):
         }
 
     # COMMANDS
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     @cooldown(1, 15, BucketType.user)
     async def pve(self, ctx,
@@ -127,7 +127,7 @@ class PvE(commands.Cog):
                 inline=False)
             embed.add_field(
                 name=f"Turn {turn_counter}", 
-                value="\n".join(recent_turns[-5:]),
+                value="\n".join(recent_turns[-3:]),
                 inline=False)
 
             view = CombatObject.ActionChoice(author_id=ctx.author.id)
@@ -151,7 +151,7 @@ class PvE(commands.Cog):
             # Calculate damage based off actions
             combat_turn = CombatInstance(player, boss, turn_counter)
             turn_msg = combat_turn.get_turn_str()
-            if random.randint(1,100) < 60: # ~65% chance of accurate prediction 
+            if random.randint(1, 100) < 60: # ~65% chance of accurate prediction 
                 turn_msg += (
                     f"**{boss.name}** seems poised to "
                     f"**{boss_next_move}**!")
@@ -194,7 +194,7 @@ class PvE(commands.Cog):
                     weapon = await ItemObject.create_weapon(
                         conn, author.disc_id, item_rarities["weapon"])
 
-                if random.randint(1, 20) == 1:
+                if random.randint(1, 15) == 1:
                     armor = await ItemObject.create_armor(
                         conn=conn, user_id=author.disc_id,
                         type=random.choice(("Helmet", "Bodypiece", "Boots")),
@@ -229,7 +229,7 @@ class PvE(commands.Cog):
                 mult = Vars.ACCESSORY_BONUS["Lucky"][player.accessory.type]
                 xp = int(xp * (mult / 100.0))
                 gold = int(gold * (mult / 100.0))
-            if player.accessory.prefix == "Old" and level >= 25:
+            if player.accessory.prefix == "Old" and level >= 25 and victory:
                 gravitas = Vars.ACCESSORY_BONUS["Old"][player.accessory.type]
                 await author.give_gravitas(conn, gravitas)
 
