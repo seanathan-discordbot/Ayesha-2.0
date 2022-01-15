@@ -410,6 +410,12 @@ class Items(commands.Cog):
     @commands.slash_command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
     async def sell(self, ctx, 
+            item_type : Option(str,
+                description="The type of item you are selling",
+                choices=[
+                    OptionChoice("Sell a Weapon", "weapon"),
+                    OptionChoice("Sell Armor", "armor"),
+                    OptionChoice("Sell an Accessory", "accessory")]),
             item_id : Option(int, 
                 description="The ID of the item you want to sell",
                 required=False),
@@ -422,6 +428,48 @@ class Items(commands.Cog):
         async with self.bot.db.acquire() as conn:
             player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
 
+            if item_type in ("armor", "accessory") and item_id is None:
+                return await ctx.respond(
+                    f"Please enter the ID of the {item_type} you are selling.")
+            
+            elif item_type == "armor":
+                eq_ar = (player.helmet.id, player.bodypiece.id, player.boots.id)
+                if item_id in eq_ar:
+                    return await ctx.respond(
+                        "Don't sell your equipped armor!")
+                if not await player.is_armor_owner(conn, item_id):
+                    raise Checks.NotArmorOwner
+                item = await ItemObject.get_armor_by_id(conn, item_id)
+                # Make armor sale
+                gold = random.randint(
+                    a=Vars.ARMOR_SALE_PRICES[item.type]['low'],
+                    b=Vars.ARMOR_SALE_PRICES[item.type]['high'])
+                sale = await Transaction.create_sale(conn, player, gold)
+                print_tax = await sale.log_transaction(conn, "sale")
+                await item.destroy(conn)
+                return await ctx.respond((
+                    f"You sold your `{item_id}`: {item.name} amd made "
+                    f"`{sale.subtotal}` gold.\n{print_tax}"))
+
+            elif item_type == "accessory":
+                if item_id == player.accessory.id:
+                    return await ctx.respond(
+                        "Don't sell your equipped accessory!")
+                if not await player.is_accessory_owner(conn, item_id):
+                    raise Checks.NotAccessoryOwner
+                item = await ItemObject.get_accessory_by_id(conn, item_id)
+                # Make accessory sale
+                gold = random.randint(
+                    a=Vars.ACCESSORY_SALE_PRICES[item.type]["low"],
+                    b=Vars.ACCESSORY_SALE_PRICES[item.type]["high"])
+                sale = await Transaction.create_sale(conn, player, gold)
+                print_tax = await sale.log_transaction(conn, "sale")
+                await item.destroy(conn)
+                return await ctx.respond((
+                    f"You sold your `{item_id}`: {item.name} amd made "
+                    f"`{sale.subtotal}` gold.\n{print_tax}"))
+
+            # SELL WEAPON 
             if item_id is not None: # If they pass both, only sell the item ID
                 # See if this is an eligible sale
                 if player.equipped_item.weapon_id == item_id:
