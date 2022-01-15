@@ -141,6 +141,14 @@ ACCESSORY_BONUS = {
     }
 }
 
+ACCESSORY_SALE_PRICES = {
+    material : {
+        'low' : 30 * i**2,
+        'high' : 50 * i**2
+    }
+    for i, material in enumerate(ACCESSORY_BONUS["Lucky"], start=1)
+}
+
 ARMOR_DEFENSE = {
     'Helmet' : {
         'Cloth' : 1,
@@ -190,6 +198,14 @@ ARMOR_DEFENSE = {
         'Mysterious' : 15,
         'Dragonscale' : 18
     },
+}
+
+ARMOR_SALE_PRICES = {
+    material : {
+        'low' : 15 * i**2,
+        'high' : 25 * i**2
+    }
+    for i, material in enumerate(ARMOR_DEFENSE["Helmet"], start=1)
 }
 
 ANNOUNCEMENT_CHANNEL = 854493268581679104

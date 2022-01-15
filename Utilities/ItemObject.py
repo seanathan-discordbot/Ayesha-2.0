@@ -163,6 +163,14 @@ class Armor:
             self.name = "No Armor"
             self.defense = 0
 
+    async def destroy(self, conn : asyncpg.Connection):
+        """Deletes this item from the database."""
+        if self.is_empty:
+            raise Checks.EmptyObject
+        
+        psql = "DELETE FROM armor WHERE armor_id = $1"
+        await conn.execute(psql, self.id)
+
 
 class Accessory:
     """An accessory object. Changing the object attributes are not permanent; to
@@ -254,6 +262,14 @@ class Accessory:
             )
         }
         return bonus[self.prefix]
+
+    async def destroy(self, conn : asyncpg.Connection):
+        """Deletes this item from the database."""
+        if self.is_empty:
+            raise Checks.EmptyObject
+        
+        psql = "DELETE FROM accessories WHERE accessory_id = $1"
+        await conn.execute(psql, self.id)
 
 
 async def get_weapon_by_id(conn : asyncpg.Connection, item_id : int) -> Weapon:
