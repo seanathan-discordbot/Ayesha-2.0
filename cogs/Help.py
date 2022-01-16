@@ -177,7 +177,8 @@ class Help(commands.Cog):
             choices=[
                 OptionChoice("Quick-Start Guide"),
                 OptionChoice("Combat"),
-                OptionChoice("Gravitas")])):
+                OptionChoice("Gravitas"),
+                OptionChoice("Work")])):
         """Learn how to play!"""
         if topic == "Quick-Start Guide":
             page1 = (
@@ -557,6 +558,72 @@ class Help(commands.Cog):
                 ("Gravitas Overview", page1),
                 ("How to Become Famous", page2),
                 ("The Officeholder System", page3)
+            ]
+            embeds = []
+            for page in messages:
+                embed = discord.Embed(
+                    title=page[0],
+                    description=page[1],
+                    color=Vars.ABLUE)
+                embed.set_thumbnail(url=self.bot.user.avatar.url)
+                embeds.append(embed)
+
+            paginator = pages.Paginator(pages=embeds, timeout=30)
+            await paginator.respond(ctx.interaction)
+
+        elif topic == "Work":
+            page1 = (
+                f"`/work` is meant to be a faster way to gain gold and "
+                f"resources essential for upgrading weapons and acolytes. Once "
+                f"invoked, you have 5 options as to how what type of work "
+                f"you wish to do. In the past, these options were actually "
+                f"separate commands, but they have been condensed to comply "
+                f"with Discord's command limits.\n\n"
+                f"Why this one command merits its own tutorial is because "
+                f"you can get bonuses on your yields from this command "
+                f"from two sources: having a weapon of a certain weapontype "
+                f"equipped, and being in a brotherhood that controls the "
+                f"location that you are working in. The brotherhood bonus "
+                f"is a flat 50% and applies to hunting, mining, and foraging. "
+                f"Each work type and the weapons which buff your profits are "
+                f"listed on the following pages:"
+            )
+            page2 = (
+                f"**Smalltown Gig** started out as the original `%work` "
+                f"command, and is available everywhere. It gives you between "
+                f"80 and 800 gold.\n\n"
+                f"**Hunting Trip**, once the `%hunt` command is only possible "
+                f"in regions which are grasslands, forests, and taigas. On "
+                f"average, the yield is about 55 fur and 40 bone.\nEquip a "
+                f"bow to double this amount, a sling to increase it by 50%, or "
+                f"a javelin for a 25% boost. Gauntlets, however, make for a "
+                f"poor hunter's item, and will halve your yield. Hunters also "
+                f"gain a 100% bonus.\n\n"
+                f"**Mining Shift**, once `%mine` is pretty much only "
+                f"worth-while in the badlands of Crumidia. There you will get "
+                f"hundreds of pieces of iron, and some silver, too. A "
+                f"trebuchet really packs a punch to collecting ore, with a "
+                f"100% yield increase. Greatswords, axes, and maces also give "
+                f"a 25% boost. But don't try to mine with a dagger, bow, or "
+                f"sling :/. Blacksmiths also get double yields."
+            )
+            page3 = (
+                f"**Foraging Party**: Forage for the others types of "
+                f"resources listed in your pack (3rd page of `/profile`). "
+                f"Amounts vary, because getting oat in a grassland is easier "
+                f"than finding cacao in the jungle. Daggers, however, are your "
+                f"tools of choice, giving you a 10% bonus. Travelers (or are "
+                f"they travellers?) get double the amount as well.\n\n"
+                f"**Fishing Getaway**: Find a nice small pond and relax with "
+                f"your fishing rod, or undertake a commercial fishing trip "
+                f"in Thenuille (that means fish in Thenuille if you want more "
+                f"money). An alternate way to get gold."
+            )
+
+            messages = [
+                ("Working", page1),
+                ("Working", page2),
+                ("Working", page3)
             ]
             embeds = []
             for page in messages:
