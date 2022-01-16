@@ -1,10 +1,10 @@
-from email.policy import default
 import discord
 from discord import Option, OptionChoice
 
 from discord.ext import commands, pages
 
 import asyncpg
+import json
 from typing import List
 
 from Utilities import Checks, Vars, AcolyteObject, PlayerObject
@@ -78,6 +78,27 @@ class Acolytes(commands.Cog):
             iteration += 1
             start += 1
         return embed
+    
+    # COMMANDS
+    @commands.slash_command(guild_ids=[762118688567984151])
+    async def acolyte_list(self, ctx):
+        """View a list of all acolytes attainable in-game."""
+        with open(Vars.ACOLYTE_LIST_PATH, "r") as f:
+            aco_dict = json.load(f)
+            aco_list = [[] for _ in range(5)]
+            for acolyte in aco_dict: # Each list in list contains same rank aco
+                aco_list[aco_dict[acolyte]["Rarity"]-1].append(acolyte)
+
+        embeds = []
+        for i in range(len(aco_list)-1, -1, -1): # Show higher ranks first
+            embed = discord.Embed(
+                title="Attainable Acolytes",
+                description=f"({i+1}⭐) " + f"\n({i+1}⭐) ".join(aco_list[i]),
+                color=Vars.ABLUE)
+            embeds.append(embed)
+        
+        paginator = pages.Paginator(pages=embeds, timeout=30)
+        await paginator.respond(ctx.interaction)
 
     @commands.slash_command(guild_ids=[762118688567984151])
     async def acolyte(self, ctx,
