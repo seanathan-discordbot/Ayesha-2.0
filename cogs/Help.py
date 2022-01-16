@@ -176,7 +176,8 @@ class Help(commands.Cog):
             default="Quick-Start Guide",
             choices=[
                 OptionChoice("Quick-Start Guide"),
-                OptionChoice("Combat")])):
+                OptionChoice("Combat"),
+                OptionChoice("Gravitas")])):
         """Learn how to play!"""
         if topic == "Quick-Start Guide":
             page1 = (
@@ -213,7 +214,9 @@ class Help(commands.Cog):
                 f"first weapon! When you get armor and accessories in the "
                 f"future, you can find your owned items with the `/armory` "
                 f"and `/wardrobe` commands, then equip them in the same way "
-                f"you equipped your weapon. "
+                f"you equipped your weapon. You can get some types of armor "
+                f"for gold by buying them in the `/shop`, but accessories "
+                f"are attainable only through PvE."
             )
             page3 = (
                 f"Finally you can get to the fun parts! You have 10 rubidics "
@@ -472,6 +475,97 @@ class Help(commands.Cog):
                     f"Emerald: 40+\nBlack Opal: 50+"),
                 inline=False)
             embeds.append(rarity_embed)
+
+            paginator = pages.Paginator(pages=embeds, timeout=30)
+            await paginator.respond(ctx.interaction)
+
+        elif topic == "Gravitas":
+            page1 = (
+                f"Something which was not expanded on in the initial tutorial "
+                f"was the gravitas system. It is very simple and exists to "
+                f"bring another dimension of gameplay beyond simply getting "
+                f"physically stronger and/or wealthier. Gravitas, a Roman "
+                f"ideal, is exactly what it sounds like: it is your weight "
+                f"within the world. When you have more gravitas, people care "
+                f"more for what you have to say. In that vein is the "
+                f"officeholding feature. Every Wednesday at 12 p.m. EST, the "
+                f"player with the most gravitas is elected the mayor of "
+                f"Aramithea. The mayor has control over the taxation system, "
+                f"and they have the power to set the tax rate to whatever they "
+                f"please, influencing players' decisions to make sales or "
+                f"purchases. You can view the current mayor using the "
+                f"`/offices` command.\n\n"
+                f"On the next page I will share how to attain gravitas."
+            )
+            page2 = (
+                f"Gravitas is gained passively. Every day at 12 a.m. EST, "
+                f"every player's gravitas is adjusted somewhat. Gravitas "
+                f"decays over time. If your character resides in an outlying "
+                f"area of the map (i.e. not in a city), this decay is "
+                f"stronger than if they were in a city. Likewise the more "
+                f"gravitas you have, the more will be lost every night. "
+                f"The smallest change is a 10% loss for players residing "
+                f"in a city with less than 500 gravitas (the largest actually "
+                f"follows one of those complex formulae Ayesha is famous for: "
+                f"`f(x) = x + 500 - (4x/5)`, where x is your current gravitas)."
+                f" But just remember to stay in a city and you will be "
+                f"golden.\n\n"
+                f"The passive gain of gravitas follows.\nFarmers gain 4 "
+                f"gravitas daily; soldiers and scribes gain 1; the rest none.\n"
+                f"Aramithean born-and-raised also gain 5 gravitas, those from "
+                f"Riverburn or Thenuille gain 3, and players from the Mythic "
+                f"Forest, Lunaris, or Crumidia gain 1.\nMembers of a college "
+                f"(the association type) gain 7.\nThe acolytes Ajar and "
+                f"Duchess also give gravitas as their passive effects.\n\n"
+                f"The expedition system (`/travel`) system also rewards those "
+                f"who undertake a campaign throughout the cities to gain a "
+                f"reputation. Those who go on long trips into the middle of "
+                f"the jungle, however, may discover that they have been "
+                f"forgotten about upon their return to civilization. Farmers, "
+                f"fortunately, upon their return, will see that their gravitas "
+                f"income is better than those of other occupations. They get "
+                f"an addition 20% gravitas from urban expeditions, and their "
+                f"decay is halved on wilderness ones."
+            )
+            page3 = (
+                f"A tenure as mayor is the highest duty that a man of low-rank "
+                f"(random adventurers in Aramythia) can hope to attain. "
+                f"Once elected, they gain access to the `/tax` command, which "
+                f"allows them to set the tax rate throughout the world. They "
+                f"can also broadcast announcements to players via `/dictate`. "
+                f"At the end of the week, they gain 3% of the tax collected "
+                f"over their mayorship. This may motivate them to set the tax "
+                f"high, but they may also keep it low to keep the favor of "
+                f"their peers. \n\n"
+                f"Fortunately, the people can cast away the tyranny of high "
+                f"taxes by using the `/influence` command. There they can "
+                f"spend their gravitas to praise or insult another player. "
+                f"The mayor who sets their tax rate to 10% may be a target "
+                f"of mass insult, tanking their gravitas, and he who promises "
+                f"to lower it may be praised by others, receiving a boost to "
+                f"their own reputation. The attacks of one person have the "
+                f"possibility to fall flat on their face, but in aggregate, "
+                f"the population wields tremendous power over the reputation "
+                f"of the few.\n\n"
+                f"Thank you for reading! The gravitas system may not be as "
+                f"fleshed out or focused on as other parts of the game, but "
+                f"we are always open to suggestions on expanding it and making "
+                f"it a more integral part of gameplay."
+            )
+
+            messages = [
+                ("Gravitas Overview", page1),
+                ("How to Become Famous", page2),
+                ("The Officeholder System", page3)
+            ]
+            embeds = []
+            for page in messages:
+                embed = discord.Embed(
+                    title=page[0],
+                    description=page[1],
+                    color=Vars.ABLUE)
+                embed.set_thumbnail(url=self.bot.user.avatar.url)
+                embeds.append(embed)
 
             paginator = pages.Paginator(pages=embeds, timeout=30)
             await paginator.respond(ctx.interaction)
