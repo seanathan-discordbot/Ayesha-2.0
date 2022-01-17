@@ -104,7 +104,7 @@ class Items(commands.Cog):
         return embed
     
     # COMMANDS
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     async def inventory(self, ctx,
             order : Option(str, description="Order by ATK or CRIT",
@@ -195,7 +195,7 @@ class Items(commands.Cog):
             paginator = pages.Paginator(pages=embeds, timeout=30)
             await paginator.respond(ctx.interaction)
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     async def armory(self, ctx,
         slot : Option(str,
@@ -248,7 +248,7 @@ class Items(commands.Cog):
             paginator = pages.Paginator(pages=embeds, timeout=30)
             await paginator.respond(ctx.interaction)
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     async def wardrobe(self, ctx, 
             prefix : Option(str,
@@ -304,7 +304,7 @@ class Items(commands.Cog):
             paginator = pages.Paginator(pages=embeds, timeout=30)
             await paginator.respond(ctx.interaction)
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     async def equip(self, ctx, 
             equip : Option(str,
@@ -348,7 +348,7 @@ class Items(commands.Cog):
                 await player.unequip_accessory(conn)
                 await ctx.respond("Unequipped your accessory.")
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     async def merge(self, ctx, item : Option(int, 
                 description="The ID of the item you want to strengthen."),
@@ -407,7 +407,7 @@ class Items(commands.Cog):
             f"You buffed your **{item_w.name}** to `{item_w.attack}` ATK.\n"
             f"This cost you `10000` gold.\n{print_tax}"))
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     async def sell(self, ctx, 
             item_type : Option(str,
@@ -520,7 +520,7 @@ class Items(commands.Cog):
             else: # Then they passed nothing bruh
                 await ctx.respond("You didn't pass anything to sell.")
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     async def offer(self, ctx,
             player : Option(discord.Member,
@@ -562,7 +562,7 @@ class Items(commands.Cog):
 
             if item_id is not None:
                 if item_id == author.equipped_item.weapon_id:
-                    return await ctx.reply("Don't sell your equipped item!")
+                    return await ctx.respond("Don't sell your equipped item!")
                 if not await author.is_weapon_owner(conn, item_id):
                     raise Checks.NotWeaponOwner
                 
