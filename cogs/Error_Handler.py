@@ -216,6 +216,9 @@ class Error_Handler(commands.Cog):
                 await ctx.respond(message)
                 print_traceback = False
 
+            if isinstance(error.original, commands.CommandNotFound):
+                print_traceback = False
+
         # --- OFFICES ---
         if isinstance(error, Checks.NotMayor):
             message = (

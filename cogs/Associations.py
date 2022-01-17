@@ -137,7 +137,7 @@ class Associations(commands.Cog):
             await paginator.respond(ctx.interaction)
 
     # COMMANDS
-    @a.command(guild_ids=[762118688567984151])
+    @a.command()
     @commands.check(Checks.is_player)
     async def view(self, ctx,
             name : Option(str,
@@ -212,7 +212,7 @@ class Associations(commands.Cog):
                 conn, member.id)        
         await self.view_association(ctx, profile.assc)
 
-    @a.command(guild_ids=[762118688567984151])
+    @a.command()
     @commands.check(Checks.is_player)
     @commands.check(Checks.not_in_association)
     async def create(self, ctx,
@@ -243,7 +243,7 @@ class Associations(commands.Cog):
                 f"Founded the **{assc.type} {assc.name}**! "
                 f"Use the `/association view` command to see it!"))
 
-    @a.command(guild_ids=[762118688567984151])
+    @a.command()
     @commands.check(Checks.is_player)
     @commands.check(Checks.in_association)
     @commands.check(Checks.is_assc_officer)
@@ -422,7 +422,7 @@ class Associations(commands.Cog):
                     color=Vars.ABLUE)
                 await ctx.respond(embed=embed)
 
-    @a.command(guild_ids=[762118688567984151])
+    @a.command()
     @commands.check(Checks.is_player)
     @commands.check(Checks.in_association)
     @commands.check(Checks.is_assc_officer)
@@ -457,7 +457,7 @@ class Associations(commands.Cog):
                 await ctx.respond("They declined your offer.")
             await msg.delete_original_message()
         
-    @a.command(guild_ids=[762118688567984151])
+    @a.command()
     @commands.check(Checks.is_player)
     @commands.check(Checks.not_in_association)
     @cooldown(2, 86400, BucketType.user)
@@ -480,7 +480,7 @@ class Associations(commands.Cog):
                 f"You have successfully joined **{assc.name}**! Use the "
                 f"`/association view` command to see it!"))
 
-    @a.command(guild_ids=[762118688567984151])
+    @a.command()
     @commands.check(Checks.is_player)
     @commands.check(Checks.in_association)
     async def leave(self, ctx):
@@ -493,7 +493,7 @@ class Associations(commands.Cog):
             await player.leave_assc(conn)
             await ctx.respond("You left your association.")
 
-    @a.command(guild_ids=[762118688567984151])
+    @a.command()
     @commands.check(Checks.is_player)
     @commands.check(Checks.in_association)
     async def contribute(self, ctx, donation : Option(int,
@@ -527,7 +527,7 @@ class Associations(commands.Cog):
     # ----- BROTHERHOOD EXCLUSIVE COMMANDS -----
     # ------------------------------------------
 
-    @b.command(guild_ids=[762118688567984151])
+    @b.command()
     @commands.check(Checks.is_player)
     @commands.check(Checks.in_brotherhood)
     @cooldown(1, 3600, BucketType.user)
@@ -564,7 +564,7 @@ class Associations(commands.Cog):
             await ctx.respond(
                 f"You stole `{amount_stolen}` gold from {victim.char_name}.")
 
-    @b.command(guild_ids=[762118688567984151])
+    @b.command()
     @commands.check(Checks.is_player)
     @commands.check(Checks.in_brotherhood)
     @commands.check(Checks.is_assc_officer)
@@ -599,7 +599,7 @@ class Associations(commands.Cog):
                 f"Added {target.char_name} to your the brotherhood's "
                 f"roster of champions.")
 
-    @b.command(guild_ids=[762118688567984151])
+    @b.command()
     @commands.check(Checks.is_player)
     @commands.check(Checks.in_brotherhood)
     @commands.check(Checks.is_assc_officer)
@@ -778,7 +778,7 @@ class Associations(commands.Cog):
     # ----- COLLEGE EXCLUSIVE COMMANDS -----
     # --------------------------------------
 
-    @c.command(guild_ids=[762118688567984151])
+    @c.command()
     @commands.check(Checks.is_player)
     @commands.check(Checks.in_college)
     @cooldown(1, 14400, BucketType.user)
@@ -818,7 +818,7 @@ class Associations(commands.Cog):
     # ----- GUILD EXCLUSIVE COMMANDS -----
     # ------------------------------------
 
-    @g.command(guild_ids=[762118688567984151])
+    @g.command()
     @commands.check(Checks.is_player)
     @commands.check(Checks.in_guild)
     @cooldown(1, 7200, BucketType.user)
@@ -863,7 +863,7 @@ class Associations(commands.Cog):
                     f"were not taxed.")
             await ctx.respond(message)
 
-    @g.command(guild_ids=[762118688567984151])
+    @g.command()
     @commands.check(Checks.is_player)
     @commands.check(Checks.in_guild)
     async def account(self, ctx, 

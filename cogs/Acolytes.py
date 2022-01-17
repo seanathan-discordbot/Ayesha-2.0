@@ -80,7 +80,7 @@ class Acolytes(commands.Cog):
         return embed
     
     # COMMANDS
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     async def acolyte_list(self, ctx):
         """View a list of all acolytes attainable in-game."""
         with open(Vars.ACOLYTE_LIST_PATH, "r") as f:
@@ -100,7 +100,7 @@ class Acolytes(commands.Cog):
         paginator = pages.Paginator(pages=embeds, timeout=30)
         await paginator.respond(ctx.interaction)
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     async def acolyte(self, ctx,
         name : Option(str, 
             description="The name of the acolyte you are viewing")):
@@ -140,7 +140,7 @@ class Acolytes(commands.Cog):
                 f"Upgrade Material: {acolyte_info['Mat'].title()}"))
         await ctx.respond(embed=embed)
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     async def tavern(self, ctx,
             order : Option(str,
@@ -181,7 +181,7 @@ class Acolytes(commands.Cog):
                 paginator = pages.Paginator(pages=embeds, timeout=30)
                 await paginator.respond(ctx.interaction)
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     async def recruit(self, ctx,
             slot : Option(int, 
@@ -208,7 +208,7 @@ class Acolytes(commands.Cog):
                 await ctx.respond(
                     f"Equipped acolyte: {player.acolyte2.acolyte_name}")
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     async def train(self, ctx, 
             instance_id : Option(int, description="The acolyte's ID"), 

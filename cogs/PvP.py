@@ -147,7 +147,7 @@ class PvP(commands.Cog):
         await interaction.edit_original_message(embed=embed)
 
     # COMMANDS
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     @cooldown(1, 15, BucketType.user)
     async def pvp(self, ctx, opponent : Option(discord.Member,
@@ -163,7 +163,7 @@ class PvP(commands.Cog):
     async def other_pvp(self, ctx, member: discord.Member):
         await self.run_pvp(ctx, ctx.author, member)
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     @cooldown(1, 120, BucketType.channel)
     async def tournament(self, ctx):

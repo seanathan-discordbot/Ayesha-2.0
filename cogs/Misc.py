@@ -89,7 +89,7 @@ class Misc(commands.Cog):
             f"{author_rank} | {names[-1]} | {author_val}```")
 
     # COMMANDS
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     async def daily(self, ctx):
         """Get 2 rubidics daily. Resets everyday at 12 a.m. EST."""
@@ -122,7 +122,7 @@ class Misc(commands.Cog):
 
         await ctx.respond(embed=embed)
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     async def cooldowns(self, ctx):
         """View any of your active cooldowns."""
@@ -202,7 +202,7 @@ class Misc(commands.Cog):
 
         await ctx.respond(embed=embed)
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     async def leaderboard(self, ctx):
         """See the leaderboards and other cool information."""
@@ -320,7 +320,7 @@ class Misc(commands.Cog):
         view.add_item(LeaderboardMenu(author, embeds))
         await ctx.respond(embed=information, view=view)
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     @cooldown(1, 21600, BucketType.user)
     async def influence(self, ctx,
@@ -405,7 +405,7 @@ class Misc(commands.Cog):
             await agent.give_gravitas(conn, gravitas * -1)
             await ctx.respond(message)
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     @cooldown(1, 7200, BucketType.user)
     async def crime(self, ctx):

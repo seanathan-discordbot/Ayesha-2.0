@@ -342,7 +342,7 @@ class Profile(commands.Cog):
         await paginator.respond(ctx.interaction)
 
     # COMMANDS
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.not_player)
     async def start(self, ctx, 
             name: Option(str, description="Your character's name",
@@ -388,7 +388,7 @@ class Profile(commands.Cog):
     async def other_profile(self, ctx, member: discord.Member):
         await self.view_profile(ctx, member)
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     async def rename(self, ctx, 
             target : Option(str,

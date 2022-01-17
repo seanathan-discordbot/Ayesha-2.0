@@ -65,7 +65,7 @@ class Occupations(commands.Cog):
         print("Occupations is ready.")
 
     # COMMANDS
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     @cooldown(3, 259200, BucketType.user)
     async def lore(self, ctx, 

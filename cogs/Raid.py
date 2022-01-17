@@ -32,7 +32,7 @@ class Raid(commands.Cog):
     r = discord.commands.SlashCommandGroup("raid", 
         "Commands related to the raid mechanic", )
 
-    @r.command(guild_ids=[762118688567984151])
+    @r.command()
     @commands.check(Checks.is_player)
     @cooldown(1, 900, BucketType.user)
     async def attack(self, ctx):
@@ -94,7 +94,7 @@ class Raid(commands.Cog):
 
                 self.raid_participants = {}
 
-    @r.command(guild_ids=[762118688567984151])
+    @r.command()
     @commands.check(Checks.is_player)
     @commands.check(Checks.is_admin)
     async def secret(self, ctx : ApplicationContext, 

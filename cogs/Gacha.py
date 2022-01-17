@@ -92,7 +92,7 @@ class Gacha(commands.Cog):
         return (f"{rarity}⭐ Acolyte: {acolyte_name}", embed)
 
     # COMMANDS
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     async def summon(self, ctx, 
             pulls : Option(int,
@@ -181,7 +181,7 @@ class Gacha(commands.Cog):
             else:
                 await ctx.respond(embed=result_list[0][1])
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     async def shop(self, ctx,
             armor : Option(str,

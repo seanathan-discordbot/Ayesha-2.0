@@ -51,7 +51,7 @@ class Travel(commands.Cog):
 
 
     # COMMANDS
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     @commands.check(Checks.is_not_travelling)
     async def travel(self, ctx, 
@@ -120,7 +120,7 @@ class Travel(commands.Cog):
                     "for up to 1 week. Be sure to return by then!")
                 await ctx.respond(message)
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     @commands.check(Checks.is_travelling)
     async def arrive(self, ctx, 
@@ -302,7 +302,7 @@ class Travel(commands.Cog):
                 await ctx.respond(embed=embed)
                 await player.check_xp_increase(conn, ctx, xp)
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     @cooldown(1, 30, BucketType.user)
     async def work(self, ctx, 
@@ -466,7 +466,7 @@ class Travel(commands.Cog):
                         f"You caught a {result}! You sold your prize for "
                         f"`{gold}` gold."))
             
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     async def upgrade(self, ctx, 
             weapon_id : Option(int, 

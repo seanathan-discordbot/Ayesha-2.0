@@ -81,7 +81,7 @@ class PvE(commands.Cog):
         }
 
     # COMMANDS
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     @cooldown(1, 15, BucketType.user)
     async def pve(self, ctx,

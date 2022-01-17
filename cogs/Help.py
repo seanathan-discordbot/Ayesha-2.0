@@ -94,7 +94,7 @@ class Help(commands.Cog):
         return embed
 
     # COMMANDS
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     async def help(self, ctx,
             cmd_query : Option(str,
                 name="command",
@@ -169,7 +169,7 @@ class Help(commands.Cog):
             embed.set_thumbnail(url=self.bot.user.avatar.url)
             await ctx.respond(embed=embed)
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     async def tutorial(self, ctx, topic : Option(str,
             description="What you want to read about",
             required=False,

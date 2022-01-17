@@ -90,7 +90,7 @@ class Offices(commands.Cog):
         print("Offices is ready.")
 
     # COMMANDS
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     async def offices(self, ctx):
         """View the map, tax rate, and this week's elected officeholders."""
         async with self.bot.db.acquire() as conn:
@@ -118,7 +118,7 @@ class Offices(commands.Cog):
 
         await ctx.respond(embed=embed)
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_mayor)
     @cooldown(1, 43200, BucketType.user)
     async def tax(self, ctx, tax_rate : Option(float,
@@ -134,7 +134,7 @@ class Offices(commands.Cog):
             f"Mayor {ctx.author.mention} has set the tax rate to `{tax_rate}%`."
         )
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_mayor)
     @cooldown(1, 172800, BucketType.user) # 2 days
     async def dictate(self, ctx, announcement : Option(str,
@@ -151,7 +151,7 @@ class Offices(commands.Cog):
             f"everyone! **__\n\n{announcement}")
         await ctx.respond("Message sent", ephemeral=True)
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     async def territories(self, ctx):
         """See which brotherhoods control the outlying areas of the map."""
         async with self.bot.db.acquire() as conn:
