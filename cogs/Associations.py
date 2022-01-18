@@ -764,8 +764,9 @@ class Associations(commands.Cog):
                 color=Vars.ABLUE)
             winner = defender.id
 
-        await AssociationObject.log_area_attack(
-            conn, attacker.base, attacker.id, defender.id, winner)
+        async with self.bot.db.acquire() as conn:
+            await AssociationObject.log_area_attack(
+                conn, attacker.base, attacker.id, defender.id, winner)
 
         embed.set_image(url="https://i.imgur.com/jpLztYK.jpg")
         battle_results.insert(0, embed)
