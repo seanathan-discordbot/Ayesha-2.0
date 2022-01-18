@@ -621,7 +621,7 @@ class Associations(commands.Cog):
             if last_battle is not None:
                 time_diff = datetime.now() - last_battle
                 if time_diff.total_seconds() < 10800:
-                    time_left = 10800 - time_diff
+                    time_left = 10800 - time_diff.total_seconds()
                     fseconds = time.gmtime(time_left)
                     return await ctx.respond(
                         f"**{attacker.base}** has already suffered a recent "
