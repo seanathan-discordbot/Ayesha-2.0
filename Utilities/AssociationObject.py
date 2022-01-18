@@ -486,7 +486,7 @@ async def log_area_attack(conn : asyncpg.Connection, area : str,
         attacker : int, defender : int, winner : int):
     """Log an area attack."""
     psql = """
-            INSERT INTO area attacks
+            INSERT INTO area_attacks
                 (area, attacker, defender, winner)
             VALUES ($1, $2, $3, $4);
             """
