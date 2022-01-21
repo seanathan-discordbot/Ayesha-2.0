@@ -1,13 +1,14 @@
 import discord
 from discord import Option, OptionChoice
-from discord import user
 
 from discord.ext import commands, pages
 from discord.ext.commands import BucketType, cooldown
 
 from aiohttp import InvalidURL
 from datetime import datetime
+import asyncio
 import random
+import schedule
 import time
 
 from Utilities import AssociationObject, Checks, PlayerObject, Vars
@@ -26,8 +27,65 @@ class InviteMenu(ConfirmationMenu):
 class Associations(commands.Cog):
     """Association Text"""
 
-    def __init__(self, bot):
+    def __init__(self, bot : commands.Bot):
         self.bot = bot
+
+        async def distribute_interest():
+            psql1 = """
+                    WITH valid_guild AS (
+                        SELECT players.assc
+                        FROM officeholders
+                        INNER JOIN players
+                            ON officeholders.officeholder = players.user_id
+                        WHERE office = 'Comptroller'
+                        ORDER BY id DESC
+                        LIMIT 1
+                    ),
+                    comptroller_members AS (
+                        SELECT user_id
+                        FROM players
+                        WHERE assc IN (SELECT * FROM valid_guild)
+                    )
+                    UPDATE guild_bank_account
+                    SET account_funds = account_funds * 1.02 + 2500
+                    WHERE user_id IN (SELECT * FROM comptroller_members);
+                    """
+            psql2 = """
+                    WITH valid_guild AS (
+                        SELECT players.assc
+                        FROM officeholders
+                        INNER JOIN players
+                            ON officeholders.officeholder = players.user_id
+                        WHERE office = 'Comptroller'
+                        ORDER BY id DESC
+                        LIMIT 1
+                    ),
+                    comptroller_members AS (
+                        SELECT user_id
+                        FROM players
+                        WHERE assc IN (SELECT * FROM valid_guild)
+                    )
+                    UPDATE guild_bank_account
+                    SET account_funds = account_funds * 1.01 + 1000
+                    WHERE user_id NOT IN (SELECT * FROM comptroller_members);
+                    """
+            async with self.bot.db.acquire() as conn:
+                await conn.execute(psql1)
+                await conn.execute(psql2)
+
+        def run_interest_func():
+            asyncio.run_coroutine_threadsafe(
+                distribute_interest(), self.bot.loop)
+
+        async def schedule_interest_updates():
+            interest_scheduler = schedule.Scheduler()
+            interest_scheduler.every().saturday.at("06:00").do(run_interest_func)
+            while True:
+                interest_scheduler.run_pending()
+                await asyncio.sleep(interest_scheduler.idle_seconds)
+
+        asyncio.ensure_future(schedule_interest_updates())
+
 
     # EVENTS
     @commands.Cog.listener()
