@@ -684,7 +684,7 @@ class Player:
         attack += Vars.ORIGINS[self.origin]['atk_bonus']
         if self.assc.type == "Brotherhood":
             lvl = self.assc.get_level()
-            attack += int(lvl * (lvl + 1) / 4)
+            attack += lvl * 3
         attack += Vars.OCCUPATIONS[self.occupation]['atk_bonus']
         attack = int(attack * 1.1) if self.occupation == "Soldier" else attack
         if self.accessory.prefix == "Demonic":
@@ -702,8 +702,6 @@ class Player:
         crit += self.acolyte1.get_crit()
         crit += self.acolyte2.get_crit()
         crit += Vars.ORIGINS[self.origin]['crit_bonus']
-        if self.assc.type == "Brotherhood":
-            crit += self.assc.get_level()
         crit += Vars.OCCUPATIONS[self.occupation]['crit_bonus']
         if self.accessory.prefix == "Flexible":
             crit += Vars.ACCESSORY_BONUS["Flexible"][self.accessory.type]
@@ -738,6 +736,8 @@ class Player:
                 base += 3
             if not self.boots.is_empty:
                 base += 3
+        if self.assc.type == "Guild":
+            base += self.assc.get_level()
         if self.accessory.prefix == "Strong":
             base += Vars.ACCESSORY_BONUS["Strong"][self.accessory.type]
         acolytes = (self.acolyte1.acolyte_name, self.acolyte2.acolyte_name)

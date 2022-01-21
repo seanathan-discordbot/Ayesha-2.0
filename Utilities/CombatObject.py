@@ -371,6 +371,8 @@ class CombatInstance:
         # Base damage boost from critical strikes
         bonus_occ = agent.type == "Engineer"
         crit_bonus = .75 if bonus_occ else .5
+        if agent.assc.type == "College":
+            crit_bonus += .05 * agent.assc.get_level()
         agent.crit_hit = True
 
         # Applicable acolytes: Aulus, Ayesha
