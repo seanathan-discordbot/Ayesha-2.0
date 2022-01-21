@@ -700,13 +700,13 @@ class Associations(commands.Cog):
                     k=2)
                 att_team[i].last_move = moves[0]
                 def_team[i].last_move = moves[1]
-                # SImulate the battle
+                # Simulate the battle
                 combat = CombatInstance(att_team[i], def_team[i], turn_counter)
                 battle_log.append(combat.get_turn_str())
                 att_team[i], def_team[i] = combat.apply_damage()
 
                 # Break loop under these victory conditions
-                if turn_counter > 5 or att_team[i].current_hp <= 0:
+                if turn_counter > 15 or att_team[i].current_hp <= 0:
                     defender_wins += 1
                     break
                 elif def_team[i].current_hp <= 0:
