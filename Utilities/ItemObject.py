@@ -163,6 +163,16 @@ class Armor:
             self.name = "No Armor"
             self.defense = 0
 
+    async def set_owner(self, conn : asyncpg.Connection, user_id : int):
+        """Changes the owner of this armor."""
+        if self.is_empty:
+            raise Checks.EmptyObject
+
+        self.owner_id = user_id
+
+        psql = "UPDATE armor SET user_id = $1 WHERE armor_id = $2;"
+        await conn.execute(psql, user_id, self.id)
+
     async def destroy(self, conn : asyncpg.Connection):
         """Deletes this item from the database."""
         if self.is_empty:

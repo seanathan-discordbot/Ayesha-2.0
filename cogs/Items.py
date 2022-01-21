@@ -528,26 +528,18 @@ class Items(commands.Cog):
                 converter=commands.MemberConverter()),
             price : Option(int,
                 description="The price you are charging for your offer",
-                min_value=1),
-            gold : Option(int,
-                description="The gold you are offering",
-                required=False,
                 min_value=0),
+            sale_type : Option(str,
+                description="What you are selling",
+                choices=[
+                    OptionChoice("Sell a Weapon", "Weapon"),
+                    OptionChoice("Sell Armor", "Armor")]),
             item_id : Option(int,
-                description="The ID of the weapon you are offering",
-                required=False)):
+                description="The ID of the weapon you are offering")):
         """Offer an item or gold to another player."""
         async with self.bot.db.acquire() as conn:
             author = await PlayerObject.get_player_by_id(conn, ctx.author.id)
             player_char = await PlayerObject.get_player_by_id(conn, player.id)
-
-            if gold is None and item_id is None:
-                return await ctx.respond(
-                    "Pass either a gold value or weapon ID to offer.")
-
-            if item_id is None:
-                price = 0 # Don't let them pay for gold
-
             # Check for valid input
             if player_char.gold < price:
                 return await ctx.respond(
@@ -555,30 +547,35 @@ class Items(commands.Cog):
 
             message = f"{player.mention}, {ctx.author.mention} is offering you "
 
-            if gold is not None:
-                if gold > author.gold:
-                    raise Checks.NotEnoughGold(gold, author.gold)
-                message += f"`{gold}` gold"
-
-            if item_id is not None:
+            # Check item to see if its sellable
+            if sale_type == "Weapon":
                 if item_id == author.equipped_item.weapon_id:
                     return await ctx.respond("Don't sell your equipped item!")
                 if not await author.is_weapon_owner(conn, item_id):
                     raise Checks.NotWeaponOwner
+                item = await ItemObject.get_weapon_by_id(conn, item_id)
+            else:
+                eq_ar = (author.helmet.id, author.bodypiece.id, author.boots.id)
+                if item_id in eq_ar:
+                    return await ctx.respond("Don't sell your equipped armor!")
+                if not await author.is_armor_owner(conn, item_id):
+                    raise Checks.NotArmorOwner
+                item = await ItemObject.get_armor_by_id(conn, item_id)
                 
-            item = await ItemObject.get_weapon_by_id(conn, item_id)
-            if not item.is_empty:
-                if gold is not None: # Sorry for convolution
-                    message += f" and a weapon:\n"
-                else:
-                    message += f" the weapon:\n"
+            # Load item and offer message
+            if sale_type == "Weapon":
+                message += f"the weapon:\n"
                 message += f"`{item.weapon_id}`: {item.name}, a {item.rarity} "
                 message += f"{item.type} with `{item.attack}` ATK and "
                 message += f"`{item.crit}` CRIT.\n"
-            else: # Then we know gold is something. Add a period to message
-                message += ". "
+            else:
+                message += (
+                    f"this armor:\n"
+                    f"`{item.id}`: {item.name}, with `{item.defense}` DEF.\n")
 
-            message += f"They are charging you `{price}` gold. Do you accept?"
+            message += (
+                f"They are charging you `{price}` gold. Do you accept?\n"
+                f"(You currently have `{player_char.gold}` gold.)")
 
             # Send player the offer
             view = OfferView(target=player)
@@ -587,15 +584,10 @@ class Items(commands.Cog):
             await view.wait()
             if view.value is None:
                 await ctx.respond("Timed out.")
-            elif view.value:
-                if not item.is_empty:
-                    await item.set_owner(conn, player_char.disc_id)
-                if gold is not None:
-                    await player_char.give_gold(conn, gold - price)
-                    await author.give_gold(conn, price - gold)
-                else:
-                    await player_char.give_gold(conn, price*-1)
-                    await author.give_gold(conn, price)
+            elif view.value and not item.is_empty: # Works for Weapon and Armor
+                await item.set_owner(conn, player_char.disc_id)
+                await player_char.give_gold(conn, price*-1)
+                await author.give_gold(conn, price)
                 await ctx.respond("They accepted the offer.")
             else:
                 await ctx.respond("They declined your offer.")
