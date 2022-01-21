@@ -1,5 +1,5 @@
-ACOLYTE_LIST_PATH = r'F:\OneDrive\Python_Projects\Ayesha_Rewrite\Assets\Acolyte_List.json'
-# ACOLYTE_LIST_PATH = r'C:\Users\sebas\OneDrive\Python_Projects\Ayesha_Rewrite\Assets\Acolyte_List.json'
+# ACOLYTE_LIST_PATH = r'F:\OneDrive\Python_Projects\Ayesha_Rewrite\Assets\Acolyte_List.json'
+ACOLYTE_LIST_PATH = r'C:\Users\sebas\OneDrive\Python_Projects\Ayesha_Rewrite\Assets\Acolyte_List.json'
 
 ABLUE = 0xBEDCF6
 
@@ -37,17 +37,17 @@ ACCESSORY_BONUS = {
     'Strong' : { # additional DEF
         'Wood' : 3,
         'Glass' : 3,
-        'Copper' : 5,
-        'Jade' : 5,
-        'Pearl' : 6,
-        'Aquamarine' : 7,
-        'Sapphire' : 8,
-        'Amethyst' : 9,
-        'Ruby' : 9,
-        'Garnet' : 11,
-        'Diamond' : 12,
-        'Emerald' : 14,
-        'Black Opal' : 15
+        'Copper' : 4,
+        'Jade' : 4,
+        'Pearl' : 5,
+        'Aquamarine' : 5,
+        'Sapphire' : 6,
+        'Amethyst' : 6,
+        'Ruby' : 6,
+        'Garnet' : 7,
+        'Diamond' : 8,
+        'Emerald' : 9,
+        'Black Opal' : 10
     },
     'Shiny' : { # reduces critdmg by x%
         'Wood' : 5,
@@ -154,33 +154,33 @@ ARMOR_DEFENSE = {
         'Cloth' : 1,
         'Wood' : 2,
         'Silk' : 3,
-        'Leather' : 5,
-        'Gambeson' : 6,
-        'Wolfskin' : 7,
-        'Bearskin' : 8,
-        'Bronze' : 7,
-        'Ceramic Plate' : 10,
-        'Chainmail' : 11,
-        'Iron' : 12,
-        'Steel' : 15,
-        'Mysterious' : 16,
-        'Dragonscale' : 17
+        'Leather' : 3,
+        'Gambeson' : 3,
+        'Wolfskin' : 4,
+        'Bearskin' : 4,
+        'Bronze' : 5,
+        'Ceramic Plate' : 6,
+        'Chainmail' : 6,
+        'Iron' : 7,
+        'Steel' : 9,
+        'Mysterious' : 11,
+        'Dragonscale' : 12
     },
     'Bodypiece' : {
         'Cloth' : 3,
         'Wood' : 5,
-        'Silk' : 7,
-        'Leather' : 8,
-        'Gambeson' : 10,
-        'Wolfskin' : 12,
-        'Bearskin' : 13,
-        'Bronze' : 12,
-        'Ceramic Plate' : 14,
-        'Chainmail' : 15,
-        'Iron' : 16,
-        'Steel' : 18,
-        'Mysterious' : 20,
-        'Dragonscale' : 22
+        'Silk' : 6,
+        'Leather' : 7,
+        'Gambeson' : 7,
+        'Wolfskin' : 8,
+        'Bearskin' : 9,
+        'Bronze' : 9,
+        'Ceramic Plate' : 10,
+        'Chainmail' : 10,
+        'Iron' : 11,
+        'Steel' : 13,
+        'Mysterious' : 15,
+        'Dragonscale' : 16
     },
     'Boots' : {
         'Cloth' : 1,
@@ -193,10 +193,10 @@ ARMOR_DEFENSE = {
         'Bronze' : 7,
         'Ceramic Plate' : 1,
         'Chainmail' : 8,
-        'Iron' : 10,
-        'Steel' : 12,
-        'Mysterious' : 15,
-        'Dragonscale' : 18
+        'Iron' : 9,
+        'Steel' : 10,
+        'Mysterious' : 12,
+        'Dragonscale' : 13
     },
 }
 
