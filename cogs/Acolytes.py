@@ -81,30 +81,32 @@ class Acolytes(commands.Cog):
     
     # COMMANDS
     @commands.slash_command()
-    async def acolyte_list(self, ctx):
-        """View a list of all acolytes attainable in-game."""
-        with open(Vars.ACOLYTE_LIST_PATH, "r") as f:
-            aco_dict = json.load(f)
-            aco_list = [[] for _ in range(5)]
-            for acolyte in aco_dict: # Each list in list contains same rank aco
-                aco_list[aco_dict[acolyte]["Rarity"]-1].append(acolyte)
-
-        embeds = []
-        for i in range(len(aco_list)-1, -1, -1): # Show higher ranks first
-            embed = discord.Embed(
-                title="Attainable Acolytes",
-                description=f"({i+1}⭐) " + f"\n({i+1}⭐) ".join(aco_list[i]),
-                color=Vars.ABLUE)
-            embeds.append(embed)
-        
-        paginator = pages.Paginator(pages=embeds, timeout=30)
-        await paginator.respond(ctx.interaction)
-
-    @commands.slash_command()
     async def acolyte(self, ctx,
         name : Option(str, 
-            description="The name of the acolyte you are viewing")):
+            description="The name of the acolyte you are viewing",
+            required=False)):
         """View an acolyte's general information."""
+        # Give a list of all acolytes if no name is given
+        if name is None:
+            with open(Vars.ACOLYTE_LIST_PATH, "r") as f:
+                aco_dict = json.load(f)
+                aco_list = [[] for _ in range(5)]
+                for acolyte in aco_dict: # Each list in list contains same rank
+                    aco_list[aco_dict[acolyte]["Rarity"]-1].append(acolyte)
+
+            embeds = []
+            for i in range(len(aco_list)-1, -1, -1): # Show higher ranks first
+                embed = discord.Embed(
+                    title="Attainable Acolytes",
+                    description=
+                        f"({i+1}⭐) " + f"\n({i+1}⭐) ".join(aco_list[i]),
+                    color=Vars.ABLUE)
+                embeds.append(embed)
+        
+            paginator = pages.Paginator(pages=embeds, timeout=30)
+            return await paginator.respond(ctx.interaction)
+
+        # Otherwise get acolyte asked for
         if name.lower() == "prxrdr":
             name = "PrxRdr"
         else:
