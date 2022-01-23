@@ -683,7 +683,7 @@ class Associations(commands.Cog):
                     fseconds = time.gmtime(time_left)
                     return await ctx.respond(
                         f"**{attacker.base}** has already suffered a recent "
-                        f" attack. Please try again in "
+                        f"attack. Please try again in "
                         f"`{time.strftime('%H:%M:%S', fseconds)}`.")
 
             # Load defender and see if attack can be ended prematurely
@@ -790,7 +790,7 @@ class Associations(commands.Cog):
                     f"`{def_team[i].defense}%`"))
             embed.add_field(
                 name="Battle Log", 
-                value="\n\n".join(battle_log),
+                value="\n\n".join(battle_log[-5:]),
                 inline=False)
             battle_results.append(embed)
 
@@ -806,7 +806,8 @@ class Associations(commands.Cog):
                     f"View the following pages to see the results of the "
                     f"battles between both brotherhood's champions."),
                 color=Vars.ABLUE)
-            await attacker.set_territory_controller(conn, attacker.base)
+            async with self.bot.db.acquire() as conn:
+                await attacker.set_territory_controller(conn, attacker.base)
             winner = attacker.id
 
         else:
@@ -822,7 +823,7 @@ class Associations(commands.Cog):
                 color=Vars.ABLUE)
             winner = defender.id
 
-        async with self.bot.db.acquire() as conn:
+        async with self.bot.db.acquire() as conn: # 3 times; improve this
             await AssociationObject.log_area_attack(
                 conn, attacker.base, attacker.id, defender.id, winner)
 
