@@ -227,8 +227,8 @@ class PvE(commands.Cog):
                 gold += 200
             if player.accessory.prefix == "Lucky":
                 mult = Vars.ACCESSORY_BONUS["Lucky"][player.accessory.type]
-                xp = int(xp * (mult / 100.0))
-                gold = int(gold * (mult / 100.0))
+                xp = int(xp * (1 + (mult / 100.0)))
+                gold = int(gold * (1 + (mult / 100.0)))
             if player.accessory.prefix == "Old" and level >= 25 and victory:
                 gravitas = Vars.ACCESSORY_BONUS["Old"][player.accessory.type]
                 await author.give_gravitas(conn, gravitas)

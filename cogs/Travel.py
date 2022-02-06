@@ -161,8 +161,8 @@ class Travel(commands.Cog):
                     xp *= 3
                 if player.accessory.prefix == "Lucky":
                     mult = Vars.ACCESSORY_BONUS["Lucky"][player.accessory.type]
-                    xp = int(xp * (mult / 100.0))
-                    gold = int(gold * (mult / 100.0))
+                    xp = int(xp * (1 + (mult / 100.0)))
+                    gold = int(gold * (1 + (mult / 100.0)))
                 if rewards['weapon'] >= random.randint(1,100):
                     new_weapon = await ItemObject.create_weapon(
                         conn=conn,
@@ -240,8 +240,8 @@ class Travel(commands.Cog):
                 # Accessory bonus
                 if player.accessory.prefix == "Lucky":
                     mult = Vars.ACCESSORY_BONUS["Lucky"][player.accessory.type]
-                    xp = int(xp * (mult / 100.0))
-                    gold = int(gold * (mult / 100.0))
+                    xp = int(xp * (1 + (mult / 100.0)))
+                    gold = int(gold * (1 + (mult / 100.0)))
 
                 # Create the embed to send
                 embed = discord.Embed(title="Expedition Complete!", 
