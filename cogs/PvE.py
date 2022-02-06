@@ -126,7 +126,7 @@ class PvE(commands.Cog):
                     f"Parry, \u2764 Heal, \u23F1 Bide"),
                 inline=False)
             embed.add_field(
-                name=f"Turn {turn_counter}", 
+                name=f"Turn {turn_counter} of 25", 
                 value="\n".join(recent_turns[-3:]),
                 inline=False)
 
@@ -227,7 +227,7 @@ class PvE(commands.Cog):
                 gold += 200
             if player.accessory.prefix == "Lucky":
                 mult = Vars.ACCESSORY_BONUS["Lucky"][player.accessory.type]
-                xp = int(xp * (1 + (mult / 100.0)))
+                xp = int(xp * (mult / 100.0))
                 gold = int(gold * (mult / 100.0))
             if player.accessory.prefix == "Old" and level >= 25 and victory:
                 gravitas = Vars.ACCESSORY_BONUS["Old"][player.accessory.type]
