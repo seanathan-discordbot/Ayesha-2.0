@@ -231,7 +231,7 @@ class Gacha(commands.Cog):
             want : Option(str,
                 description=f"The material you want to receive",
                 choices=ex_mats)):
-        """Exchange 20 of your excess resources for 2 of another or 1 gold."""
+        """Exchange 10 of your excess resources for 1 gold or another resource."""
         # Check for valid input
         if offer == want:
             return await ctx.respond(f"This is an unfavorable trade.")
