@@ -705,21 +705,21 @@ class Associations(commands.Cog):
             att_team = await attacker.get_champions(conn)
             def_team = await defender.get_champions(conn)
 
-        # Check for valid fighters or premature victory
-        if att_team == [None]*len(att_team): # See if its no champs
-            return await ctx.respond(
-                "Your brotherhood has no champions. Set some using "
-                "`/brotherhood champion`.")
-            
-        if def_team == [None]*len(def_team):
-            # If defender has no champions, give it away
-            await attacker.set_territory_controller(conn, attacker.base)
-            await self.bot.announcement_channel.send(
-                f"**{attacker.name}** (ID: `{attacker.id}`) has defeated "
-                f"**{defender.name}** (ID: `{defender.id}`) and seized "
-                f"control over **{attacker.base}**!")
-            return await ctx.respond(
-                f"Your guild successfully occupied **{attacker.base}**.")
+            # Check for valid fighters or premature victory
+            if att_team == [None]*len(att_team): # See if its no champs
+                return await ctx.respond(
+                    "Your brotherhood has no champions. Set some using "
+                    "`/brotherhood champion`.")
+                
+            if def_team == [None]*len(def_team):
+                # If defender has no champions, give it away
+                await attacker.set_territory_controller(conn, attacker.base)
+                await self.bot.announcement_channel.send(
+                    f"**{attacker.name}** (ID: `{attacker.id}`) has defeated "
+                    f"**{defender.name}** (ID: `{defender.id}`) and seized "
+                    f"control over **{attacker.base}**!")
+                return await ctx.respond(
+                    f"Your guild successfully occupied **{attacker.base}**.")
 
         # Sort and fill teams, checking for repeats
         for team in (att_team, def_team):
