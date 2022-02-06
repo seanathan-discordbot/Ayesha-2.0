@@ -67,7 +67,7 @@ class Occupations(commands.Cog):
     # COMMANDS
     @commands.slash_command()
     @commands.check(Checks.is_player)
-    @cooldown(3, 259200, BucketType.user)
+    @cooldown(1, 86400, BucketType.user)
     async def lore(self, ctx, 
             setting : Option(str,
                 description="The aspect of your profile to change",
@@ -91,14 +91,18 @@ class Occupations(commands.Cog):
                     occ = menu.values[0]
                 except IndexError: # pressed confirm on home page
                     await ctx.respond("Don't confirm the landing page.")
+                    ctx.command.reset_cooldown(ctx)
                 else:
                     async with self.bot.db.acquire() as conn:
                         player = await PlayerObject.get_player_by_id(
                             conn, ctx.author.id)
                         await player.set_occupation(conn, occ)
                         await ctx.respond(f"You are now a **{occ}**!")
+                        if player.level <= 10:
+                            ctx.command.reset_cooldown(ctx)
             else:
                 await ctx.respond("You decided not to change your occupation.")
+                ctx.command.reset_cooldown(ctx)
             await msg.delete_original_message()
 
         else:
@@ -116,14 +120,18 @@ class Occupations(commands.Cog):
                     ori = menu.values[0]
                 except IndexError: # pressed confirm on home page
                     await ctx.respond("Don't confirm the landing page.")
+                    ctx.command.reset_cooldown(ctx)
                 else:
                     async with self.bot.db.acquire() as conn:
                         player = await PlayerObject.get_player_by_id(
                             conn, ctx.author.id)
                         await player.set_origin(conn, ori)
                         await ctx.respond(f"Homeland set to **{ori}**!")
+                        if player.level <= 10:
+                            ctx.command.reset_cooldown(ctx)
             else:
                 await ctx.respond("You decided not to change your origin.")
+                ctx.command.reset_cooldown(ctx)
             await msg.delete_original_message()
 
 

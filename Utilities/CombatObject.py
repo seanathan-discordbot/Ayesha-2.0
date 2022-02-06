@@ -347,9 +347,9 @@ class CombatInstance:
         for p in (self.player1, self.player2):
             if p.last_move in ("Attack", "Block", "Parry"):
                 temp = {
-                    "Attack" : "attacked",
-                    "Block" : "blocked",
-                    "Parry" : "parried"
+                    "Attack" : "🗡️",
+                    "Block" : "\N{SHIELD}",
+                    "Parry" : "\N{CROSSED SWORDS}"
                 }
                 if p.crit_hit:
                     output += (
@@ -360,10 +360,10 @@ class CombatInstance:
                         f"**{p.name}** {temp[p.last_move]} for **{p.damage}** "
                         f"damage. ")
             elif p.last_move == "Heal":
-                output += f"**{p.name}** healed for **{p.heal}** HP. "
+                output += f"**{p.name}** \u2764 for **{p.heal}** HP. "
             else:
                 output += (
-                    f"**{p.name}** bided their time. ")
+                    f"**{p.name}** decided to \u23F1. ")
         return output
 
     # Independent event as it happens during damage calculation

@@ -157,14 +157,29 @@ class Player:
         else:
             return level
 
+    async def reload_xp(self, conn : asyncpg.Connection):
+        """Updates the player's current xp.
+        Since players might gain xp from multiple sources within a short time
+        (multiple PvEs at once), players might level up to the same level as
+        a result of having different Player instances acting independently.
+        """
+        psql = """
+                SELECT xp
+                FROM players
+                WHERE user_id = $1;
+                """
+        self.xp = await conn.fetchval(psql, self.disc_id)
+        self.level = self.get_level()
+
     async def check_xp_increase(self, conn : asyncpg.Connection, 
-            ctx : discord.context, xp : int):
+            ctx, xp : int):
         """Increase the player's xp by a set amount.
         This will also increase the player's equipped acolytes xp by 10% of the 
         player's increase.
         If the xp change results in a level-up for any of these entities, 
         a reward will be given and printed to Discord.        
         """
+        await self.reload_xp(conn)
         old_level = self.level
         self.xp += xp
         psql = """
@@ -174,9 +189,12 @@ class Player:
                 """
         await conn.execute(psql, xp, self.disc_id)
         self.level = self.get_level()
-        if self.level > old_level: # Level up
-            gold = self.level * 500
-            rubidics = int(self.level / 30) + 1
+        # if self.level > old_level: # Level up
+        gold, rubidics = 0, 0
+        if self.level > old_level:
+            for new_level in range(old_level+1, self.level+1):
+                gold += new_level * 500 # Handle multiple lvl-ups
+                rubidics += int(new_level / 30) + 1
 
             await self.give_gold(conn, gold)
             await self.give_rubidics(conn, rubidics)
@@ -524,7 +542,7 @@ class Player:
                     amount*-1 - self.resources[resource], 
                     self.resources[resource])
         except KeyError:
-            raise Checks.InvalidResource
+            raise Checks.InvalidResource(resource)
 
         psql = f"""
                 UPDATE resources

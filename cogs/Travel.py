@@ -64,7 +64,9 @@ class Travel(commands.Cog):
                 description="The part of the map you are travelling to",
                 choices = [
                     OptionChoice(
-                        name=f"{t} ({Vars.TRAVEL_LOCATIONS[t]['Biome']})",
+                        name=(
+                            f"{t} ({Vars.TRAVEL_LOCATIONS[t]['Biome']}: "
+                            f"{Vars.TRAVEL_LOCATIONS[t]['Forage']})"),
                         value=t) 
                     for t in Vars.TRAVEL_LOCATIONS.keys()],
                 required=False
@@ -128,7 +130,9 @@ class Travel(commands.Cog):
                 description=
                     "Type 'Yes' to cancel your current adventure if travelling",
                 required=False,
-                options=[OptionChoice("Yes"), OptionChoice("No")],
+                choices=[
+                    OptionChoice("CANCEL Adventure", "Yes"), 
+                    OptionChoice("CONTINUE Adventure", "No")],
                 default="No")):
         """Complete your adventure/expedition and gain rewards!"""
         async with self.bot.db.acquire() as conn:
@@ -161,8 +165,8 @@ class Travel(commands.Cog):
                     xp *= 3
                 if player.accessory.prefix == "Lucky":
                     mult = Vars.ACCESSORY_BONUS["Lucky"][player.accessory.type]
-                    xp = int(xp * (mult / 100.0))
-                    gold = int(gold * (mult / 100.0))
+                    xp = int(xp * (1 + (mult / 100.0)))
+                    gold = int(gold * (1 + (mult / 100.0)))
                 if rewards['weapon'] >= random.randint(1,100):
                     new_weapon = await ItemObject.create_weapon(
                         conn=conn,
@@ -240,8 +244,8 @@ class Travel(commands.Cog):
                 # Accessory bonus
                 if player.accessory.prefix == "Lucky":
                     mult = Vars.ACCESSORY_BONUS["Lucky"][player.accessory.type]
-                    xp = int(xp * (mult / 100.0))
-                    gold = int(gold * (mult / 100.0))
+                    xp = int(xp * (1 + (mult / 100.0)))
+                    gold = int(gold * (1 + (mult / 100.0)))
 
                 # Create the embed to send
                 embed = discord.Embed(title="Expedition Complete!", 
@@ -479,7 +483,7 @@ class Travel(commands.Cog):
                 min_value=1,
                 max_value=15,
                 default=1)):
-        """Upgrade a weapon's ATK stat. Costs 8*ATK iron and 35*ATK gold."""
+        """Upgrade a weapon's ATK stat. Costs 8\*ATK iron and 35\*ATK gold."""
         async with self.bot.db.acquire() as conn:
             player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
             if player.location not in ("Aramithea", "Riverburn", "Thenuille"):

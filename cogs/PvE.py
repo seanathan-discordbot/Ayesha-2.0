@@ -105,7 +105,12 @@ class PvE(commands.Cog):
         interaction = await ctx.respond("Loading battle...")
         turn_counter = 1
         boss_next_move = random.choices(
-            population=["Attack", "Block", "Parry", "Heal", "Bide"],
+            population=[
+                ("Attack", "🗡️"), 
+                ("Block", "\N{SHIELD}"), 
+                ("Parry", "\N{CROSSED SWORDS}"), 
+                ("Heal", "\u2764"), 
+                ("Bide", "\u23F1")],
             weights=[50, 20, 20, 3, 7])[0]
         # Stores string information to display to player
         recent_turns = [
@@ -126,7 +131,7 @@ class PvE(commands.Cog):
                     f"Parry, \u2764 Heal, \u23F1 Bide"),
                 inline=False)
             embed.add_field(
-                name=f"Turn {turn_counter}", 
+                name=f"Turn {turn_counter} of 25", 
                 value="\n".join(recent_turns[-3:]),
                 inline=False)
 
@@ -143,9 +148,14 @@ class PvE(commands.Cog):
                     f"You fled the battle as you ran out of time to move.")
 
             player.last_move = view.choice
-            boss.last_move = boss_next_move
+            boss.last_move = boss_next_move[0]
             boss_next_move = random.choices(
-                population=["Attack", "Block", "Parry", "Heal", "Bide"],
+                population=[
+                    ("Attack", "🗡️"), 
+                    ("Block", "\N{SHIELD}"), 
+                    ("Parry", "\N{CROSSED SWORDS}"), 
+                    ("Heal", "\u2764"), 
+                    ("Bide", "\u23F1")],
                 weights=[50, 20, 20, 3, 7])[0]
 
             # Calculate damage based off actions
@@ -154,10 +164,11 @@ class PvE(commands.Cog):
             if random.randint(1, 100) < 60: # ~65% chance of accurate prediction 
                 turn_msg += (
                     f"**{boss.name}** seems poised to "
-                    f"**{boss_next_move}**!")
+                    f"**{boss_next_move[1]}**!")
             else: # Throw the player off with a lie (might be true though)
                 deception = random.choice(
-                    ["Attack", "Block", "Parry", "Heal", "Bide"])
+                    ["🗡️", "\N{SHIELD}", "\N{CROSSED SWORDS}", 
+                     "\u2764", "\u23F1"])
                 turn_msg += f"**{boss.name}** seems poised to **{deception}**!"
             recent_turns.append(turn_msg)
             player, boss = combat_turn.apply_damage() # Apply to belligerents
@@ -227,8 +238,8 @@ class PvE(commands.Cog):
                 gold += 200
             if player.accessory.prefix == "Lucky":
                 mult = Vars.ACCESSORY_BONUS["Lucky"][player.accessory.type]
-                xp = int(xp * (mult / 100.0))
-                gold = int(gold * (mult / 100.0))
+                xp = int(xp * (1 + (mult / 100.0)))
+                gold = int(gold * (1 + (mult / 100.0)))
             if player.accessory.prefix == "Old" and level >= 25 and victory:
                 gravitas = Vars.ACCESSORY_BONUS["Old"][player.accessory.type]
                 await author.give_gravitas(conn, gravitas)
