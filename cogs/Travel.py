@@ -64,7 +64,9 @@ class Travel(commands.Cog):
                 description="The part of the map you are travelling to",
                 choices = [
                     OptionChoice(
-                        name=f"{t} ({Vars.TRAVEL_LOCATIONS[t]['Biome']})",
+                        name=(
+                            f"{t} ({Vars.TRAVEL_LOCATIONS[t]['Biome']}: "
+                            f"{Vars.TRAVEL_LOCATIONS[t]['Forage']})"),
                         value=t) 
                     for t in Vars.TRAVEL_LOCATIONS.keys()],
                 required=False
