@@ -217,6 +217,50 @@ class Gacha(commands.Cog):
                 f"command to equip it!\n"
                 f"This purchase cost `{purchase.subtotal}` gold. {print_tax}"))
 
+    ex_mats = [OptionChoice(m) for m in Vars.MATERIALS]
+    ex_mats.append(OptionChoice("Gold"))
+    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_player)
+    async def exchange(self, ctx, 
+            offer : Option(str,
+                description=f"The material you want to trade away",
+                choices=[OptionChoice(m) for m in Vars.MATERIALS]),
+            amount : Option(int,
+                description=f"The amount of the material you are exchanging",
+                min_value=20),
+            want : Option(str,
+                description=f"The material you want to receive",
+                choices=ex_mats)):
+        """Exchange 20 of your excess resources for 2 of another or 1 gold."""
+        # Check for valid input
+        if offer == want:
+            return await ctx.respond(f"This is an unfavorable trade.")
+        offer = offer.lower()
+        want = want.lower()
+
+        async with self.bot.db.acquire() as conn:
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+
+            amount -= amount % 10 # Make a multiple of 20 so nothing is wasted
+            to_receive = amount // 10
+
+            if player.resources[offer] < amount:
+                raise Checks.NotEnoughResources(
+                    offer, amount, player.resources[offer])
+
+            # Complete transaction
+            await player.give_resource(conn, offer, amount*-1)
+            if want == "gold":
+                sale = await Transaction.create_sale(conn, player, to_receive)
+                print_tax = await sale.log_transaction(conn, "sale")
+            else:
+                print_tax = ""
+                await player.give_resource(conn, want, to_receive)
+
+        await ctx.respond((
+            f"You exchanged `{amount}` **{offer}** for `{to_receive}` "
+            f"**{want}**. {print_tax}"))
+
 
 def setup(bot):
     bot.add_cog(Gacha(bot))
