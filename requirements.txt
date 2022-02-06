@@ -1,4 +1,4 @@
-py-cord @ git+https://github.com/Pycord-Development/pycord@d9807cd516ba248bfd03c5d57ca8c5c6e902a460
+py-cord==2.0.0b1
 asyncpg==0.25.0
 aiohttp==3.7.4.post0
 coolname==1.1.0
