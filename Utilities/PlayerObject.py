@@ -172,7 +172,7 @@ class Player:
         self.level = self.get_level()
 
     async def check_xp_increase(self, conn : asyncpg.Connection, 
-            ctx : discord.context, xp : int):
+            ctx, xp : int):
         """Increase the player's xp by a set amount.
         This will also increase the player's equipped acolytes xp by 10% of the 
         player's increase.
@@ -191,21 +191,22 @@ class Player:
         self.level = self.get_level()
         # if self.level > old_level: # Level up
         gold, rubidics = 0, 0
-        for new_level in range(old_level+1, self.level+1): # Handle mult lvl-ups
-            gold += new_level * 500
-            rubidics += int(new_level / 30) + 1
+        if self.level > old_level:
+            for new_level in range(old_level+1, self.level+1):
+                gold += new_level * 500 # Handle multiple lvl-ups
+                rubidics += int(new_level / 30) + 1
 
-        await self.give_gold(conn, gold)
-        await self.give_rubidics(conn, rubidics)
+            await self.give_gold(conn, gold)
+            await self.give_rubidics(conn, rubidics)
 
-        embed = discord.Embed(
-            title = f"You have levelled up to level {self.level}!",
-            color = Vars.ABLUE)
-        embed.add_field(
-            name = f"{self.char_name}, you gained some rewards",
-            value = f"**Gold:** {gold}\n**Rubidics:** {rubidics}")
+            embed = discord.Embed(
+                title = f"You have levelled up to level {self.level}!",
+                color = Vars.ABLUE)
+            embed.add_field(
+                name = f"{self.char_name}, you gained some rewards",
+                value = f"**Gold:** {gold}\n**Rubidics:** {rubidics}")
 
-        await ctx.respond(embed=embed)
+            await ctx.respond(embed=embed)
 
         # Check xp for the equipped acolytes
         a_xp = int(xp / 10)
@@ -541,7 +542,7 @@ class Player:
                     amount*-1 - self.resources[resource], 
                     self.resources[resource])
         except KeyError:
-            raise Checks.InvalidResource
+            raise Checks.InvalidResource(resource)
 
         psql = f"""
                 UPDATE resources
