@@ -157,6 +157,20 @@ class Player:
         else:
             return level
 
+    async def reload_xp(self, conn : asyncpg.Connection):
+        """Updates the player's current xp.
+        Since players might gain xp from multiple sources within a short time
+        (multiple PvEs at once), players might level up to the same level as
+        a result of having different Player instances acting independently.
+        """
+        psql = """
+                SELECT xp
+                FROM players
+                WHERE user_id = $1;
+                """
+        self.xp = await conn.fetchval(psql, self.disc_id)
+        self.level = self.get_level()
+
     async def check_xp_increase(self, conn : asyncpg.Connection, 
             ctx : discord.context, xp : int):
         """Increase the player's xp by a set amount.
@@ -165,6 +179,7 @@ class Player:
         If the xp change results in a level-up for any of these entities, 
         a reward will be given and printed to Discord.        
         """
+        await self.reload_xp(conn)
         old_level = self.level
         self.xp += xp
         psql = """
@@ -174,21 +189,23 @@ class Player:
                 """
         await conn.execute(psql, xp, self.disc_id)
         self.level = self.get_level()
-        if self.level > old_level: # Level up
-            gold = self.level * 500
-            rubidics = int(self.level / 30) + 1
+        # if self.level > old_level: # Level up
+        gold, rubidics = 0, 0
+        for new_level in range(old_level+1, self.level+1): # Handle mult lvl-ups
+            gold += new_level * 500
+            rubidics += int(new_level / 30) + 1
 
-            await self.give_gold(conn, gold)
-            await self.give_rubidics(conn, rubidics)
+        await self.give_gold(conn, gold)
+        await self.give_rubidics(conn, rubidics)
 
-            embed = discord.Embed(
-                title = f"You have levelled up to level {self.level}!",
-                color = Vars.ABLUE)
-            embed.add_field(
-                name = f"{self.char_name}, you gained some rewards",
-                value = f"**Gold:** {gold}\n**Rubidics:** {rubidics}")
+        embed = discord.Embed(
+            title = f"You have levelled up to level {self.level}!",
+            color = Vars.ABLUE)
+        embed.add_field(
+            name = f"{self.char_name}, you gained some rewards",
+            value = f"**Gold:** {gold}\n**Rubidics:** {rubidics}")
 
-            await ctx.respond(embed=embed)
+        await ctx.respond(embed=embed)
 
         # Check xp for the equipped acolytes
         a_xp = int(xp / 10)
