@@ -128,8 +128,9 @@ class Travel(commands.Cog):
                 description=
                     "Type 'Yes' to cancel your current adventure if travelling",
                 required=False,
-                options=[OptionChoice("Yes"), OptionChoice("No")],
-                default="No")):
+                choices=[
+                    OptionChoice("CANCEL Adventure", "Yes"), 
+                    OptionChoice("CONTINUE Adventure", "No")])):
         """Complete your adventure/expedition and gain rewards!"""
         async with self.bot.db.acquire() as conn:
             player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
