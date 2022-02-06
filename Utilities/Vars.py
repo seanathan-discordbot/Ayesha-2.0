@@ -486,6 +486,7 @@ TRAVEL_LOCATIONS = {
     'Aramithea' : {
         'Biome' : 'City', 
         'Drops' : 'You can `upgrade` your weapons here.',
+        'Forage' : None,
         'Destinations' : {
             'Aramithea' : 0,
             'Mythic Forest' : 1800,
@@ -504,6 +505,7 @@ TRAVEL_LOCATIONS = {
     'Mythic Forest' : {
         'Biome' : 'Forest',
         'Drops' : 'You can `hunt` and `forage` here for `fur`, `bone`, and `wood`.',
+        'Forage' : 'Wood',
         'Destinations' : {
             'Aramithea' : 1800,
             'Mythic Forest' : 0,
@@ -522,6 +524,7 @@ TRAVEL_LOCATIONS = {
     'Thenuille' : {
         'Biome' : 'Town', 
         'Drops' : 'You can `upgrade` your weapons here and `fish`.',
+        'Forage' : None,
         'Destinations' : {
             'Aramithea' : 1800,
             'Mythic Forest' : 1800,
@@ -540,6 +543,7 @@ TRAVEL_LOCATIONS = {
     'Fernheim' : {
         'Biome' : 'Grassland', 
         'Drops' : 'You can `hunt` and `forage` here for `fur`, `bone`, and `wheat`.',
+        'Forage' : 'Wheat',
         'Destinations' : {
             'Aramithea' : 1800,
             'Mythic Forest' : 3600,
@@ -558,6 +562,7 @@ TRAVEL_LOCATIONS = {
     'Sunset Prairie' : {
         'Biome' : 'Grassland', 
         'Drops' : 'You can `hunt` and `forage` here for `fur`, `bone`, and `oats`.',
+        'Forage' : 'Oat',
         'Destinations' : {
             'Aramithea' : 0,
             'Mythic Forest' : 0,
@@ -576,6 +581,7 @@ TRAVEL_LOCATIONS = {
     'Riverburn' : {
         'Biome' : 'City', 
         'Drops' : 'You can `upgrade` your weapons here.',
+        'Forage' : None,
         'Destinations' : {
             'Aramithea' : 1800,
             'Mythic Forest' : 3600,
@@ -594,6 +600,7 @@ TRAVEL_LOCATIONS = {
     'Thanderlans' : {
         'Biome' : 'Marsh', 
         'Drops' : 'You can `forage` here for `reeds`.',
+        'Forage' : 'Reeds',
         'Destinations' : {
             'Aramithea' : 3600,
             'Mythic Forest' : 7200,
@@ -612,6 +619,7 @@ TRAVEL_LOCATIONS = {
     'Glakelys' : {
         'Biome' : 'Grassland', 
         'Drops' : 'You can `hunt` and `forage` here for `fur`, `bone`, and `oats`.',
+        'Forage' : 'Oat',
         'Destinations' : {
             'Aramithea' : 3600,
             'Mythic Forest' : 7200,
@@ -630,6 +638,7 @@ TRAVEL_LOCATIONS = {
     'Russe' : {
         'Biome' : 'Taiga', 
         'Drops' : 'You can `hunt` and `forage` here for `fur`, `bone`, `pine`, and `moss`.',
+        'Forage' : 'Pine, Moss',
         'Destinations' : {
             'Aramithea' : 7200,
             'Mythic Forest' : 10800,
@@ -648,6 +657,7 @@ TRAVEL_LOCATIONS = {
     'Croire' : {
         'Biome' : 'Grassland', 
         'Drops' : 'You can `hunt` and `forage` here for `fur`, and `wheat`.',
+        'Forage' : 'Wheat',
         'Destinations' : {
             'Aramithea' : 7200,
             'Mythic Forest' : 10800,
@@ -666,6 +676,7 @@ TRAVEL_LOCATIONS = {
     'Crumidia' : {
         'Biome' : 'Hills', 
         'Drops' : 'You can `mine` and `forage` here for `iron` and `silver`.',
+        'Forage' : 'Iron, Silver',
         'Destinations' : {
             'Aramithea' : 5400,
             'Mythic Forest' : 7200,
@@ -684,6 +695,7 @@ TRAVEL_LOCATIONS = {
     'Kucre' : {
         'Biome' : 'Jungle', 
         'Drops' : 'You can `forage` here for `cacao`.',
+        'Forage' : 'Cacao',
         'Destinations' : {
             'Aramithea' : 14400,
             'Mythic Forest' : 10800,
