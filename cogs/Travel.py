@@ -483,7 +483,7 @@ class Travel(commands.Cog):
                 min_value=1,
                 max_value=15,
                 default=1)):
-        """Upgrade a weapon's ATK stat. Costs 8*ATK iron and 35*ATK gold."""
+        """Upgrade a weapon's ATK stat. Costs 8\*ATK iron and 35\*ATK gold."""
         async with self.bot.db.acquire() as conn:
             player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
             if player.location not in ("Aramithea", "Riverburn", "Thenuille"):
