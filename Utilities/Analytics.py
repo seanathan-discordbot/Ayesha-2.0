@@ -206,15 +206,15 @@ async def get_top_gravitas(conn : asyncpg.Connection):
             """
     return await conn.fetch(psql)
 
-def stringify_gains(item : str, subtotal : int, sources : List[tuple]):
+def stringify_gains(item : str, total : int, sources : List[tuple]):
     """
     Break down all bonuses to some item and returns a str detailing it.
-    subtotal is the base amount gained before any bonuses are applied.
+    total is the base amount gained after all bonuses are applied.
     Each arg is a bonus source given as a tuple, with the bonus amount first,
     followed by the name of the source eg (20, 'Occupation')
     """
-    output = f"`{subtotal}` {item}"
-    additions = [f"(`+{source[0]}` from {source[1]})" for source in sources]
+    output = f"`{total}` {item}"
+    additions = [f"(`{source[0]}` from {source[1]})" for source in sources]
     if len(sources) > 0:
         output += " "
         output += " ".join(additions)
