@@ -231,27 +231,24 @@ class PvE(commands.Cog):
                 header = f"They had {boss.current_hp} HP remaining."
 
             # ON GAME END event technically
-            gold_bonuses = 0
             gold_bonus_sources = []
-            xp_bonuses = 0
             xp_bonus_sources = []
             acolytes = [a.acolyte_name 
                 for a in (player.acolyte1, player.acolyte2)]
             if "Sean" in acolytes:
                 bonus = xp // 5
-                xp_bonuses += bonus
+                xp += bonus
                 xp_bonus_sources.append((bonus, "Sean"))
             if "Spartacus" in acolytes:
-                bonus = 200
-                gold_bonuses += 200
-                gold_bonus_sources.append((bonus, "Spartacus"))
+                gold += 200
+                gold_bonus_sources.append((200, "Spartacus"))
             if player.accessory.prefix == "Lucky":
                 mult = Vars.ACCESSORY_BONUS["Lucky"][player.accessory.type]
                 bonus = int(xp * (mult / 100.0))
-                xp_bonuses += bonus
+                xp += bonus
                 xp_bonus_sources.append((bonus, "Lucky Accessory"))
                 bonus = int(gold * (mult / 100.0))
-                gold_bonuses += bonus
+                gold += bonus
                 gold_bonus_sources.append((bonus, "Lucky Accessory"))
             if player.accessory.prefix == "Old" and level >= 25 and victory:
                 gravitas = Vars.ACCESSORY_BONUS["Old"][player.accessory.type]
@@ -288,8 +285,8 @@ class PvE(commands.Cog):
                         f"`{accessory.id}`: **{accessory.name}**"),
                     inline=False)
 
-            await author.give_gold(conn, gold + gold_bonuses)
-            await author.check_xp_increase(conn, ctx, xp + xp_bonuses)
+            await author.give_gold(conn, gold)
+            await author.check_xp_increase(conn, ctx, xp)
             await author.log_pve(conn, victory)
             if level == author.pve_limit and victory:
                 await author.increment_pve_limit(conn)
