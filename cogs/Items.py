@@ -475,7 +475,7 @@ class Items(commands.Cog):
                 gold_gain_str = stringify_gains(
                     "gold", sale.subtotal, sale.bonus_list)
                 return await ctx.respond((
-                    f"You sold your `{item_id}`: {item.name} amd made "
+                    f"You sold your `{item_id}`: {item.name} and made "
                     f"{gold_gain_str}.\n{print_tax}"))
 
             # SELL WEAPON 
