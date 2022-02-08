@@ -1,5 +1,7 @@
 import asyncpg
 
+from typing import List
+
 from Utilities import Checks, PlayerObject, Vars
 
 class Transaction:
@@ -24,9 +26,12 @@ class Transaction:
         If the player is making a purchase, this is the total price they pay
     paid_amount : int
         If the player is making a sale, this is the total gold they make
+    bonus_list : List[tuple]
+        A list of things which have changed the transaction total
+        The tuples take the form (bonus_amount (int), bonus_source (str))
     """
     def __init__(self, player : PlayerObject.Player, subtotal : int, 
-            tax_rate : float, tax_amount : int):
+            tax_rate : float, tax_amount : int, bonus_list : List[tuple] = []):
         """
         Parameters
         ----------
@@ -38,6 +43,9 @@ class Transaction:
             The tax rate being applied to the transaction
         tax_amount : int
             The amount being paid in taxes
+        bonus_list : Optional[List[tuple]]
+            A list of things which have changed the transaction total
+            The tuples take the form (bonus_amount (int), bonus_source (str))
         """
         self.player = player
         self.subtotal = subtotal
@@ -45,10 +53,12 @@ class Transaction:
         self.tax_amount = tax_amount
         self.paying_price = subtotal + tax_amount
         self.paid_amount = subtotal - tax_amount
+        self.bonus_list = bonus_list
 
     @classmethod
     async def calc_cost(cls, conn : asyncpg.Connection, 
-            player : PlayerObject.Player, subtotal : int):
+            player : PlayerObject.Player, subtotal : int, 
+            sale_bonuses : List[tuple] = []):
         """Factory method for Transaction. Calculates everything.
 
         Parameters
@@ -59,6 +69,9 @@ class Transaction:
             The player to whom this transaction applies
         subtotal : int
             The amount (gold) the player would pay/be paid if there was no tax.
+        sale_bonuses : Optional[List[tuple]]
+            A list of things which have changed the transaction total
+            The tuples take the form (bonus_amount (int), bonus_source (str))
         """
         multiplier = 1
         if player.origin == "Sunset":
@@ -77,7 +90,7 @@ class Transaction:
         tax_rate = float(await get_tax_rate(conn)) * multiplier
         tax_amount = int(subtotal * tax_rate / 100)
 
-        return cls(player, subtotal, tax_rate, tax_amount)
+        return cls(player, subtotal, tax_rate, tax_amount, sale_bonuses)
 
     @classmethod
     async def create_sale(cls, conn : asyncpg.Connection, 
@@ -95,13 +108,16 @@ class Transaction:
             The amount (gold) the player would pay/be paid if there was no tax.
         """
         sale_bonus = 1
+        sale_bonuses = []
         if player.occupation == "Merchant":
             sale_bonus += .5
+            sale_bonuses.append((subtotal // 2), "Merchant")
         if player.assc.type == "Guild":
-            sale_bonus += .5 + (.1 * player.assc.get_level())
-        # TODO: Implement comptroller bonuses
+            guild_bonus = .5 + (.1 * player.assc.get_level())
+            sale_bonus += guild_bonus
+            sale_bonuses.append((int(subtotal * guild_bonus), "Guild Level"))
         subtotal = int(subtotal * sale_bonus)
-        return await cls.calc_cost(conn, player, subtotal)
+        return await cls.calc_cost(conn, player, subtotal, sale_bonuses)
 
     async def log_transaction(self, conn : asyncpg.Connection, 
             type : str) -> str:
