@@ -31,7 +31,8 @@ class Transaction:
         The tuples take the form (bonus_amount (int), bonus_source (str))
     """
     def __init__(self, player : PlayerObject.Player, subtotal : int, 
-            tax_rate : float, tax_amount : int, bonus_list : List[tuple] = []):
+            tax_rate : float, tax_amount : int, tax_rate_reduction : int, 
+            reduction_sources : List[str], bonus_list : List[tuple] = []):
         """
         Parameters
         ----------
@@ -54,6 +55,8 @@ class Transaction:
         self.paying_price = subtotal + tax_amount
         self.paid_amount = subtotal - tax_amount
         self.bonus_list = bonus_list
+        self.tax_rate_reduction = tax_rate_reduction
+        self.reduction_sources = reduction_sources
 
     @classmethod
     async def calc_cost(cls, conn : asyncpg.Connection, 
@@ -74,23 +77,32 @@ class Transaction:
             The tuples take the form (bonus_amount (int), bonus_source (str))
         """
         multiplier = 1
+        reduction_sources = []
         if player.origin == "Sunset":
             multiplier -= .05
+            reduction_sources.append("origin")
         if player.occupation == "Scribe":
             multiplier -= .15
+            reduction_sources.append("occupation")
         if player.gravitas >= 200:
             multiplier -= .05
+            reduction_sources.append("gravitas")
         elif player.gravitas >= 500:
             multiplier -= .15
+            reduction_sources.append("gravitas")
         elif player.gravitas >= 1000:
             multiplier -= .25
+            reduction_sources.append("gravitas")
         if player.accessory.prefix == "Regal":
             a_mult = Vars.ACCESSORY_BONUS["Regal"][player.accessory.type]
             multiplier -= a_mult / 100.0
+            reduction_sources.append("regal accessory")
+        reduction = 1 - multiplier
         tax_rate = float(await get_tax_rate(conn)) * multiplier
         tax_amount = int(subtotal * tax_rate / 100)
 
-        return cls(player, subtotal, tax_rate, tax_amount, sale_bonuses)
+        return cls(player, subtotal, tax_rate, tax_amount, reduction, 
+            reduction_sources, sale_bonuses)
 
     @classmethod
     async def create_sale(cls, conn : asyncpg.Connection, 
@@ -144,7 +156,13 @@ class Transaction:
         await conn.execute(psql, self.player.disc_id, self.subtotal, 
             self.tax_amount, self.tax_rate)
 
-        return f"You paid `{self.tax_amount}` in taxes."
+        if len(self.reduction_sources) == 0:
+            return f"You paid `{self.tax_amount}` in taxes."
+        else:
+            return (
+                f"You paid `{self.tax_amount}` in taxes, with your effective "
+                f"tax rate reduced by `{int(self.tax_rate_reduction*100)}`% "
+                f"due to your `{', '.join(self.reduction_sources)}`.")
 
 
 async def get_tax_rate(conn : asyncpg.Connection) -> float:
