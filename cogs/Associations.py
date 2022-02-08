@@ -12,6 +12,7 @@ import schedule
 import time
 
 from Utilities import AssociationObject, Checks, PlayerObject, Vars
+from Utilities.Analytics import stringify_gains
 from Utilities.CombatObject import Belligerent, CombatInstance
 from Utilities.ConfirmationMenu import ConfirmationMenu
 from Utilities.Finances import Transaction
@@ -616,11 +617,16 @@ class Associations(commands.Cog):
 
             amount_stolen = 50 if victim.gold < 1000 else int(victim.gold / 20)
             await victim.give_gold(conn, amount_stolen * -1)
+            bonus_sources = [] # 2.0.3: for new stringify_gains()
+            bonuses = 0
             if player.occupation == "Engineer": # Occupation bonus
-                amount_stolen *= 2
-            await player.give_gold(conn, amount_stolen)
+                bonuses += amount_stolen
+                bonus_sources.append((amount_stolen, "Engineer"))
+            await player.give_gold(conn, amount_stolen + bonuses)
+            gold_gain_str = stringify_gains(
+                "gold", amount_stolen, bonus_sources)
             await ctx.respond(
-                f"You stole `{amount_stolen}` gold from {victim.char_name}.")
+                f"You stole {gold_gain_str} from {victim.char_name}.")
 
     @b.command()
     @commands.check(Checks.is_player)
@@ -848,28 +854,42 @@ class Associations(commands.Cog):
             player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
 
             chance = random.randint(1,4)
-            gravitas = 5 if player.occupation == "Engineer" else 0
-            gravitas += player.assc.get_level()
+            gravitas = 0
+            gravitas_bonuses = 0
+            gravitas_bonus_sources = []
+            if player.occupation == "Engineer":
+                gravitas_bonuses += 5
+                gravitas_bonus_sources.append((5, "Engineer"))
+            gravitas_bonuses += player.assc.get_level()
+            gravitas_bonus_sources.append(
+                (player.assc.get_level(), "College Level"))
+
             if chance == 1: # Failure
                 gravitas -= random.randint(16, 25)
+                gravitas_gain_str = stringify_gains(
+                    "gravitas", gravitas*-1, gravitas_bonus_sources)
                 message = (
                     f"Your political play was wildly unpopular with the "
-                    f"people of {player.location}. You lost `{gravitas}` "
-                    f"gravitas.")
+                    f"people of {player.location}. You lost "
+                    f"{gravitas_gain_str}.")
             elif chance == 2: # Big success
                 gravitas += random.randint(12, 25)
+                gravitas_gain_str = stringify_gains(
+                    "gravitas", gravitas, gravitas_bonus_sources)
                 message = (
                     f"Your maneuver was received with raucous applause from "
-                    f" the people of {player.location}. You gained "
-                    f"`{gravitas}` gravitas.")
+                    f"the people of {player.location}. You gained "
+                    f"{gravitas_gain_str}.")
             else:
                 gravitas += random.randint(3, 10)
+                gravitas_gain_str = stringify_gains(
+                    "gravitas", gravitas, gravitas_bonus_sources)
                 message = (
                     f"Your speech turned some heads but most of the people of "
                     f"{player.location} are apathetic to your rhetoric. You "
-                    f"gained `{gravitas}` gravitas.")
+                    f"gained {gravitas_gain_str}.")
             
-            await player.give_gravitas(conn, gravitas)
+            await player.give_gravitas(conn, gravitas + gravitas_bonuses)
             await ctx.respond(message)
 
 
@@ -894,10 +914,13 @@ class Associations(commands.Cog):
             
             # Determine the return
             bonus_occ = player.occupation == "Engineer"
+            gold_bonus_sources = []
+            gold_bonuses = 0
             multiplier = random.randint(0, 21500) / 10000.0 # up to 2.15x
-            print(multiplier)
-            return_amt = int(capital * multiplier)
-            return_amt = int(return_amt * 1.25) if bonus_occ else return_amt
+            return_amt = int(capital * multiplier) 
+            if bonus_occ:
+                gold_bonuses += return_amt // 4
+                gold_bonus_sources.append((return_amt // 4), "Engineer")
 
             # Pick random things to display to player
             projects = ("museum", "church", "residence", 
@@ -908,18 +931,21 @@ class Associations(commands.Cog):
 
             # Determine if loss or gain
             capital_gains = return_amt - capital
+            gold_gains_str = stringify_gains(
+                "gold", capital_gains, gold_bonus_sources)
             if capital_gains > 0: # Player made money, tax it
                 sale = await Transaction.create_sale(
-                    conn, player, capital_gains)
+                    conn, player, capital_gains + gold_bonuses)
                 print_tax = await sale.log_transaction(conn, "sale")
+
                 message = (
                     f"You invested `{capital}` gold in a {project} and made a "
-                    f"return of `{return_amt}`. {print_tax}")
+                    f"return of {gold_gains_str}. {print_tax}")
             else:
-                await player.give_gold(conn, capital_gains)
+                await player.give_gold(conn, capital_gains + gold_bonuses)
                 message = (
                     f"You invested `{capital}` gold in a {project} and made a "
-                    f"return of `{return_amt}`. Since you lost money, you "
+                    f"return of {gold_gains_str}. Since you lost money, you "
                     f"were not taxed.")
             await ctx.respond(message)
 
