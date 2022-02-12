@@ -17,27 +17,6 @@ handler.setFormatter(logging.Formatter(
     '%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
-# async def get_prefix(client, message):
-#     """Return the prefix of a server. If DM, return '%'."""
-#     a = isinstance(message.channel, discord.DMChannel)
-#     b = isinstance(message.channel, discord.GroupChannel)
-#     if a or b:
-#         return '%'
-
-#     conn = await asyncpg.connect(database = config.DATABASE['name'],
-#                                  user = config.DATABASE['user'],
-#                                  password = config.DATABASE['password'])
-#     psql = "SELECT prefix FROM prefixes WHERE server = $1"
-#     prefix = await conn.fetchval(psql, message.guild.id)
-
-#     if prefix is None:
-#         psql = "INSERT INTO prefixes (server, prefix) VALUES ($1, '%')"
-#         await conn.execute(psql, message.guild.id)
-#         prefix = '%'
-
-#     await conn.close()
-#     return prefix
-
 class Ayesha(commands.AutoShardedBot):
     """Ayesha bot class with added properties"""
 
@@ -65,7 +44,8 @@ class Ayesha(commands.AutoShardedBot):
             "cogs.Offices",
             "cogs.Misc",
             "cogs.Acolytes",
-            "cogs.Help"
+            "cogs.Help",
+            "cogs.Vote"
         )
 
         for cog in self.init_cogs:
