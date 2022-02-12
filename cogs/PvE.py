@@ -5,6 +5,7 @@ from discord.ext import commands
 from discord.ext.commands import BucketType, cooldown
 
 import random
+import time
 
 from Utilities import Checks, CombatObject, ItemObject, PlayerObject, Vars
 from Utilities.Analytics import stringify_gains
@@ -253,6 +254,16 @@ class PvE(commands.Cog):
             if player.accessory.prefix == "Old" and level >= 25 and victory:
                 gravitas = Vars.ACCESSORY_BONUS["Old"][player.accessory.type]
                 await author.give_gravitas(conn, gravitas)
+            try: # 20% booster for 30 minutes after voting for bot
+                if int(time.time()) < self.bot.recent_voters[player.disc_id]:
+                    bonus = xp // 5
+                    xp += bonus
+                    xp_bonus_sources.append((bonus, "voting for the bot"))
+                    bonus = gold // 5
+                    gold += bonus
+                    gold_bonus_sources.append((bonus, "voting for the bot"))
+            except KeyError:
+                pass
 
             # Create and send embed
             gold_gains_str = stringify_gains("gold", gold, gold_bonus_sources)
