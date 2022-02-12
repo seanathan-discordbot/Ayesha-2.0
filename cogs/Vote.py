@@ -5,6 +5,7 @@ from discord.ext import commands
 from Utilities import  Checks, config, PlayerObject
 
 import asyncio
+import time
 
 import aiohttp
 from aiohttp import web
@@ -89,10 +90,14 @@ class Vote(commands.Cog):
 
         async with self.client.db.acquire() as conn:
             try:
+                # TODO: Change recent_voters to db table when playerbase is big
+                self.client.recent_voters[user_id] = int(time.time() + 1800)
                 p = await PlayerObject.get_player_by_id(conn, user_id)
                 await p.give_rubidics(conn, 1)
                 await player.send(
-                    "Thank you for supporting me! You received a rubidic.")
+                    "Thank you for supporting me! You received a rubidic.\n"
+                    "For the next 30 minutes, you will also receive a 20% gold "
+                    "and xp boost from PvE.")
             except Checks.PlayerHasNoChar:
                 await player.send((
                     "Thank you for voting for the bot! Create a character with "

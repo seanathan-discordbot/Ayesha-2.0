@@ -9,6 +9,7 @@ import random
 import time
 
 from Utilities import AcolyteObject, AssociationObject, Checks, PlayerObject, ItemObject, Vars
+from Utilities.Analytics import stringify_gains
 from Utilities.Finances import Transaction
 
 class Travel(commands.Cog):
@@ -159,14 +160,22 @@ class Travel(commands.Cog):
                     ['Destinations'][player.destination]
                 rewards = self.calculate_travel_rewards(length)
                 gold = random.randint(rewards['gold_low'], rewards['gold_high'])
+                gold_bonus_sources = []
                 xp = random.randint(rewards['xp_low'], rewards['xp_high'])
+                xp_bonus_sources = []
                 if player.occupation == "Traveler":
+                    gold_bonus_sources.append((gold * 3, "Traveler"))
                     gold *= 3
+                    xp_bonus_sources.append((xp * 3, "Traveler"))
                     xp *= 3
                 if player.accessory.prefix == "Lucky":
                     mult = Vars.ACCESSORY_BONUS["Lucky"][player.accessory.type]
-                    xp = int(xp * (1 + (mult / 100.0)))
-                    gold = int(gold * (1 + (mult / 100.0)))
+                    xp_bonus = int(xp * (mult / 100.0))
+                    xp += xp_bonus
+                    xp_bonus_sources.append((xp_bonus, "Lucky Accessory"))
+                    gold_bonus = int(gold * (mult / 100.0))
+                    gold += gold_bonus
+                    gold_bonus_sources.append((gold_bonus, "Lucky Accessory"))
                 if rewards['weapon'] >= random.randint(1,100):
                     new_weapon = await ItemObject.create_weapon(
                         conn=conn,
@@ -176,9 +185,12 @@ class Travel(commands.Cog):
                     new_weapon = ItemObject.Weapon()
 
                 # Give the rewards
+                xp_gains_str = stringify_gains("xp", xp, xp_bonus_sources)
+                gold_gains_str = stringify_gains(
+                    "gold", gold, gold_bonus_sources)
                 message = (
                     f"You arrived at **{player.destination}**! On the way "
-                    f"you earned `{gold}` gold and `{xp}` xp! ")
+                    f"you earned {gold_gains_str} and {xp_gains_str}! ")
                 if not new_weapon.is_empty:
                     message += (
                         f"You also found a weapon: \n"
@@ -237,6 +249,9 @@ class Travel(commands.Cog):
                     gravitas = int(hours / 2)
                     gravitas_decay = .25
                 
+                gold_bonus_sources = []
+                xp_bonus_sources = []
+                gravitas_bonus_sources = []
                 # Farmer gets reduced loss or bonus on expedition
                 if player.occupation == "Farmer":
                     gravitas = int(gravitas * 1.2)
@@ -244,17 +259,23 @@ class Travel(commands.Cog):
                 # Accessory bonus
                 if player.accessory.prefix == "Lucky":
                     mult = Vars.ACCESSORY_BONUS["Lucky"][player.accessory.type]
-                    xp = int(xp * (1 + (mult / 100.0)))
-                    gold = int(gold * (1 + (mult / 100.0)))
+                    xp_bonus = int(xp * (mult / 100.0))
+                    xp += xp_bonus
+                    xp_bonus_sources.append((xp_bonus, "Lucky Accessory"))
+                    gold_bonus = int(gold * (mult / 100.0))
+                    gold += gold_bonus
+                    gold_bonus_sources.append((gold_bonus, "Lucky Accessory"))
 
                 # Create the embed to send
+                xp_gains_str = stringify_gains("xp", xp, xp_bonus_sources)
+                gold_gains_str = stringify_gains(
+                    "gold", gold, gold_bonus_sources)
                 embed = discord.Embed(title="Expedition Complete!", 
                     color=Vars.ABLUE)
                 embed.set_thumbnail(url=ctx.author.avatar.url)
                 e_message = (
                     f"While on your journey, you gained these resources:\n"
-                    f"Gold: `{gold}`\n"
-                    f"EXP: `{xp}`\n")
+                    f"{gold_gains_str}\n{xp_gains_str}\n")
 
                 # Give player the goods
                 await player.give_gold(conn, gold)
@@ -262,9 +283,14 @@ class Travel(commands.Cog):
                     resource = random.choice(['fur', 'bone'])
                     mats = int(mats/4)
                     e_name = "You returned from your urban expedition"
+                    if player.occupation == "Farmer":
+                        gravitas_bonus_sources.append(
+                            (gravitas // 1.2, "Farmer"))
+                    gravitas_gains_str = stringify_gains(
+                        "gravitas", gravitas, gravitas_bonus_sources)
                     e_message += (
-                        f"Your campaign increased your gravitas by "
-                        f"`{gravitas}`.\n")
+                        f"Your campaign increased your reputation by "
+                        f"{gravitas_gains_str}.\n")
                 else:
                     gravitas = int(player.gravitas * gravitas_decay * -1)
                     e_name = "You returned from your expedition"
@@ -326,16 +352,19 @@ class Travel(commands.Cog):
             result = random.choices(("success", "critical success", "failure"),
                 (60, 10, 30))[0]
             if result == "success":
-                bonus = 1 # Bonus will add all possible bonuses into one
+                initial_bonus = 1 # Bonus will add all possible bonuses into one
             elif result == "critical success":
-                bonus = 1.5
+                initial_bonus = 1.5
             else:
-                bonus = .5
+                initial_bonus = .5
+            bonus = 1
             # Brotherhood Map Control Bonus
             bonus_bh = await AssociationObject.get_territory_controller(
                 conn, player.location)
-            if player.assc.id == bonus_bh.id:
-                bonus += .5
+
+            gold_bonus_sources = []
+            material1_bonus_sources = []
+            material2_bonus_sources = []
 
             if workplace == "Smalltown Gig":
                 employer = random.choice((
@@ -353,26 +382,58 @@ class Travel(commands.Cog):
                         f"You cannot hunt at **{player.location}**. Please "
                         f"move to a grassland, forest, or taiga."))
                 
+                income = int(random.randint(10, 100) * initial_bonus)
+                fur = int(random.randint(30, 80) * initial_bonus)
+                bone = int(random.randint(20, 60) * initial_bonus)
+
+                if player.assc.id == bonus_bh.id:
+                    bonus += .5
+                    gold_bonus_sources.append((income // 2, "Brotherhood"))
+                    material1_bonus_sources.append((fur // 2, "Brotherhood"))
+                    material2_bonus_sources.append((bone // 2, "Brotherhood"))
                 if player.occupation == "Hunter":
                     bonus += 1
+                    gold_bonus_sources.append((income, "Hunter"))
+                    material1_bonus_sources.append((fur, "Hunter"))
+                    material2_bonus_sources.append((bone, "Hunter"))
                 if player.equipped_item.type == "Bow":
                     bonus += 1
+                    gold_bonus_sources.append((income, "Weapon"))
+                    material1_bonus_sources.append((fur, "Weapon"))
+                    material2_bonus_sources.append((bone, "Weapon"))
                 elif player.equipped_item.type == "Gauntlets":
                     bonus -= .5
+                    gold_bonus_sources.append((-income // 2, "Weapon"))
+                    material1_bonus_sources.append((-fur // 2, "Weapon"))
+                    material2_bonus_sources.append((-bone // 2, "Weapon"))
                 elif player.equipped_item.type == "Sling":
                     bonus += .5
+                    gold_bonus_sources.append((income // 2, "Weapon"))
+                    material1_bonus_sources.append((fur // 2, "Weapon"))
+                    material2_bonus_sources.append((bone // 2, "Weapon"))
                 elif player.equipped_item.type == "Javelin":
                     bonus += .25
+                    gold_bonus_sources.append((income // 4, "Weapon"))
+                    material1_bonus_sources.append((fur // 4, "Weapon"))
+                    material2_bonus_sources.append((bone // 4, "Weapon"))
 
-                income = int(random.randint(10, 100) * bonus)
-                fur = int(random.randint(30, 80) * bonus)
-                bone = int(random.randint(20, 60) * bonus)
+                income = int(income * bonus)
+                fur = int(fur * bonus)
+                bone = int(bone * bonus)
+
+                gold_gains_str = stringify_gains(
+                    "gold", income, gold_bonus_sources)
+                fur_gains_str = stringify_gains(
+                    "fur", fur, material1_bonus_sources)
+                bone_gains_str = stringify_gains(
+                    "bone", bone, material2_bonus_sources)
                 await player.give_gold(conn, income)
                 await player.give_resource(conn, "fur", fur)
                 await player.give_resource(conn, "bone", bone)
                 await ctx.respond((
-                    f"Your hunting trip was a {result}! You got `{income}` "
-                    f"gold, `{fur}` fur, and `{bone}` bones."))
+                    f"Your hunting trip was a {result}! You received:\n"
+                    f"{gold_gains_str},\n{fur_gains_str}, and\n"
+                    f"{bone_gains_str}."))
 
             elif workplace == "Mining Shift":
                 if location_biome != "Hills":
@@ -380,26 +441,58 @@ class Travel(commands.Cog):
                         f"You cannot mine at **{player.location}**. Please "
                         f"move to a hilly region."))
 
+                income = int(random.randint(10,100) * initial_bonus)
+                iron = int(random.randint(200, 400) * initial_bonus)
+                silver = int(random.randint(20, 80) * initial_bonus)
+
+                if player.assc.id == bonus_bh.id:
+                    bonus += .5
+                    gold_bonus_sources.append((income // 2, "Brotherhood"))
+                    material1_bonus_sources.append((iron // 2, "Brotherhood"))
+                    material2_bonus_sources.append((silver // 2, "Brotherhood"))
                 if player.occupation == "Blacksmith":
                     bonus += 1
+                    gold_bonus_sources.append((income, "Blacksmith"))
+                    material1_bonus_sources.append((iron, "Blacksmith"))
+                    material2_bonus_sources.append((silver, "Blacksmith"))
                 if player.equipped_item.type == "Dagger":
                     bonus -= .25
+                    gold_bonus_sources.append((-income // 4, "Weapon"))
+                    material1_bonus_sources.append((-iron // 4, "Weapon"))
+                    material2_bonus_sources.append((-silver // 4, "Weapon"))
                 elif player.equipped_item.type in ("Bow", "Sling"):
                     bonus -= .5
+                    gold_bonus_sources.append((-income // 2, "Weapon"))
+                    material1_bonus_sources.append((-iron // 2, "Weapon"))
+                    material2_bonus_sources.append((-silver // 2, "Weapon"))
                 elif player.equipped_item.type == "Trebuchet":
                     bonus += 1
+                    gold_bonus_sources.append((income, "Weapon"))
+                    material1_bonus_sources.append((iron, "Weapon"))
+                    material2_bonus_sources.append((silver, "Weapon"))
                 elif player.equipped_item.type in ("Greatsword", "Axe", "Mace"):
                     bonus += .25
+                    gold_bonus_sources.append((income // 4, "Weapon"))
+                    material1_bonus_sources.append((iron // 4, "Weapon"))
+                    material2_bonus_sources.append((silver // 4, "Weapon"))
 
-                income = int(random.randint(10,100) * bonus)
-                iron = int(random.randint(200, 400) * bonus)
-                silver = int(random.randint(20, 80) * bonus)
+                income = int(income * bonus)
+                iron = int(iron * bonus)
+                silver = int(silver * bonus)
+
+                gold_gains_str = stringify_gains(
+                    "gold", income, gold_bonus_sources)
+                iron_gains_str = stringify_gains(
+                    "iron", iron, material1_bonus_sources)
+                silver_gains_str = stringify_gains(
+                    "silver", silver, material2_bonus_sources)
                 await player.give_gold(conn, income)
                 await player.give_resource(conn, "iron", iron)
                 await player.give_resource(conn, "silver", silver)
                 await ctx.respond((
-                    f"Your mining expedition was a {result}! You got "
-                    f"`{income}` gold, `{iron}` iron, and `{silver}` silver."))
+                    f"Your mining expedition was a {result}! You received:\n"
+                    f"{gold_gains_str},\n{iron_gains_str}, and\n"
+                    f"{silver_gains_str}."))
 
             elif workplace == "Foraging Party":
                 if location_biome in ("City", "Town"):
@@ -428,14 +521,24 @@ class Travel(commands.Cog):
                     res = "cacao"
                     amount = random.randint(20, 40)
 
-                if player.occupation == "Traveller":
+                amount = int(amount * initial_bonus)
+
+                if player.assc.id == bonus_bh.id:
+                    bonus += .5
+                    material1_bonus_sources.append((amount // 2), "Brotherhood")
+                if player.occupation == "Traveler":
                     bonus += 1
+                    material1_bonus_sources.append((amount, "Traveler"))
                 if player.equipped_item.type == "Dagger":
                     bonus += .1
+                    material1_bonus_sources.append((amount // 10, "Weapon"))
 
-                await player.give_resource(conn, res, int(amount * bonus))
+                income = int(amount * bonus)
+                await player.give_resource(conn, res, income)
+                mat_gain_str = stringify_gains(
+                    res, income, material1_bonus_sources)
                 await ctx.respond((
-                    f"You received `{amount}` {res} while foraging in "
+                    f"You received {mat_gain_str} while foraging in "
                     f"**{player.location}**."))
 
             elif workplace == "Fishing Getaway":

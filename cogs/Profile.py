@@ -419,10 +419,7 @@ class Profile(commands.Cog):
                 await ctx.respond((
                     f"You renamed `{item.weapon_id}`: {old_name} to "
                     f"{item.name}."))
-
-    # TODO: Add tutorial; this should probably go last
-
-
+                    
 
 def setup(bot):
     bot.add_cog(Profile(bot))

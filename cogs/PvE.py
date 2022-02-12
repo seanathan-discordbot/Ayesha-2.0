@@ -5,8 +5,10 @@ from discord.ext import commands
 from discord.ext.commands import BucketType, cooldown
 
 import random
+import time
 
 from Utilities import Checks, CombatObject, ItemObject, PlayerObject, Vars
+from Utilities.Analytics import stringify_gains
 from Utilities.CombatObject import CombatInstance
 
 class PvE(commands.Cog):
@@ -230,27 +232,48 @@ class PvE(commands.Cog):
                 header = f"They had {boss.current_hp} HP remaining."
 
             # ON GAME END event technically
+            gold_bonus_sources = []
+            xp_bonus_sources = []
             acolytes = [a.acolyte_name 
                 for a in (player.acolyte1, player.acolyte2)]
             if "Sean" in acolytes:
-                xp = int(xp * 1.2)
+                bonus = xp // 5
+                xp += bonus
+                xp_bonus_sources.append((bonus, "Sean"))
             if "Spartacus" in acolytes:
                 gold += 200
+                gold_bonus_sources.append((200, "Spartacus"))
             if player.accessory.prefix == "Lucky":
                 mult = Vars.ACCESSORY_BONUS["Lucky"][player.accessory.type]
-                xp = int(xp * (1 + (mult / 100.0)))
-                gold = int(gold * (1 + (mult / 100.0)))
+                bonus = int(xp * (mult / 100.0))
+                xp += bonus
+                xp_bonus_sources.append((bonus, "Lucky Accessory"))
+                bonus = int(gold * (mult / 100.0))
+                gold += bonus
+                gold_bonus_sources.append((bonus, "Lucky Accessory"))
             if player.accessory.prefix == "Old" and level >= 25 and victory:
                 gravitas = Vars.ACCESSORY_BONUS["Old"][player.accessory.type]
                 await author.give_gravitas(conn, gravitas)
+            try: # 20% booster for 30 minutes after voting for bot
+                if int(time.time()) < self.bot.recent_voters[player.disc_id]:
+                    bonus = xp // 5
+                    xp += bonus
+                    xp_bonus_sources.append((bonus, "voting for the bot"))
+                    bonus = gold // 5
+                    gold += bonus
+                    gold_bonus_sources.append((bonus, "voting for the bot"))
+            except KeyError:
+                pass
 
             # Create and send embed
+            gold_gains_str = stringify_gains("gold", gold, gold_bonus_sources)
+            xp_gains_str = stringify_gains("xp", xp, xp_bonus_sources)
             embed = discord.Embed(title=title, color=Vars.ABLUE)
             embed.add_field(
                 name=header,
                 value=(
-                    f"You received `{gold}` gold and `{xp}` xp from the battle."
-                ))
+                    f"You received {gold_gains_str} and {xp_gains_str} "
+                    f"from the battle."))
             if weapon is not None:
                 embed.add_field(
                     name="While fighting you found a weapon!",
