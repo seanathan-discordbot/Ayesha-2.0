@@ -1,5 +1,7 @@
 import asyncpg
 
+from typing import List
+
 from Utilities import Checks, PlayerObject, Vars
 
 class Transaction:
@@ -24,9 +26,13 @@ class Transaction:
         If the player is making a purchase, this is the total price they pay
     paid_amount : int
         If the player is making a sale, this is the total gold they make
+    bonus_list : List[tuple]
+        A list of things which have changed the transaction total
+        The tuples take the form (bonus_amount (int), bonus_source (str))
     """
     def __init__(self, player : PlayerObject.Player, subtotal : int, 
-            tax_rate : float, tax_amount : int):
+            tax_rate : float, tax_amount : int, tax_rate_reduction : int, 
+            reduction_sources : List[str], bonus_list : List[tuple] = []):
         """
         Parameters
         ----------
@@ -38,6 +44,9 @@ class Transaction:
             The tax rate being applied to the transaction
         tax_amount : int
             The amount being paid in taxes
+        bonus_list : Optional[List[tuple]]
+            A list of things which have changed the transaction total
+            The tuples take the form (bonus_amount (int), bonus_source (str))
         """
         self.player = player
         self.subtotal = subtotal
@@ -45,10 +54,14 @@ class Transaction:
         self.tax_amount = tax_amount
         self.paying_price = subtotal + tax_amount
         self.paid_amount = subtotal - tax_amount
+        self.bonus_list = bonus_list
+        self.tax_rate_reduction = tax_rate_reduction
+        self.reduction_sources = reduction_sources
 
     @classmethod
     async def calc_cost(cls, conn : asyncpg.Connection, 
-            player : PlayerObject.Player, subtotal : int):
+            player : PlayerObject.Player, subtotal : int, 
+            sale_bonuses : List[tuple] = []):
         """Factory method for Transaction. Calculates everything.
 
         Parameters
@@ -59,25 +72,37 @@ class Transaction:
             The player to whom this transaction applies
         subtotal : int
             The amount (gold) the player would pay/be paid if there was no tax.
+        sale_bonuses : Optional[List[tuple]]
+            A list of things which have changed the transaction total
+            The tuples take the form (bonus_amount (int), bonus_source (str))
         """
         multiplier = 1
+        reduction_sources = []
         if player.origin == "Sunset":
             multiplier -= .05
+            reduction_sources.append("origin")
         if player.occupation == "Scribe":
             multiplier -= .15
+            reduction_sources.append("occupation")
         if player.gravitas >= 200:
             multiplier -= .05
+            reduction_sources.append("gravitas")
         elif player.gravitas >= 500:
             multiplier -= .15
+            reduction_sources.append("gravitas")
         elif player.gravitas >= 1000:
             multiplier -= .25
+            reduction_sources.append("gravitas")
         if player.accessory.prefix == "Regal":
             a_mult = Vars.ACCESSORY_BONUS["Regal"][player.accessory.type]
             multiplier -= a_mult / 100.0
+            reduction_sources.append("regal accessory")
+        reduction = 1 - multiplier
         tax_rate = float(await get_tax_rate(conn)) * multiplier
         tax_amount = int(subtotal * tax_rate / 100)
 
-        return cls(player, subtotal, tax_rate, tax_amount)
+        return cls(player, subtotal, tax_rate, tax_amount, reduction, 
+            reduction_sources, sale_bonuses)
 
     @classmethod
     async def create_sale(cls, conn : asyncpg.Connection, 
@@ -95,13 +120,16 @@ class Transaction:
             The amount (gold) the player would pay/be paid if there was no tax.
         """
         sale_bonus = 1
+        sale_bonuses = []
         if player.occupation == "Merchant":
             sale_bonus += .5
+            sale_bonuses.append((subtotal // 2), "Merchant")
         if player.assc.type == "Guild":
-            sale_bonus += .5 + (.1 * player.assc.get_level())
-        # TODO: Implement comptroller bonuses
+            guild_bonus = .5 + (.1 * player.assc.get_level())
+            sale_bonus += guild_bonus
+            sale_bonuses.append((int(subtotal * guild_bonus), "Guild Level"))
         subtotal = int(subtotal * sale_bonus)
-        return await cls.calc_cost(conn, player, subtotal)
+        return await cls.calc_cost(conn, player, subtotal, sale_bonuses)
 
     async def log_transaction(self, conn : asyncpg.Connection, 
             type : str) -> str:
@@ -128,7 +156,13 @@ class Transaction:
         await conn.execute(psql, self.player.disc_id, self.subtotal, 
             self.tax_amount, self.tax_rate)
 
-        return f"You paid `{self.tax_amount}` in taxes."
+        if len(self.reduction_sources) == 0:
+            return f"You paid `{self.tax_amount}` in taxes."
+        else:
+            return (
+                f"You paid `{self.tax_amount}` in taxes, with your effective "
+                f"tax rate reduced by `{int(self.tax_rate_reduction*100)}`% "
+                f"due to your `{', '.join(self.reduction_sources)}`.")
 
 
 async def get_tax_rate(conn : asyncpg.Connection) -> float:

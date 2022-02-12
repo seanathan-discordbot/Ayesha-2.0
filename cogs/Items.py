@@ -5,7 +5,8 @@ from discord.ext import commands, pages
 
 import random
 
-from Utilities import Checks, Vars, PlayerObject, ItemObject, Finances
+from Utilities import Checks, Vars, PlayerObject, ItemObject
+from Utilities.Analytics import stringify_gains
 from Utilities.Finances import Transaction
 
 class OfferView(discord.ui.View):
@@ -395,16 +396,20 @@ class Items(commands.Cog):
                     f"`{player.gold}` gold."))
             
             # Perform the merge
+            atk_bonus_sources = []
             if player.occupation == "Blacksmith":
                 new_atk = item_w.attack + 2
+                atk_bonus_sources.append((1, "Blacksmith"))
             else:
                 new_atk = item_w.attack + 1
             await item_w.set_attack(conn, new_atk)
             await fodder_w.destroy(conn)
             print_tax = await purchase.log_transaction(conn, "purchase")
 
+        atk_gain_str = stringify_gains("ATK", 1, atk_bonus_sources)
         await ctx.respond((
-            f"You buffed your **{item_w.name}** to `{item_w.attack}` ATK.\n"
+            f"You buffed your **{item_w.name}** by {atk_gain_str} to "
+            f"`{item_w.attack}`.\n"
             f"This cost you `10000` gold.\n{print_tax}"))
 
     @commands.slash_command()
@@ -447,9 +452,11 @@ class Items(commands.Cog):
                 sale = await Transaction.create_sale(conn, player, gold)
                 print_tax = await sale.log_transaction(conn, "sale")
                 await item.destroy(conn)
+                gold_gain_str = stringify_gains(
+                    "gold", sale.subtotal, sale.bonus_list)
                 return await ctx.respond((
-                    f"You sold your `{item_id}`: {item.name} amd made "
-                    f"`{sale.subtotal}` gold.\n{print_tax}"))
+                    f"You sold your `{item_id}`: {item.name} and made "
+                    f"{gold_gain_str}.\n{print_tax}"))
 
             elif item_type == "accessory":
                 if item_id == player.accessory.id:
@@ -465,9 +472,11 @@ class Items(commands.Cog):
                 sale = await Transaction.create_sale(conn, player, gold)
                 print_tax = await sale.log_transaction(conn, "sale")
                 await item.destroy(conn)
+                gold_gain_str = stringify_gains(
+                    "gold", sale.subtotal, sale.bonus_list)
                 return await ctx.respond((
-                    f"You sold your `{item_id}`: {item.name} amd made "
-                    f"`{sale.subtotal}` gold.\n{print_tax}"))
+                    f"You sold your `{item_id}`: {item.name} and made "
+                    f"{gold_gain_str}.\n{print_tax}"))
 
             # SELL WEAPON 
             if item_id is not None: # If they pass both, only sell the item ID
@@ -485,9 +494,11 @@ class Items(commands.Cog):
                 sale = await Transaction.create_sale(conn, player, gold)
                 print_tax = await sale.log_transaction(conn, "sale")
                 await item.destroy(conn)
+                gold_gain_str = stringify_gains(
+                    "gold", sale.subtotal, sale.bonus_list)
                 await ctx.respond((
                     f"You sold your `{item_id}`: {item.name} and made "
-                    f"`{sale.subtotal}` gold.\n{print_tax}"))
+                    f"{gold_gain_str}.\n{print_tax}"))
 
             elif rarity is not None: 
                 psql = """
@@ -513,9 +524,11 @@ class Items(commands.Cog):
                 subtotal *= amount_sold
                 sale = await Transaction.create_sale(conn, player, subtotal)
                 print_tax = await sale.log_transaction(conn, "sale")
+                gold_gain_str = stringify_gains(
+                    "gold", sale.subtotal, sale.bonus_list)
                 await ctx.respond((
-                    f"You sould all {amount_sold} of your {rarity.lower()} "
-                    f"items and made `{sale.subtotal}` gold.\n{print_tax}"))
+                    f"You sold all {amount_sold} of your {rarity.lower()} "
+                    f"items and made {gold_gain_str}.\n{print_tax}"))
 
             else: # Then they passed nothing bruh
                 await ctx.respond("You didn't pass anything to sell.")
