@@ -85,6 +85,7 @@ class Occupations(commands.Cog):
             msg = await ctx.respond(embed=embed, view=view)
             await view.wait()
             if view.value is None:
+                ctx.command.reset_cooldown(ctx)
                 await ctx.respond("Timed out.")
             elif view.value:
                 try:
@@ -114,6 +115,7 @@ class Occupations(commands.Cog):
             msg = await ctx.respond(embed=embed, view=view)
             await view.wait()
             if view.value is None:
+                ctx.command.reset_cooldown(ctx)
                 await ctx.respond("Timed out.")
             elif view.value:
                 try:
