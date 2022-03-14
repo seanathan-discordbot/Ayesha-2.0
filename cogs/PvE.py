@@ -1,9 +1,10 @@
 import discord
-from discord import Option
+from discord import Option, OptionChoice
 
 from discord.ext import commands
 from discord.ext.commands import BucketType, cooldown
 
+import asyncio
 import random
 import time
 
@@ -83,13 +84,22 @@ class PvE(commands.Cog):
         }
 
     # COMMANDS
-    @commands.slash_command()
+    @commands.slash_command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
     @cooldown(1, 15, BucketType.user)
     async def pve(self, ctx,
             level : Option(int,
                 description="The difficulty level of your opponent",
-                min_value=1)):
+                min_value=1),
+            auto : Option(str,
+                description=(
+                    "Play interactive with buttons or simulate an automatic "
+                    "battle for decreased rewards"),
+                choices = [
+                    OptionChoice("Play Interactively", "Y"),
+                    OptionChoice("Play Auto (Decreased Rewards)", "N")],
+                required = False,
+                default = "Y")):
         """Fight an enemy for gold, xp, and items!"""
         async with self.bot.db.acquire() as conn:
             author = await PlayerObject.get_player_by_id(conn, ctx.author.id)
@@ -137,19 +147,28 @@ class PvE(commands.Cog):
                 value="\n".join(recent_turns[-3:]),
                 inline=False)
 
-            view = CombatObject.ActionChoice(author_id=ctx.author.id)
+            if auto == "Y":
+                view = CombatObject.ActionChoice(author_id=ctx.author.id)
+            else:
+                view = discord.ui.View() # Create empty view for compatibility
             # Remaking the view every time is a bit of a problem but results
             # in more readable code than having one view handle everything
             await interaction.edit_original_message(
                 content=None, embed=embed, view=view)
 
             # Determine belligerent actions
-            await view.wait()
-            if view.choice is None:
-                return await ctx.respond(
-                    f"You fled the battle as you ran out of time to move.")
+            if auto == "Y":
+                await view.wait()
+                if view.choice is None:
+                    return await ctx.respond(
+                        f"You fled the battle as you ran out of time to move.")
+                player.last_move = view.choice
+            else:
+                await asyncio.sleep(3)
+                player.last_move = random.choices(
+                    population=["Attack", "Block", "Parry", "Heal", "Bide"],
+                    weights=[50, 20, 20, 3, 7])[0]
 
-            player.last_move = view.choice
             boss.last_move = boss_next_move[0]
             boss_next_move = random.choices(
                 population=[
@@ -200,6 +219,10 @@ class PvE(commands.Cog):
                 xp *= (level+10)**2 # Put weight on high levels and HP
                 xp *= (player.current_hp / 750) + .2
                 xp = int(xp)
+
+                if auto == "N": # Quarter rewards if PvE was automatic
+                    gold = gold // 4
+                    xp = xp // 4
 
                 # Possibly get weapons + armor
                 item_rarities = self.level_to_rewards(level)
@@ -305,8 +328,6 @@ class PvE(commands.Cog):
                     text=f"You have unlocked PvE level {author.pve_limit}.")
 
         await interaction.edit_original_message(embed=embed, view=None)
-
-
 
 
 def setup(bot):
