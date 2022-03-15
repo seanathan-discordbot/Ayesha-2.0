@@ -11,22 +11,46 @@ from datetime import timedelta
 class Reminders(commands.Cog):
     """Reminders text"""
 
-    def __init__(self,bot):
+    def __init__(self, bot : discord.Bot):
         self.bot = bot
 
     @tasks.loop(seconds=15.0)
     async def check_for_reminders(self):
+        # Every 15 seconds, get every reminder that has passed
         now = int(time.time())
-        # Function to get all reminders
+        psql = """
+                DELETE FROM reminders
+                WHERE endtime <= $1
+                RETURNING starttime, user_id, content;
+                """
+        async with self.bot.db.acquire() as conn:
+            reminders = await conn.fetch(psql, now)
+
+        # DM each reminder
+        for reminder in reminders:
+            # Get the person in question
+            user = await self.bot.fetch_user(reminder['user_id'])
+
+            # Create a string telling them the time passed
+            elapsed_time = now - reminder['starttime']
+            delta = timedelta(seconds=elapsed_time)
+            days = f"0{delta.days}" if delta.days < 10 else str(delta.days)
+            short_elapsed = time.gmtime(elapsed_time % 86400)
+            time_str = days + ":" + time.strftime("%H:%M:%S", short_elapsed)
+
+            # Send a DM
+            if not user.dm_channel:
+                await user.create_dm()
+            await user.send((
+                f"`{time_str}` ago, you wanted to be reminded of:\n"
+                f"{reminder['content']}"))
+
     
     # EVENTS
     @commands.Cog.listener()
     async def on_ready(self):
+        self.check_for_reminders.start()
         print("Reminders is ready.")
-
-    def cog_unload(self):
-        self.check_for_reminders.stop()
-        return super().cog_unload()
 
     # COMMANDS
     r = discord.commands.SlashCommandGroup("remind", 
@@ -84,7 +108,7 @@ class Reminders(commands.Cog):
         endtime = starttime + length
         delta = timedelta(seconds=length)
         short_time_str = time.strftime('%H:%M:%S', time.gmtime(delta.seconds))
-        msg = await ctx.respond((
+        await ctx.respond((
             f"Will remind you in `{delta.days}:{short_time_str}`."))
 
         psql = """
