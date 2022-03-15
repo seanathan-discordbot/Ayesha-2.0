@@ -173,14 +173,26 @@ class Reminders(commands.Cog):
             for i in range(0, len(reminders), 5)]
 
         if len(reminders) == 1:
-            await ctx.respond(remind_pages[0])
+            await ctx.respond(embed=remind_pages[0])
         else:
             paginator = pages.Paginator(pages=remind_pages, timeout=30.0)
             await paginator.respond(ctx.interaction)
         
+    @r.command(guild_ids=[762118688567984151])
+    async def delete(self, ctx, 
+            reminder_id : Option(int,
+                description="The ID of the reminder you want to delete.",
+                required=True)):
+        """Delete a reminder so that you are not reminded of it."""
+        psql = """
+                DELETE FROM reminders
+                WHERE id = $1 AND user_id = $2;
+                """
+        async with self.bot.db.acquire() as conn:
+            await conn.execute(psql, reminder_id, ctx.author.id)
+        await ctx.respond(
+            f"Deleted reminder `{reminder_id}` (if you created it).")
         
-        
-
 
 def setup(bot):
     bot.add_cog(Reminders(bot))
