@@ -140,16 +140,16 @@ class WordChain:
             f"will continue.")
 
         self.SCRABBLE_RULES = self.BASE_RULES + (
-            f"In **Scrabble Mode**, each word you give will earn you a varying "
-            f"amount of points depending on the rarity of letters used. Try to "
-            f"come up with the longest word! Play continues until someone is "
-            f"eliminated; the winner is the player with the most points. "
-            f"Have fun! \n\n"
+            f"\n\nIn **Scrabble Mode**, each word you give will earn you a "
+            f"varying amount of points depending on the rarity of letters "
+            f"used. Try to come up with the longest word! Play continues "
+            f"until someone is eliminated; the winner is the player with the "
+            f"most points. Have fun! \n\n"
             f"__Example:__ happy --> your --> rig --> guy... and so on")
 
         self.MULTIPLAYER_RULES = self.BASE_RULES + (
-            f"In **Public/Lightning** Mode, play continues until one person "
-            f"remains. Have fun!\n\n"
+            f"\n\nIn **Public/Lightning** Mode, play continues until one "
+            f"person remains. Have fun!\n\n"
             f"__Example:__ happy --> your --> rig --> guy... and so on")
 
     async def play(self):
@@ -402,7 +402,7 @@ class WordChain:
             await interaction.followup.send(self.SCRABBLE_RULES)
             self.points = {player : 0 for player in self.players}
         else:
-            await interaction.followup.send(self.SCRABBLE_RULES)
+            await interaction.followup.send(self.MULTIPLAYER_RULES)
         await asyncio.sleep(10)
 
         # Begin game loop
