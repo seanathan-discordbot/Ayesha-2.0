@@ -534,10 +534,9 @@ class Minigames(commands.Cog):
 
     # Commands
     w = discord.commands.SlashCommandGroup("wordchain", 
-        "Commands related to Word Chain",
-        guild_ids=[762118688567984151])
+        "Commands related to Word Chain")
 
-    @w.command(guild_ids=[762118688567984151])
+    @w.command()
     async def play(self, ctx : discord.ApplicationContext, 
             mode : Option(str,
                 description = "The Word Chain game mode you wish to play",
@@ -558,7 +557,7 @@ class Minigames(commands.Cog):
             await game.play()
         self.active_channels.pop(ctx.channel.id)
 
-    @w.command(guild_ids=[762118688567984151])
+    @w.command()
     async def leaderboard(self, ctx : discord.ApplicationContext):
         """View the Word Chain leaderboards."""
         psql1 = """
@@ -635,7 +634,7 @@ class Minigames(commands.Cog):
         view.add_item(LeaderboardMenu(ctx.author, embeds))
         await ctx.respond(embed=solo_lb, view=view)
 
-    @w.command(name="check", guild_ids=[762118688567984151])
+    @w.command(name="check")
     async def _check(self, ctx, word : str):
         """See if a word exists in the Ayesha dictionary"""
         word = word.lower()
