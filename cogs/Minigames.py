@@ -48,6 +48,27 @@ class JoinMenu(discord.ui.View):
         return interaction.user not in self.players
 
 
+class LeaderboardMenu(discord.ui.Select):
+    def __init__(self, author : discord.Member, embeds : dict):
+        self.author = author
+        self.embeds = embeds
+        # Exclude last entry; its the empty occupation (Name = None)
+        options = [
+            discord.SelectOption(label="Most words in Solo", value="Solo"),
+            discord.SelectOption(label="Highest points in Scrabble", 
+                value="Scrabble")
+        ]
+        super().__init__(placeholder="View Leaderboards", options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.edit_message(
+            embed=self.embeds[self.values[0]])
+
+    async def interaction_check(self, 
+            interaction : discord.Interaction) -> bool:
+        return interaction.user.id == self.author.id
+
+
 class WordChain:
     """A word chain instance. Instantiate the class with the required 
     parameters and run the 'play' method to begin the game.
@@ -160,10 +181,11 @@ class WordChain:
     async def input_solo_game(self, score : int):
         """Input game entry into database."""
         psql = """
-                INSERT INTO solo_wins (player, score)
-                VALUES ($1, $2);
+                INSERT INTO solo_wins (player, score, player_name)
+                VALUES ($1, $2, $3);
                 """
-        await self.conn.execute(psql, self.host.id, score)
+        await self.conn.execute(psql, self.host.id, score, 
+            self.players[0].name)
 
     async def play_solo(self):
         """Begin a singleplayer word chain game."""
@@ -304,10 +326,11 @@ class WordChain:
             # Input in database
             for player in self.players:
                 psql = """
-                        INSERT INTO scrabble_wins (player, score)
+                        INSERT INTO scrabble_wins (player, score, player_name)
                         VALUES ($1, $2);
                         """
-                await self.conn.execute(psql, player.id, self.points[player])
+                await self.conn.execute(psql, player.id, self.points[player], 
+                    player.name)
 
         else: # In public/lightning, only 1 person is left in the players list
             win_msg = (
@@ -329,10 +352,11 @@ class WordChain:
                     await self.conn.execute(psql, self.players[0].id)
                 else:
                     psql = """
-                            INSERT INTO public_wins (player)
-                            VALUES ($1)
+                            INSERT INTO public_wins (player, player_name)
+                            VALUES ($1, $2)
                             """
-                    await self.conn.execute(psql, self.players[0].id)
+                    await self.conn.execute(psql, self.players[0].id, 
+                        self.players[0].name)
             else:
                 psql = """SELECT id FROM lightning_wins WHERE player = $1"""
                 in_db = await self.conn.fetchval(psql, self.players[0].id)
@@ -345,10 +369,11 @@ class WordChain:
                     await self.conn.execute(psql, self.players[0].id)
                 else:
                     psql = """
-                            INSERT INTO lightning_wins (player)
-                            VALUES ($1)
+                            INSERT INTO lightning_wins (player, player_name)
+                            VALUES ($1, $2)
                             """
-                    await self.conn.execute(psql, self.players[0].id)
+                    await self.conn.execute(psql, self.players[0].id, 
+                        self.players[0].name)
 
 
     async def play_public(self):
@@ -452,7 +477,6 @@ class WordChain:
         await self.end_game(interaction, len(used_words))
 
 
-            
 
 
 class Minigames(commands.Cog):
@@ -481,9 +505,40 @@ class Minigames(commands.Cog):
             self.letter_frequency = letter_frequency
         print("Minigames is ready.")
 
+    # AUXILIARY FUNCTIONS
+    def format_leaderboard(self, lb, author_name : str, author_rank : int, 
+            author_val : int) -> str:
+        """Returns a formatted block of text showing the leaderboard.
+        lb must be an asyncpg.Record or list. 
+        """
+        # Make all the names equal width
+        names = [record['player_name'] for record in lb]
+        names.append(author_name)
+        name_length = len(max(names, key=len))
+        names = [name + " "*(name_length - len(name)) for name in names]
+
+        ranks = []
+        for i, record in enumerate(lb):
+            if i+1 < 10: # Make all ranks equal width
+                j = "0"+str(i+1)
+            else:
+                j = "10"
+            ranks.append(f"{j} | {names[i]} | {record['score']}")
+            
+        if author_rank < 10:
+            author_rank = "0" + str(author_rank)
+
+        return "```" + "\n".join(ranks) + (
+            f"\n{'-'*len(max(ranks, key=len))}\n"
+            f"{author_rank} | {names[-1]} | {author_val}```")
+
     # Commands
-    @commands.slash_command(guild_ids=[762118688567984151])
-    async def wordchain(self, ctx : discord.ApplicationContext, 
+    w = discord.commands.SlashCommandGroup("wordchain", 
+        "Commands related to Word Chain",
+        guild_ids=[762118688567984151])
+
+    @w.command(guild_ids=[762118688567984151])
+    async def play(self, ctx : discord.ApplicationContext, 
             mode : Option(str,
                 description = "The Word Chain game mode you wish to play",
                 required = True,
@@ -503,6 +558,99 @@ class Minigames(commands.Cog):
             await game.play()
         self.active_channels.pop(ctx.channel.id)
 
+    @w.command(guild_ids=[762118688567984151])
+    async def leaderboard(self, ctx : discord.ApplicationContext):
+        """View the Word Chain leaderboards."""
+        psql1 = """
+                SELECT ROW_NUMBER() OVER(ORDER BY score DESC) AS rank, 
+                    player_name, score
+                FROM solo_wins
+                LIMIT 10;
+                """
+        psql2 = """
+                WITH solo_ranks AS (
+                    SELECT ROW_NUMBER() OVER(ORDER BY score DESC) AS rank, 
+                        player, player_name, score
+                    FROM solo_wins
+                )
+                SELECT rank, player_name, score
+                FROM solo_ranks
+                WHERE player = $1
+                LIMIT 1;
+                """
+        psql7 = """
+                SELECT ROW_NUMBER() OVER(ORDER BY score DESC) AS rank, 
+                    player_name, score
+                FROM scrabble_wins
+                LIMIT 10;
+                """
+        psql8 = """
+                WITH scrabble_ranks AS (
+                    SELECT ROW_NUMBER() OVER(ORDER BY score DESC) AS rank, 
+                        player, player_name, score
+                    FROM scrabble_wins
+                )
+                SELECT rank, player_name, score
+                FROM scrabble_ranks
+                WHERE player = $1
+                LIMIT 1;
+                """
+        async with self.bot.dictionary.acquire() as conn:
+            # Top Solo Scores
+            solo_board = await conn.fetch(psql1)
+            solo_best = await conn.fetchrow(psql2, ctx.author.id)
+
+            # I have decided not to do public/lightning leaderboards
+
+            # Top Scrabble Scores
+            scrabble_board = await conn.fetch(psql7)
+            scrabble_best = await conn.fetchrow(psql8, ctx.author.id)
+
+        # Write Solo Leaderboard
+        solo_text = self.format_leaderboard(
+            solo_board, ctx.author.name, solo_best['rank'], 
+            solo_best['score'])
+        solo_lb = discord.Embed(
+            title="Word Chain Leaderboards: Solo High-Scores",
+            description=solo_text,
+            color=Vars.ABLUE)
+        solo_lb.set_thumbnail(url=self.bot.user.avatar.url)
+
+        # Write Scrabble Leaderboard
+        scrabble_text = self.format_leaderboard(
+            scrabble_board, ctx.author.name, scrabble_best['rank'],
+            scrabble_best['score'])
+        scrabble_lb = discord.Embed(
+            title="Word Chain Leaderboards: Scrabble High-Scores",
+            description=scrabble_text,
+            color=Vars.ABLUE)
+        scrabble_lb.set_thumbnail(url=self.bot.user.avatar.url)
+
+        # Display embeds
+        embeds = {
+            "Solo" : solo_lb,
+            "Scrabble" : scrabble_lb
+        }
+        view = discord.ui.View(timeout=30.0)
+        view.add_item(LeaderboardMenu(ctx.author, embeds))
+        await ctx.respond(embed=solo_lb, view=view)
+
+    @w.command(name="check", guild_ids=[762118688567984151])
+    async def _check(self, ctx, word : str):
+        """See if a word exists in the Ayesha dictionary"""
+        word = word.lower()
+        psql = "SELECT id FROM word_list WHERE word = $1;"
+
+        async with self.bot.dictionary.acquire() as conn:
+            word_id = await conn.fetchval(psql, word)
+
+        if word_id is None:
+            return await ctx.respond(f"**{word}** is not in our database.")
+        else:
+            points = sum([point_conversion[c] for c in word])
+            return await ctx.respond((
+                f"**{word}** is a valid term for use in Word Chain!\n"
+                f"Using it in Scrabble Mode nets **{points}** points."))
 
 
 def setup(bot):
