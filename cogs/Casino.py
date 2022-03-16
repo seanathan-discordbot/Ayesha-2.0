@@ -4,6 +4,7 @@ from discord import Option, OptionChoice
 from discord.ext import commands
 from discord.ext.commands import BucketType, cooldown
 
+import asyncio
 import random
 
 from Utilities import Checks, PlayerObject, Vars
@@ -30,9 +31,9 @@ class Casino(commands.Cog):
                 default="Heads"
             ),
             wager : Option(int, 
-                description="The amount of gold you are betting (up to 10k)",
+                description="The amount of gold you are betting (up to 25k)",
                 min_value=1,
-                max_value=10000,
+                max_value=25000,
                 default=1000)):
         """Wager some money on a coinflip for the classic 50/50 gamble."""
         async with self.bot.db.acquire() as conn:
@@ -74,9 +75,9 @@ class Casino(commands.Cog):
                 min_value=1,
                 max_value=36),
             wager : Option(int,
-                description="The amount of gold you are betting (up to 25k)",
+                description="The amount of gold you are betting (up to 50k)",
                 min_value=1,
-                max_value=25000,
+                max_value=50000,
                 default=1000)):
         """Play a game of Roulette"""
         async with self.bot.db.acquire() as conn:
@@ -115,9 +116,9 @@ class Casino(commands.Cog):
     @commands.check(Checks.is_player)
     async def craps(self, ctx : discord.ApplicationContext,
             wager : Option(int,
-                description="The amount of gold you are betting (up to 50k)",
+                description="The amount of gold you are betting (up to 100k)",
                 min_value=1,
-                max_value=50000,
+                max_value=100000,
                 default=1000)):
         """Play a game of craps/seven-elevens on Pass Line rules."""
         async with self.bot.db.acquire() as conn:
@@ -193,6 +194,106 @@ class Casino(commands.Cog):
                 await interaction.followup.send((
                     f"You rolled a **{total}** and lost the game and your "
                     f"`{wager}` gold wager!"))
+
+    @commands.slash_command(guild_ids=[762118688567984151])
+    @cooldown(1, 10, BucketType.user)
+    @commands.check(Checks.is_player)
+    async def race(self, ctx : discord.ApplicationContext, 
+            bet : Option(str,
+                description="The animal you are betting on winning the race",
+                required=True,
+                choices=[
+                    OptionChoice(c) for c in
+                    ["Duck", "Swan", "Dog", "Horse", "Turtle", "Rabbit"]]), 
+            wager : Option(int, 
+                description="The amount of gold you are betting (up to 100k)",
+                default=1000,
+                min_value=1,
+                max_value=100000)):
+        """Bet on an animal race!"""
+        names = ["Duck", "Swan", "Dog", "Horse", "Turtle", "Rabbit"]
+        emojis = ["🦆", "🦢", "🐕", "🐎", "🐢", "🐇"]
+        racers = {
+            n : {
+                "emoji" : e,
+                "string" : "||" + "."*19 + e,
+                "score" : 0,
+                "player" : True if n == bet else False
+            } for n, e in zip(names, emojis)}
+
+        async with self.bot.db.acquire() as conn: # Remember to reconnect later
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+            if player.gold < wager:
+                raise Checks.NotEnoughGold(wager, player.gold)
+
+        # Race is printed on an embed
+        output = "```" + "\n".join([racers[r]['string'] for r in racers]) +\
+            "```"
+        display = discord.Embed(
+            title="And the race is on!", color=Vars.ABLUE, description=output)
+        interaction = await ctx.respond(embed=display)
+
+        # Game Loop - extraordinarily bad code even for my standards geez
+        while max([racers[r]['score'] for r in racers]) <= 100:
+            bet_str = ""
+            for racer in racers:
+                # Change their progress and accompanying data
+                advance = random.randint(3, 14)
+                racers[racer]['score'] += advance
+                dots = racers[racer]['score'] // 5
+                if dots >= 20: # They pass the finish line
+                    racers[racer]['string'] = "|" + racers[racer]['emoji'] +\
+                        "."*20
+                else:
+                    racers[racer]['string'] = "||" + "."*(19-dots) +\
+                        racers[racer]['emoji'] + "."*(dots)
+
+                # If racer is the bet, come up with some string
+                if racer == bet:
+                    e = racers[racer]['emoji']
+                    if advance < 7:
+                        bet_str = random.choice([
+                            f"{e} falters!",
+                            f"{e} has been outgunned!",
+                            f"{e} trips!",
+                            f"{e} was the sussy-impostor all along!",
+                            f"{e} eats a fly and momentarily loses focus!"])
+                    elif advance < 11:
+                        bet_str = random.choice([
+                            f"{e} keeps pace.",
+                            f"{e} settles into mediocrity.",
+                            f"{e} is showing signs of exhaustion.",
+                            f"{e} passes a checkpoint!"])
+                    else:
+                        bet_str = random.choice([
+                            f"{e} gains a quick burst of speed!",
+                            f"{e} is one with nature.",
+                            f"{e} is showing them who's boss!",
+                            f"{e} leaps over an obstacle."])
+
+            output = bet_str +"\n```" +\
+                "\n".join([racers[r]['string'] for r in racers]) + "```"
+            display = discord.Embed(
+                title="And the race is on!", color=Vars.ABLUE, 
+                description=output)
+            await interaction.edit_original_message(embed=display)
+            await asyncio.sleep(3)
+
+        # Find the winner
+        winners = [r for r in racers if racers[r]['score'] >= 100]
+        win_str = ", ".join([racers[r]["emoji"] for r in winners])
+        message = f"The winner(s) are {win_str}"
+
+        async with self.bot.db.acquire() as conn:
+            if bet in winners: # Then player's choice won
+                payout = int(wager * 6.25 / len(winners)) # // gave float anyway
+                await player.give_gold(conn, payout)
+                message += f"\n You received a payout of `{payout}` gold!"
+            else:
+                await player.give_gold(conn, -wager)
+                message +=f"\n You lost your bet and your `{wager}` gold wager!"
+    
+        await interaction.followup.send(message)
 
 
 def setup(bot):
