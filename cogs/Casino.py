@@ -159,7 +159,7 @@ class Casino(commands.Cog):
                         if total == goal_number: # win
                             victory = True
                         elif total == 7: # lose
-                            victory = False
+                            loss = True
 
                 else: # Player didn't respond
                     await player.give_gold(conn, -wager)
@@ -173,7 +173,7 @@ class Casino(commands.Cog):
                 display.set_field_at(0, 
                     name=f"Press Shoot! to roll the die!",
                     value=(
-                        f"You rolled a **{die1}** and a **{die2}**\n\n"
+                        f"You rolled a **{die1}** and a **{die2}**.\n\n"
                         f"Your Roll: **{total}**\n"
                         f"Number to Win: **{goal_number}**\n"
                         f"Number to Lose: **7**"))
