@@ -44,7 +44,7 @@ class Misc(commands.Cog):
         self.daily_scheduler = schedule.Scheduler()
 
         def clear_dailies():
-            self.bot.recent_voters.clear()
+            self.bot.daily_claimers.clear()
 
         async def update_dailies():
             self.daily_scheduler.every().day.at("00:00").do(clear_dailies)
@@ -93,8 +93,8 @@ class Misc(commands.Cog):
     @commands.check(Checks.is_player)
     async def daily(self, ctx):
         """Get 2 rubidics daily. Resets everyday at 12 a.m. EST."""
-        if ctx.author.id not in self.bot.recent_voters:
-            self.bot.recent_voters[ctx.author.id] = 0
+        if ctx.author.id not in self.bot.daily_claimers:
+            self.bot.daily_claimers[ctx.author.id] = 0
             async with self.bot.db.acquire() as conn:
                 player = await PlayerObject.get_player_by_id(
                     conn, ctx.author.id)
@@ -175,11 +175,11 @@ class Misc(commands.Cog):
                 f"at **{player.destination}**.")
 
         # Check if player has claiemd daily today
-        if ctx.author.id in self.bot.recent_voters:
+        if ctx.author.id in self.bot.daily_claimers:
             to_reset = time.gmtime(self.daily_scheduler.idle_seconds)
             daily = (
                 f"You can claim your daily again in "
-                f"`{time.strftime('%H:%M:%S', to_reset)}`")
+                f"`{time.strftime('%H:%M:%S', to_reset)}`.")
         else:
             daily = (
                 "You can claim your free daily 2 rubidics with the `/daily` "
