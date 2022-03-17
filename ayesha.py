@@ -21,6 +21,7 @@ class Ayesha(commands.AutoShardedBot):
     """Ayesha bot class with added properties"""
 
     def __init__(self):
+        self.daily_claimers = {}
         self.recent_voters = {}
         self.trading_players = {}
 
@@ -45,6 +46,9 @@ class Ayesha(commands.AutoShardedBot):
             "cogs.Misc",
             "cogs.Acolytes",
             "cogs.Help",
+            "cogs.Minigames",
+            "cogs.Reminders",
+            "cogs.Casino",
             "cogs.Vote"
         )
 
@@ -88,6 +92,15 @@ async def create_db_pool():
 
 bot.loop.run_until_complete(create_db_pool())
 
+# Word Chain database
+async def create_dictionary_pool():
+    bot.dictionary = await asyncpg.create_pool(
+        database = config.DICTIONARY['name'],
+        user = config.DICTIONARY['user'],
+        password = config.DICTIONARY['password'])
+
+bot.loop.run_until_complete(create_dictionary_pool())
+
 # Ping command
 @bot.slash_command(guild_ids=[762118688567984151])
 async def ping(ctx):
@@ -97,25 +110,5 @@ async def ping(ctx):
                            description=fmt, 
                            color=Vars.ABLUE)
     await ctx.respond(embed=embed)
-
-# Cog-loading commands
-# @bot.slash_command(guild_ids=[762118688567984151])
-# @commands.check(bot.is_admin)
-# async def reload(ctx, extension):
-#     bot.unload_extension(f"cogs.{extension}")
-#     bot.load_extension(f"cogs.{extension}")
-#     await ctx.respond("Reloaded.")
-
-# @bot.slash_command(guild_ids=[762118688567984151])
-# @commands.check(bot.is_admin)
-# async def load(ctx, extension):
-#     bot.load_extension(f"cogs.{extension}")
-#     await ctx.respond("Loaded.")
-
-# @bot.slash_command(guild_ids=[762118688567984151])
-# @commands.check(bot.is_admin)
-# async def unload(ctx, extension):
-#     bot.unload_extension(f"cogs.{extension}")
-#     await ctx.respond("Unloaded.")
 
 bot.run(config.TOKEN)
