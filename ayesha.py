@@ -21,6 +21,7 @@ class Ayesha(commands.AutoShardedBot):
     """Ayesha bot class with added properties"""
 
     def __init__(self):
+        self.daily_claimers = {}
         self.recent_voters = {}
         self.trading_players = {}
 
@@ -45,7 +46,10 @@ class Ayesha(commands.AutoShardedBot):
             "cogs.Misc",
             "cogs.Acolytes",
             "cogs.Help",
-            "cogs.Minigames"
+            "cogs.Minigames",
+            "cogs.Reminders",
+            "cogs.Casino",
+            "cogs.Vote"
         )
 
         for cog in self.init_cogs:
