@@ -89,9 +89,9 @@ class Reminders(commands.Cog):
     # COMMANDS
     r = discord.commands.SlashCommandGroup("remind", 
         "Set reminders for Ayesha gameplay",
-        guild_ids=[762118688567984151])
+        )
 
-    @r.command(guild_ids=[762118688567984151])
+    @r.command()
     async def create(self, ctx : discord.ApplicationContext, 
             duration : Option(str,
                 description="Time until reminder: Use DD:HH:MM:SS or MM:SS format",
@@ -153,7 +153,7 @@ class Reminders(commands.Cog):
         async with self.bot.db.acquire() as conn:
             await conn.execute(psql, starttime, endtime, ctx.author.id, content)
 
-    @r.command(name="list", guild_ids=[762118688567984151])
+    @r.command(name="list", )
     async def _list(self, ctx):
         """Show the list of your active reminders."""
         # Get person's active reminders
@@ -178,7 +178,7 @@ class Reminders(commands.Cog):
             paginator = pages.Paginator(pages=remind_pages, timeout=30.0)
             await paginator.respond(ctx.interaction)
         
-    @r.command(guild_ids=[762118688567984151])
+    @r.command()
     async def delete(self, ctx, 
             reminder_id : Option(int,
                 description="The ID of the reminder you want to delete.",

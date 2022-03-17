@@ -22,7 +22,7 @@ class Casino(commands.Cog):
         print("Casino is ready.")
 
     # COMMANDS
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     async def coinflip(self, ctx : discord.ApplicationContext, 
             call : Option(str,
@@ -51,7 +51,7 @@ class Casino(commands.Cog):
                 await ctx.respond(
                     f"{msg} You lost your `{wager}` gold wager.")
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     async def roulette(self, ctx : discord.ApplicationContext,
             bet_type : Option(str,
@@ -111,7 +111,7 @@ class Casino(commands.Cog):
                 await player.give_gold(conn, -wager)
                 await ctx.respond(f"{msg} You lost your bet.")
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @cooldown(1, 10, BucketType.user)
     @commands.check(Checks.is_player)
     async def craps(self, ctx : discord.ApplicationContext,
@@ -195,7 +195,7 @@ class Casino(commands.Cog):
                     f"You rolled a **{total}** and lost the game and your "
                     f"`{wager}` gold wager!"))
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.slash_command()
     @cooldown(1, 10, BucketType.user)
     @commands.check(Checks.is_player)
     async def race(self, ctx : discord.ApplicationContext, 
