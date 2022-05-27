@@ -1,5 +1,6 @@
 # My Stuff
 Utilities/config.py
+Database/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
