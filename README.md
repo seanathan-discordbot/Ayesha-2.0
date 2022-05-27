@@ -6,6 +6,7 @@ You can also join the [official support server here](https://discord.gg/FRTTARhN
 
 
 Ayesha is currently being rewritten using pycord after the discontinuation of discord.py.
+Ayesha runs on Python 3.9.12.
 
 ## Features
 - Character customization with several jobs and backgrounds
@@ -16,11 +17,3 @@ Ayesha is currently being rewritten using pycord after the discontinuation of di
 - Take over areas of the map
 - Become elected mayor or comptroller, setting laws which affect all players
 - Join cooperative raids to defeat a common enemy
-
-## Requirements
-- Python 3.8.12
-- [pycord](https://pypi.org/project/py-cord/) v.2.0.0b5
-- [asyncpg](https://pypi.org/project/asyncpg/) v.0.25.0
-- [aiohttp](https://pypi.org/project/aiohttp/3.7.4.post0/) v.3.7.4.post0
-- [coolname](https://pypi.org/project/coolname/) v.1.1.0
-- [schedule](https://pypi.org/project/schedule/) v.1.1.0
