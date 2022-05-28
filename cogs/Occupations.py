@@ -11,7 +11,9 @@ class OccupationMenu(discord.ui.Select):
     def __init__(self, author):
         self.author = author
         # Exclude last entry; its the empty occupation (Name = None)
-        options = [discord.SelectOption(label=o) for o in Vars.OCCUPATIONS][:-1]
+        options = [
+            discord.SelectOption(label=o) 
+            for o in Vars.OCCUPATIONS if o is not None]
         super().__init__(placeholder="Pick an Occupation", options=options)
 
     async def callback(self, interaction : discord.Interaction):
@@ -37,7 +39,9 @@ class OriginMenu(discord.ui.Select):
     def __init__(self, author):
         self.author = author
         # Exclude last entry; its the empty origin
-        options = [discord.SelectOption(label=o) for o in Vars.ORIGINS][:-1]
+        options = [
+            discord.SelectOption(label=o) 
+            for o in Vars.ORIGINS if o is not None]
         super().__init__(placeholder="Pick something!", options=options)
 
     async def callback(self, interaction: discord.Interaction):
