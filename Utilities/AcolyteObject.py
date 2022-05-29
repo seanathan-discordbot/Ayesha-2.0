@@ -236,6 +236,9 @@ async def get_acolyte_by_id(conn : asyncpg.Connection,
             WHERE acolyte_id = $1;
             """
     acolyte_record = await conn.fetchrow(psql, acolyte_id)
+    if acolyte_record is None:
+        return Acolyte(None, None) # Creates an empty acolyte object
+
     base_info = await Acolyte.get_acolyte_by_name(
         acolyte_record['acolyte_name'], conn)
 
