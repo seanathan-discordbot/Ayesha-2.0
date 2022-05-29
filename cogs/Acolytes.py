@@ -7,6 +7,7 @@ import asyncpg
 from typing import List
 
 from Utilities import Checks, Vars, AcolyteObject, PlayerObject
+from Utilities.AyeshaBot import Ayesha
 
 def acolyte_equipped(player,acolyte_id):
     id_1=player.acolyte1.acolyte_id
@@ -30,7 +31,7 @@ class Acolytes(commands.Cog):
     """
     All of the commands relating to Acolytes
     """
-    def __init__(self,bot):
+    def __init__(self, bot : Ayesha):
         self.bot=bot
     
     #events

@@ -8,6 +8,7 @@ import random
 from Utilities import Checks, Vars, PlayerObject, ItemObject
 from Utilities.Analytics import stringify_gains
 from Utilities.Finances import Transaction
+from Utilities.AyeshaBot import Ayesha
 
 class OfferView(discord.ui.View):
     """Help me. Same code as Profile.ConfirmButton. Bad code moment"""
@@ -34,7 +35,7 @@ class OfferView(discord.ui.View):
 class Items(commands.Cog):
     """View and manipulate your inventory"""
 
-    def __init__(self, bot):
+    def __init__(self, bot : Ayesha):
         self.bot = bot
 
     # EVENTS

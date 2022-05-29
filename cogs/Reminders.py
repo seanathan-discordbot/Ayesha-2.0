@@ -8,12 +8,13 @@ import time
 from datetime import timedelta
 
 from Utilities import Vars
+from Utilities.AyeshaBot import Ayesha
 
 
 class Reminders(commands.Cog):
     """Reminders text"""
 
-    def __init__(self, bot : discord.Bot):
+    def __init__(self, bot : Ayesha):
         self.bot = bot
 
     @tasks.loop(seconds=15.0)

@@ -7,6 +7,7 @@ import asyncio
 import schedule
 
 from Utilities import Checks, ItemObject, Vars, Analytics, PlayerObject
+from Utilities.AyeshaBot import Ayesha
 
 class ConfirmButton(discord.ui.View):
     def __init__(self):
@@ -28,7 +29,7 @@ class ConfirmButton(discord.ui.View):
 class Profile(commands.Cog):
     """Create a character and view your stats!"""
 
-    def __init__(self, bot):
+    def __init__(self, bot : Ayesha):
         self.bot = bot
 
         async def update_gravitas():

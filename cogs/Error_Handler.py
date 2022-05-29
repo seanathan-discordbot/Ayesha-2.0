@@ -10,11 +10,12 @@ from discord.ext.commands.errors import CommandOnCooldown
 from discord.ui.item import Item
 
 from Utilities import Checks
+from Utilities.AyeshaBot import Ayesha
 
 class Error_Handler(commands.Cog):
     """Bot error handler."""
 
-    def __init__(self, bot):
+    def __init__(self, bot : Ayesha):
         self.bot = bot
 
     # EVENTS

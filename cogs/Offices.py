@@ -7,12 +7,13 @@ from discord.ext.commands import BucketType, cooldown
 import asyncio
 import schedule
 
-from Utilities import AssociationObject, Checks, Finances, ItemObject, PlayerObject, Vars
+from Utilities import AssociationObject, Checks, Finances, PlayerObject, Vars
+from Utilities.AyeshaBot import Ayesha
 
 class Offices(commands.Cog):
     """Offices Text"""
 
-    def __init__(self, bot):
+    def __init__(self, bot : Ayesha):
         self.bot = bot
 
         async def update_offices():

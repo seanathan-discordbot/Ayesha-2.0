@@ -16,6 +16,7 @@ from Utilities.Analytics import stringify_gains
 from Utilities.CombatObject import Belligerent, CombatInstance
 from Utilities.ConfirmationMenu import ConfirmationMenu
 from Utilities.Finances import Transaction
+from Utilities.AyeshaBot import Ayesha
 
 class InviteMenu(ConfirmationMenu):
     def __init__(self, author, target : discord.Member):
@@ -28,7 +29,7 @@ class InviteMenu(ConfirmationMenu):
 class Associations(commands.Cog):
     """Association Text"""
 
-    def __init__(self, bot : commands.Bot):
+    def __init__(self, bot : Ayesha):
         self.bot = bot
 
         async def distribute_interest():

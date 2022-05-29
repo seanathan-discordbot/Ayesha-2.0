@@ -10,6 +10,7 @@ import schedule
 import time
 
 from Utilities import Analytics, Checks, PlayerObject, Vars
+from Utilities.AyeshaBot import Ayesha
 
 class LeaderboardMenu(discord.ui.Select):
     def __init__(self, author : PlayerObject.Player, embeds : dict):
@@ -39,7 +40,7 @@ class LeaderboardMenu(discord.ui.Select):
 class Misc(commands.Cog):
     """General, non-cog-related commands"""
 
-    def __init__(self, bot : commands.Bot):
+    def __init__(self, bot : Ayesha):
         self.bot = bot
         self.daily_scheduler = schedule.Scheduler()
 

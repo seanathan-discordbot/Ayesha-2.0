@@ -7,11 +7,12 @@ from discord.ext import commands, pages
 from typing import List
 
 from Utilities import CombatObject, Vars, config
+from Utilities.AyeshaBot import Ayesha
 
 class Help(commands.Cog):
     """Get help with the bot!"""
 
-    def __init__(self, bot : commands.Bot):
+    def __init__(self, bot : Ayesha):
         self.bot = bot
 
     # EVENTS

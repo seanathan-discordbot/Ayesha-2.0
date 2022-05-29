@@ -8,6 +8,7 @@ import asyncpg
 import random
 
 from Utilities import ConfirmationMenu, Vars
+from Utilities.AyeshaBot import Ayesha
 
 # The dictionary used is words_alpha given here: https://github.com/dwyl/english-words
 
@@ -94,7 +95,7 @@ class WordChain:
         A dictionary containing each player and the points they have earned
         This is used for Scrabble Mode
     """
-    def __init__(self, bot : discord.Bot, ctx : discord.ApplicationContext,
+    def __init__(self, bot : Ayesha, ctx : discord.ApplicationContext,
             type : str, conn : asyncpg.Connection, char_freq : dict):
         """
         Parameters

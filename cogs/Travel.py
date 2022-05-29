@@ -11,11 +11,12 @@ import time
 from Utilities import AcolyteObject, AssociationObject, Checks, PlayerObject, ItemObject, Vars
 from Utilities.Analytics import stringify_gains
 from Utilities.Finances import Transaction
+from Utilities.AyeshaBot import Ayesha
 
 class Travel(commands.Cog):
     """Go on an adventure!"""
 
-    def __init__(self, bot):
+    def __init__(self, bot : Ayesha):
         self.bot = bot
         self.rarities = None
 

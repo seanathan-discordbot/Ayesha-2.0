@@ -1,14 +1,14 @@
 import discord
 from discord import Option, OptionChoice
 
-from discord.ext import commands, pages
+from discord.ext import commands
 
 import asyncpg
-import json
 import random
 
 from Utilities import Checks, Vars, PlayerObject, AcolyteObject, ItemObject
 from Utilities.Finances import Transaction
+from Utilities.AyeshaBot import Ayesha
 
 class SummonDropdown(discord.ui.Select):
     def __init__(self, results : list, author_id : int):
@@ -28,7 +28,7 @@ class SummonDropdown(discord.ui.Select):
 class Gacha(commands.Cog):
     """Spend rubidics and gold for random items"""
 
-    def __init__(self, bot):
+    def __init__(self, bot : Ayesha):
         self.bot = bot
         self.rarities = None
         self.int_rar_to_str = {

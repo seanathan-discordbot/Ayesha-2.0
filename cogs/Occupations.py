@@ -6,6 +6,7 @@ from discord.ext.commands import BucketType, cooldown
 
 from Utilities import Checks, PlayerObject, Vars
 from Utilities.ConfirmationMenu import ConfirmationMenu
+from Utilities.AyeshaBot import Ayesha
 
 class OccupationMenu(discord.ui.Select):
     def __init__(self, author):
@@ -60,7 +61,7 @@ class OriginMenu(discord.ui.Select):
 class Occupations(commands.Cog):
     """Customize your character!"""
 
-    def __init__(self, bot):
+    def __init__(self, bot : Ayesha):
         self.bot = bot
 
     # EVENTS
