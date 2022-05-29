@@ -121,7 +121,7 @@ class Acolyte:
         return {
             "Name" : name,
             "Attack" : acolyte['attack'],
-            "Scale" : acolyte['scale'],
+            "Scale" : round(acolyte['scale'], 2),
             "Crit" : acolyte['crit'],
             "HP" : acolyte['hp'],
             "Rarity" : acolyte['rarity'],
