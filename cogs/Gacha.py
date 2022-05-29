@@ -50,16 +50,21 @@ class Gacha(commands.Cog):
             "Iron" : 100000
         } # Be sure to change the OptionChoices in shop if changing this
 
-        # Get a list of all acolytes sorted by rarity
-        with open(Vars.ACOLYTE_LIST_PATH) as f:
-            acolyte_list = json.load(f)
-            self.rarities = {i:[] for i in range(1,6)}
-            for acolyte in acolyte_list:
-                self.rarities[acolyte_list[acolyte]['Rarity']].append(acolyte)
-
     # EVENTS
     @commands.Cog.listener()
     async def on_ready(self):
+        # Get a list of all acolytes sorted by rarity
+        psql = """
+                SELECT name
+                FROM acolyte_list
+                WHERE rarity = $1; 
+                """
+        async with self.bot.db.acquire() as conn:
+            self.rarities = {
+                rarity : [
+                    record['name'] for record in await conn.fetch(psql, rarity)]
+                for rarity in range(1, 6)}
+
         print("Gacha is ready.")
 
     # INVISIBLE
