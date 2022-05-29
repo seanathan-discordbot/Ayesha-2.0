@@ -4,7 +4,6 @@ from discord import Option, OptionChoice
 from discord.ext import commands, pages
 
 import asyncpg
-import json
 from typing import List
 
 from Utilities import Checks, Vars, AcolyteObject, PlayerObject
@@ -88,19 +87,27 @@ class Acolytes(commands.Cog):
         """View an acolyte's general information."""
         # Give a list of all acolytes if no name is given
         if name is None:
-            with open(Vars.ACOLYTE_LIST_PATH, "r") as f:
-                aco_dict = json.load(f)
-                aco_list = [[] for _ in range(5)]
-                for acolyte in aco_dict: # Each list in list contains same rank
-                    aco_list[aco_dict[acolyte]["Rarity"]-1].append(acolyte)
+            async with self.bot.db.acquire() as conn:
+                psql = """
+                        SELECT name
+                        FROM acolyte_list
+                        WHERE rarity = $1
+                        ORDER BY name;
+                        """
+                results = [ # Gets list of acolytes divided by rarity
+                    await conn.fetch(psql, rarity) 
+                    for rarity in range(1, 6)]
 
             embeds = []
-            for i in range(len(aco_list)-1, -1, -1): # Show higher ranks first
+            for i, acolytes in enumerate(results[::-1]): # Desc rarity order
+                rarity = 5 - i
+                acolyte_names = [
+                    f"({rarity}⭐) {record['name']}" for record in acolytes]
                 embed = discord.Embed(
                     title="Attainable Acolytes",
-                    description=
-                        f"({i+1}⭐) " + f"\n({i+1}⭐) ".join(aco_list[i]),
+                    description="\n".join(acolyte_names),
                     color=Vars.ABLUE)
+                embed.set_footer(text=f"{len(acolyte_names)} acolytes.")
                 embeds.append(embed)
         
             paginator = pages.Paginator(pages=embeds, timeout=30)
@@ -113,7 +120,9 @@ class Acolytes(commands.Cog):
             name = name.title()
 
         try:
-            acolyte_info = AcolyteObject.Acolyte.get_acolyte_by_name(name)
+            async with self.bot.db.acquire() as conn:
+                acolyte_info = await AcolyteObject.Acolyte.get_acolyte_by_name(
+                    name, conn)
         except KeyError:
             return await ctx.respond(
                 f"There is no such acolyte with the name {name}."
