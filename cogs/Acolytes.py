@@ -123,7 +123,7 @@ class Acolytes(commands.Cog):
             async with self.bot.db.acquire() as conn:
                 acolyte_info = await AcolyteObject.Acolyte.get_acolyte_by_name(
                     name, conn)
-        except KeyError:
+        except TypeError:
             return await ctx.respond(
                 f"There is no such acolyte with the name {name}."
             )
