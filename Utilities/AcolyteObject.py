@@ -44,9 +44,6 @@ class Acolyte:
 
     Methods
     -------
-    get_acolyte_by_name(str)
-        Retrieves the information of an acolyte with a specific name from
-        the json file containing all acolytes and returns it as a dict
     get_level()
         Calculates an acolyte's level using its current xp value
     check_xp_increase()
@@ -57,10 +54,13 @@ class Acolyte:
         Calculates and returns the acolyte's crit stat
     get_hp()
         Calculates and returns the acolyte's HP stat
+    await get_acolyte_by_name(str)
+        Retrieves the information of an acolyte with a specific name from
+        the json file containing all acolytes and returns it as a dict
     await add_duplicate()
         Increases the acolyte's dupes value by 1
     """
-    def __init__(self, record : asyncpg.Record = None):
+    def __init__(self, record : asyncpg.Record = None, base_info : dict = None):
         """
         Parameters
         ----------
@@ -68,9 +68,14 @@ class Acolyte:
             A record containing information from the acolytes table
             Pass nothing to create an empty acolyte
         """
+        invalid_argument1 = record is None and base_info is not None
+        invalid_argument2 = record is not None and base_info is None
+        if invalid_argument1 or invalid_argument2:
+            raise discord.InvalidArgument
+
         if record is not None:
             self.is_empty = False
-            self.gen_dict = self.get_acolyte_by_name(record['acolyte_name'])
+            self.gen_dict = base_info.copy() # unsure if copy is necessary
             self.acolyte_id = record['acolyte_id']
             self.owner_id = record['user_id']
             self.acolyte_name = record['acolyte_name']
@@ -100,13 +105,33 @@ class Acolyte:
             self.dupes = 0
 
     @staticmethod
-    def get_acolyte_by_name(name : str) -> dict:
+    async def get_acolyte_by_name(name : str, conn : asyncpg.Connection) -> dict:
         """
         Returns a dict of the general information of the acolyte.
         Dict: Name, Attack, Scale, Crit, HP, Rarity, Effect, Mat, Story, Image
         """
-        with open(Vars.ACOLYTE_LIST_PATH, 'r') as acolyte_list:
-            return json.load(acolyte_list)[name]
+        # with open(Vars.ACOLYTE_LIST_PATH, 'r') as acolyte_list:
+        #     return json.load(acolyte_list)[name]
+        psql = """
+                SELECT 
+                    attack, scale, crit, hp, rarity, effect, material, story, 
+                    image
+                FROM acolyte_list
+                WHERE name = $1;
+                """
+        acolyte = await conn.fetchrow(psql, name)
+        return {
+            "Name" : name,
+            "Attack" : acolyte['attack'],
+            "Scale" : acolyte['scale'],
+            "Crit" : acolyte['crit'],
+            "HP" : acolyte['hp'],
+            "Rarity" : acolyte['rarity'],
+            "Effect" : acolyte['effect'],
+            "Mat" : acolyte['material'],
+            "Story" : acolyte['story'],
+            "Image" : acolyte['image']
+        }
 
     def get_level(self) -> int:
         """Returns the acolyte's level."""
@@ -213,8 +238,10 @@ async def get_acolyte_by_id(conn : asyncpg.Connection,
             WHERE acolyte_id = $1;
             """
     acolyte_record = await conn.fetchrow(psql, acolyte_id)
+    base_info = await Acolyte.get_acolyte_by_name(
+        acolyte_record['acolyte_name'], conn)
 
-    return Acolyte(acolyte_record)
+    return Acolyte(acolyte_record, base_info)
 
 async def create_acolyte(conn : asyncpg.Connection, owner_id : int, 
         acolyte : str) -> Acolyte:
