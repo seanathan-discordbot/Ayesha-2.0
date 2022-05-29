@@ -225,6 +225,8 @@ class Acolytes(commands.Cog):
             instance_id : Option(int, description="The acolyte's ID"), 
             iterations : Option(int,
                 description="The amount of training sessions",
+                default=1,
+                required=False,
                 min_value=1,
                 max_value=100)):
         """Train your acolyte, spending gold and resources for xp."""
