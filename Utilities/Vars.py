@@ -1,7 +1,3 @@
-# ACOLYTE_LIST_PATH = r'F:\OneDrive\Python_Projects\Ayesha_Rewrite\Assets\Acolyte_List.json'
-# ACOLYTE_LIST_PATH = r'C:\Users\sebas\OneDrive\Python_Projects\Ayesha_Rewrite\Assets\Acolyte_List.json'
-ACOLYTE_LIST_PATH = "/home/ayeshadev/Ayesha-2.0/Assets/Acolyte_List.json"
-
 ABLUE = 0xBEDCF6
 
 ACCESSORY_BONUS = {
