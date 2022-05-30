@@ -172,44 +172,39 @@ class ActionChoice(discord.ui.View):
         self.choice = None
         super().__init__(timeout=30)
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, 
-            emoji="🗡️")
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🗡️")
     async def attack(self, button : discord.ui.Button, 
             interaction : discord.Interaction):
         self.choice = "Attack"
-        button.disabled = True
+        await interaction.response.edit_message(content=None)
         self.stop()
 
-    @discord.ui.button(style=discord.ButtonStyle.grey, 
-            emoji="\N{SHIELD}")
+    @discord.ui.button(style=discord.ButtonStyle.grey, emoji="\N{SHIELD}")
     async def block(self, button : discord.ui.Button, 
             interaction : discord.Interaction):
         self.choice = "Block"
-        button.disabled = True
+        await interaction.response.edit_message(content=None)
         self.stop()
 
-    @discord.ui.button(style=discord.ButtonStyle.green, 
-            emoji="\N{CROSSED SWORDS}")
+    @discord.ui.button(style=discord.ButtonStyle.green, emoji="\N{CROSSED SWORDS}")
     async def parry(self, button : discord.ui.Button, 
             interaction : discord.Interaction):
         self.choice = "Parry"
-        button.disabled = True
+        await interaction.response.edit_message(content=None)
         self.stop()
 
-    @discord.ui.button(style=discord.ButtonStyle.red, 
-            emoji="\u2764")
+    @discord.ui.button(style=discord.ButtonStyle.red, emoji="\u2764")
     async def heal(self, button : discord.ui.Button, 
             interaction : discord.Interaction):
         self.choice = "Heal"
-        button.disabled = True
+        await interaction.response.edit_message(content=None)
         self.stop()
 
-    @discord.ui.button(style=discord.ButtonStyle.grey, 
-            emoji="\u23F1")
+    @discord.ui.button(style=discord.ButtonStyle.grey, emoji="\u23F1")
     async def bide(self, button : discord.ui.Button, 
             interaction : discord.Interaction):
         self.choice = "Bide"
-        button.disabled = True
+        await interaction.response.edit_message(content=None)
         self.stop()
 
     async def interaction_check(self, 
