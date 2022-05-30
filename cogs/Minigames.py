@@ -83,8 +83,8 @@ class WordChain:
     ----------
     bot : discord.Bot 
         The bot
-    ctx : discord.ApplicationContext
-        The context of the class instantiation
+    ctx : discord.Message
+        The original message that prompted this game
     type : str
         The game mode type: Solo, Pubic, Lightning, or Scrabble
     conn : asyncpg.Connection
@@ -100,15 +100,15 @@ class WordChain:
         A dictionary containing each player and the points they have earned
         This is used for Scrabble Mode
     """
-    def __init__(self, bot : Ayesha, ctx : discord.ApplicationContext,
+    def __init__(self, bot : Ayesha, ctx : discord.Message,
             type : str, conn : asyncpg.Connection, char_freq : dict):
         """
         Parameters
         ----------
         bot : discord.Bot 
             The bot
-        ctx : discord.ApplicationContext
-            The context of the class instantiation
+        ctx : discord.Message
+            The original message that prompted this game
         type : str
             The game mode type: Solo, Pubic, Lightning, or Scrabble
         conn : asyncpg.Connection
@@ -201,16 +201,14 @@ class WordChain:
 
         # Make sure player reads rules and agrees to start the game
         confirmation = ConfirmationMenu.ConfirmationMenu(self.host)
-        interaction = await self.ctx.respond(self.BASE_RULES, view=confirmation)
+        interaction = await self.ctx.reply(self.BASE_RULES, view=confirmation)
         await confirmation.wait()
         if confirmation.value is None:
-            return await interaction.edit_original_message(
-                content="Timed out.", view=None)
+            return await interaction.edit(content="Timed out.", view=None)
         elif not confirmation.value:
-            return await interaction.edit_original_message(
-                content="Cancelled the game.", view=None)
+            return await interaction.edit(content="Cancelled the game.", view=None)
         else:
-            await interaction.edit_original_message(view=None)
+            await interaction.edit(view=None)
 
         # Begin game loop
         first_turn = True
@@ -221,11 +219,11 @@ class WordChain:
                 f"with **{next_letter}**! (beta)")
             if not first_turn:
                 message = f"My Word: **{word}**\n\n" + message
-            await interaction.followup.send(content=message)
+            await interaction.reply(content=message)
             first_turn = False
 
             # Wait for a player to give a word
-            def word_reader(message):
+            def word_reader(message : discord.Message):
                 return message.author == self.host and \
                     message.channel == self.ctx.channel
             
@@ -238,13 +236,13 @@ class WordChain:
                     # Gets the first word that isn't the bot ping
                     for string in resp_str:
                         word = string
-                        if not string.startswith("<@!"):
+                        if not string.startswith("<@"):
                             break
                     # Not pinging the bot will continue the game it seems
                 except asyncio.TimeoutError:
                     score = len(used_words) // 2
                     message = f"Out of Time! | Score : {score}"
-                    await interaction.followup.send(content=message)
+                    await interaction.reply(content=message)
                     return await self.input_solo_game(score)
 
             # Check for word validity
@@ -257,7 +255,7 @@ class WordChain:
                     message = (
                         f"Word already used! | Score: "
                         f"{score}")
-                    await interaction.followup.send(content=message)
+                    await interaction.reply(content=message)
                     return await self.input_solo_game(score)
                 else:
                     used_words[word] += 1
@@ -267,7 +265,7 @@ class WordChain:
             if not await self.check_validity(next_letter, word):
                 score = len(used_words) // 2
                 message = f"Invalid Word! | Score: {score}"
-                await interaction.followup.send(content=message)
+                await interaction.reply(content=message)
                 return await self.input_solo_game(score)
 
             # Set up for next turn
@@ -299,7 +297,7 @@ class WordChain:
                     message = (
                         f"I tried **{word}** but it was already used!\n"
                         f"You win! | Score : {score}")
-                    await interaction.followup.send(content=message)
+                    await interaction.reply(content=message)
                     return await self.input_solo_game(score)
                 else:
                     used_words[word] += 1
@@ -308,7 +306,7 @@ class WordChain:
             
             next_letter = word[-1]
 
-    async def end_game(self, interaction : discord.Interaction, 
+    async def end_game(self, interaction : discord.Message, 
             word_count : int):
         """Ends the game for a public match"""
         if self.type == "Scrabble":
@@ -329,7 +327,7 @@ class WordChain:
             win_msg += '\n'.join(point_pairs)
             win_msg += f"\nPlayers gave a collective {word_count} words."
 
-            await interaction.followup.send(win_msg)
+            await interaction.reply(win_msg)
 
             # Input in database
             for player in self.players:
@@ -345,7 +343,7 @@ class WordChain:
                 f"{self.players[0].mention} wins!\n"
                 f"Players gave a collective {word_count} words.")
 
-            await interaction.followup.send(win_msg)
+            await interaction.reply(win_msg)
 
             if self.type == "Public":
                 # postgres literally falls apart if I try an upsert idk why
@@ -391,11 +389,11 @@ class WordChain:
         join_msg = (
             f"{self.host.mention} has begun a game of **Word Chain: "
             f"{self.type}**\n Press the button below to join!")
-        interaction = await self.ctx.respond(join_msg, view=join_menu)
+        interaction = await self.ctx.reply(join_msg, view=join_menu)
         await join_menu.wait()
-        await interaction.edit_original_message(view=None)
+        await interaction.edit(view=None)
         if len(join_menu.players) < 2:
-            return await interaction.followup.send("Not enough players joined.")
+            return await interaction.reply("Not enough players joined.")
         self.players = join_menu.players
 
         # Set up game
@@ -407,10 +405,10 @@ class WordChain:
 
         # Read rules and start game
         if self.type == "Scrabble":
-            await interaction.followup.send(self.SCRABBLE_RULES)
+            await interaction.reply(self.SCRABBLE_RULES)
             self.points = {player : 0 for player in self.players}
         else:
-            await interaction.followup.send(self.MULTIPLAYER_RULES)
+            await interaction.reply(self.MULTIPLAYER_RULES)
         await asyncio.sleep(10)
 
         # Begin game loop
@@ -423,7 +421,7 @@ class WordChain:
                 f"**{next_letter}!**")
             if len(used_words) > 0 and self.type == "Scrabble":
                 prompt = f"**{word}** was worth **{points}** points!\n" + prompt
-            await interaction.followup.send(prompt)
+            await interaction.reply(prompt)
 
             # Wait for player to give a word
             def word_reader(message : discord.Message):
@@ -439,11 +437,11 @@ class WordChain:
                     # Gets the first word that isn't the bot ping
                     for string in resp_str:
                         word = string
-                        if not string.startswith("<@!"):
+                        if not string.startswith("<@"):
                             break
                     # Not pinging the bot will continue the game it seems
                 except asyncio.TimeoutError:
-                    await interaction.followup.send(
+                    await interaction.reply(
                         "Out of time! | You have been eliminated.")
                     if self.type == "Scrabble":
                         return await self.end_game(interaction, len(used_words))
@@ -456,7 +454,7 @@ class WordChain:
             # 2. It is in the dictionary of words
             # 3. It begins with the last letter of the last word given
             if word in used_words: # I think this should be O(1)
-                await interaction.followup.send(
+                await interaction.reply(
                     f"This word was used by {used_words[word]}! | You have "
                     f"been eliminated.")
                 if self.type == "Scrabble":
@@ -465,7 +463,7 @@ class WordChain:
                 eliminated = True
 
             if not await self.check_validity(next_letter, word):
-                await interaction.followup.send(
+                await interaction.reply(
                     "Invalid word! | You have been eliminated.")
                 if self.type == "Scrabble":
                     return await self.end_game(interaction, len(used_words))
@@ -490,7 +488,7 @@ class WordChain:
 class Minigames(commands.Cog):
     """Minigames text"""
 
-    def __init__(self,bot):
+    def __init__(self, bot : Ayesha):
         self.bot = bot
         self.active_channels = {} # Prevent multiple games in one channel
     
@@ -512,6 +510,39 @@ class Minigames(commands.Cog):
                 letter_frequency[letter] = await conn.fetchval(psql)
             self.letter_frequency = letter_frequency
         print("Minigames is ready.")
+
+    @commands.Cog.listener()
+    async def on_message(self, message : discord.Message):
+        if message.author.bot:
+            return
+
+        solo = r"wordchain play solo" in message.content
+        public = r"wordchain play public" in message.content
+        lightning = r"wordchain play lightning" in message.content
+        scrabble = r"wordchain play scrabble" in message.content
+
+        if solo or public or lightning or scrabble:
+            if message.channel.id in self.active_channels:
+                return await message.reply((
+                    "There is already a game in this channel. Please wait for "
+                    "it to end or go to another channel."))
+            self.active_channels[message.channel.id] = 1
+
+            if solo:
+                mode = "Solo"
+            elif public:
+                mode = "Public"
+            elif lightning:
+                mode = "Lightning"
+            else:
+                mode = "Scrabble"
+
+            async with self.bot.dictionary.acquire() as conn:
+                game = WordChain(self.bot, message, mode, conn, self.letter_frequency)
+                await game.play()
+
+            self.active_channels.pop(message.channel.id)
+
 
     # AUXILIARY FUNCTIONS
     def format_leaderboard(self, lb, author_name : str, author_rank : int, 
@@ -545,25 +576,21 @@ class Minigames(commands.Cog):
         "Commands related to Word Chain")
 
     @w.command()
-    async def play(self, ctx : discord.ApplicationContext, 
-            mode : Option(str,
-                description = "The Word Chain game mode you wish to play",
-                required = True,
-                choices = [
-                    OptionChoice("Solo"),
-                    OptionChoice("Public"),
-                    OptionChoice("Lightning"),
-                    OptionChoice("Scrabble")])):
+    async def play(self, ctx : discord.ApplicationContext):
         """Play a game of Word Chain - the vocabulary testing game!"""
-        if ctx.channel.id in self.active_channels:
-            return await ctx.respond((
-                "There is already a game in this channel. Please wait for "
-                "it to end or go to another channel."))
-        self.active_channels[ctx.channel.id] = 1
-        async with self.bot.dictionary.acquire() as conn:
-            game = WordChain(self.bot, ctx, mode, conn, self.letter_frequency)
-            await game.play()
-        self.active_channels.pop(ctx.channel.id)
+        ping = f"<@{self.bot.user.id}>"
+        return await ctx.respond((
+            "Since normal slash commands have a time limit of 15 minutes, and "
+            "some games have exceeded that limit, WordChain has been migrated "
+            "back to a class-style prefixed command. To begin a WordChain "
+            "game, please copy and paste the command corresponding to the "
+            "game mode you want to play below:\n\n"
+            f"**Solo:** `%wordchain play solo {ping}`\n"
+            f"**Public:** `%wordchain play public {ping}`\n"
+            f"**Lightning:** `%wordchain play lightning {ping}`\n"
+            f"**Scrabble:** `%wordchain play scrabble {ping}`\n\n"
+            "Have fun!"
+        ))
 
     @w.command()
     async def leaderboard(self, ctx : discord.ApplicationContext):
