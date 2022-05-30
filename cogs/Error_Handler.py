@@ -10,11 +10,12 @@ from discord.ext.commands.errors import CommandOnCooldown
 from discord.ui.item import Item
 
 from Utilities import Checks
+from Utilities.AyeshaBot import Ayesha
 
 class Error_Handler(commands.Cog):
     """Bot error handler."""
 
-    def __init__(self, bot):
+    def __init__(self, bot : Ayesha):
         self.bot = bot
 
     # EVENTS
@@ -23,6 +24,18 @@ class Error_Handler(commands.Cog):
         print("Error Handling activated.")
 
     # --- ERROR HANDLER ---
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx, error):
+        """Error handler for classic commands (eg Wordchain)"""
+        print_traceback = True
+
+        if isinstance(error, commands.CommandNotFound):
+            print_traceback = False
+
+        if print_traceback:
+            traceback.print_exception(
+                error.__class__, error, error.__traceback__, file=sys.stderr)
+
     @commands.Cog.listener()
     async def on_application_command_error(self, ctx, error):
         """The error handler for the bot.

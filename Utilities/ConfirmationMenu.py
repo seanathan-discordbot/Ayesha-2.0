@@ -67,4 +67,5 @@ class OneButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         self.view.value = True
+        await interaction.response.edit_message(content=None)
         self.view.stop()

@@ -11,25 +11,30 @@ import time
 from Utilities import AcolyteObject, AssociationObject, Checks, PlayerObject, ItemObject, Vars
 from Utilities.Analytics import stringify_gains
 from Utilities.Finances import Transaction
+from Utilities.AyeshaBot import Ayesha
 
 class Travel(commands.Cog):
     """Go on an adventure!"""
 
-    def __init__(self, bot):
+    def __init__(self, bot : Ayesha):
         self.bot = bot
         self.rarities = None
-
-        # Get a list of all acolytes sorted by rarity - same code as in Gacha
-        with open(Vars.ACOLYTE_LIST_PATH) as f:
-            acolyte_list = json.load(f)
-            self.rarities = {i:[] for i in range(1,6)}
-            for acolyte in acolyte_list:
-                self.rarities[acolyte_list[acolyte]['Rarity']].append(acolyte)
-
 
     # EVENTS
     @commands.Cog.listener()
     async def on_ready(self):
+        # Get a list of all acolytes sorted by rarity - same code as in Gacha
+        psql = """
+                SELECT name
+                FROM acolyte_list
+                WHERE rarity = $1; 
+                """
+        async with self.bot.db.acquire() as conn:
+            self.rarities = {
+                rarity : [
+                    record['name'] for record in await conn.fetch(psql, rarity)]
+                for rarity in range(1, 6)}
+
         print("Travel is ready.")
 
     # AUXILIARY FUNCTIONS

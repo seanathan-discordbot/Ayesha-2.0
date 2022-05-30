@@ -11,11 +11,12 @@ import time
 from Utilities import Checks, CombatObject, ItemObject, PlayerObject, Vars
 from Utilities.Analytics import stringify_gains
 from Utilities.CombatObject import CombatInstance
+from Utilities.AyeshaBot import Ayesha
 
 class PvE(commands.Cog):
     """PvE Text"""
 
-    def __init__(self, bot):
+    def __init__(self, bot : Ayesha):
         self.bot = bot
 
     # EVENTS

@@ -1,14 +1,14 @@
 import discord
 from discord import Option, OptionChoice
 
-from discord.ext import commands, pages
+from discord.ext import commands
 
 import asyncpg
-import json
 import random
 
 from Utilities import Checks, Vars, PlayerObject, AcolyteObject, ItemObject
 from Utilities.Finances import Transaction
+from Utilities.AyeshaBot import Ayesha
 
 class SummonDropdown(discord.ui.Select):
     def __init__(self, results : list, author_id : int):
@@ -28,7 +28,7 @@ class SummonDropdown(discord.ui.Select):
 class Gacha(commands.Cog):
     """Spend rubidics and gold for random items"""
 
-    def __init__(self, bot):
+    def __init__(self, bot : Ayesha):
         self.bot = bot
         self.rarities = None
         self.int_rar_to_str = {
@@ -50,16 +50,21 @@ class Gacha(commands.Cog):
             "Iron" : 100000
         } # Be sure to change the OptionChoices in shop if changing this
 
-        # Get a list of all acolytes sorted by rarity
-        with open(Vars.ACOLYTE_LIST_PATH) as f:
-            acolyte_list = json.load(f)
-            self.rarities = {i:[] for i in range(1,6)}
-            for acolyte in acolyte_list:
-                self.rarities[acolyte_list[acolyte]['Rarity']].append(acolyte)
-
     # EVENTS
     @commands.Cog.listener()
     async def on_ready(self):
+        # Get a list of all acolytes sorted by rarity
+        psql = """
+                SELECT name
+                FROM acolyte_list
+                WHERE rarity = $1; 
+                """
+        async with self.bot.db.acquire() as conn:
+            self.rarities = {
+                rarity : [
+                    record['name'] for record in await conn.fetch(psql, rarity)]
+                for rarity in range(1, 6)}
+
         print("Gacha is ready.")
 
     # INVISIBLE

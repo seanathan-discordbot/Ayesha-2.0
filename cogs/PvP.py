@@ -10,6 +10,7 @@ import random
 from Utilities import Checks, CombatObject, PlayerObject, Vars
 from Utilities.CombatObject import Belligerent, CombatInstance
 from Utilities.ConfirmationMenu import OfferMenu
+from Utilities.AyeshaBot import Ayesha
 
 class JoinMenu(discord.ui.View):
     def __init__(self, author : discord.Member):
@@ -31,7 +32,7 @@ class JoinMenu(discord.ui.View):
 class PvP(commands.Cog):
     """PvP Text"""
 
-    def __init__(self, bot):
+    def __init__(self, bot : Ayesha):
         self.bot = bot
 
     # EVENTS

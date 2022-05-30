@@ -8,11 +8,12 @@ from discord.ext.commands import BucketType, cooldown
 import random
 
 from Utilities import Checks, ItemObject, PlayerObject, Vars
+from Utilities.AyeshaBot import Ayesha
 
 class Raid(commands.Cog):
     """Raid Text"""
 
-    def __init__(self, bot):
+    def __init__(self, bot : Ayesha):
         self.bot = bot
         self.raid_info = {
             "Active" : False,

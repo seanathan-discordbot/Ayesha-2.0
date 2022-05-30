@@ -9,11 +9,12 @@ import random
 
 from Utilities import Checks, PlayerObject, Vars
 from Utilities.ConfirmationMenu import OneButtonView
+from Utilities.AyeshaBot import Ayesha
 
 class Casino(commands.Cog):
     """Casino text"""
 
-    def __init__(self, bot : discord.Bot):
+    def __init__(self, bot : Ayesha):
         self.bot = bot
 
     # EVENTS
