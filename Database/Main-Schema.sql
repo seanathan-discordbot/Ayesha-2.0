@@ -228,6 +228,54 @@ ALTER SEQUENCE public.accessories_accessory_id_seq OWNED BY public.accessories.a
 
 
 --
+-- Name: acolyte_list; Type: TABLE; Schema: public; Owner: ayeshadev
+--
+
+CREATE TABLE public.acolyte_list (
+    uid smallint NOT NULL,
+    name character varying(20) NOT NULL,
+    attack smallint NOT NULL,
+    scale real NOT NULL,
+    crit smallint NOT NULL,
+    hp smallint NOT NULL,
+    rarity smallint NOT NULL,
+    effect text,
+    material character varying(20),
+    story text,
+    image text,
+    CONSTRAINT acolyte_list_attack_check CHECK ((attack >= 0)),
+    CONSTRAINT acolyte_list_crit_check CHECK ((crit >= 0)),
+    CONSTRAINT acolyte_list_hp_check CHECK ((hp >= 0)),
+    CONSTRAINT acolyte_list_rarity_check CHECK (((rarity > 0) AND (rarity <= 5))),
+    CONSTRAINT acolyte_list_scale_check CHECK ((scale >= (0)::double precision))
+);
+
+
+ALTER TABLE public.acolyte_list OWNER TO ayeshadev;
+
+--
+-- Name: acolyte_list_uid_seq; Type: SEQUENCE; Schema: public; Owner: ayeshadev
+--
+
+CREATE SEQUENCE public.acolyte_list_uid_seq
+    AS smallint
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.acolyte_list_uid_seq OWNER TO ayeshadev;
+
+--
+-- Name: acolyte_list_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: ayeshadev
+--
+
+ALTER SEQUENCE public.acolyte_list_uid_seq OWNED BY public.acolyte_list.uid;
+
+
+--
 -- Name: area_attacks; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -707,6 +755,13 @@ ALTER TABLE ONLY public.accessories ALTER COLUMN accessory_id SET DEFAULT nextva
 
 
 --
+-- Name: acolyte_list uid; Type: DEFAULT; Schema: public; Owner: ayeshadev
+--
+
+ALTER TABLE ONLY public.acolyte_list ALTER COLUMN uid SET DEFAULT nextval('public.acolyte_list_uid_seq'::regclass);
+
+
+--
 -- Name: acolytes acolyte_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -897,6 +952,22 @@ ALTER TABLE ONLY public.resources
 
 ALTER TABLE ONLY public.accessories
     ADD CONSTRAINT accessories_pkey PRIMARY KEY (accessory_id);
+
+
+--
+-- Name: acolyte_list acolyte_list_name_key; Type: CONSTRAINT; Schema: public; Owner: ayeshadev
+--
+
+ALTER TABLE ONLY public.acolyte_list
+    ADD CONSTRAINT acolyte_list_name_key UNIQUE (name);
+
+
+--
+-- Name: acolyte_list acolyte_list_pkey; Type: CONSTRAINT; Schema: public; Owner: ayeshadev
+--
+
+ALTER TABLE ONLY public.acolyte_list
+    ADD CONSTRAINT acolyte_list_pkey PRIMARY KEY (uid);
 
 
 --
