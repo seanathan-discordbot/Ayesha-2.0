@@ -46,7 +46,12 @@ class JoinMenu(discord.ui.View):
             f"{self.author.display_name}'s Word Chain Game."))
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return interaction.user not in self.players
+        if interaction.user not in self.players:
+            return True
+        else:
+            await interaction.response.send_message(
+                "You already joined!", ephemeral=True)
+            return False
 
 
 class LeaderboardMenu(discord.ui.Select):
@@ -204,6 +209,8 @@ class WordChain:
         elif not confirmation.value:
             return await interaction.edit_original_message(
                 content="Cancelled the game.", view=None)
+        else:
+            await interaction.edit_original_message(view=None)
 
         # Begin game loop
         first_turn = True
@@ -211,7 +218,7 @@ class WordChain:
             # Prompt user to give a word
             message = (
                 f"{self.host.mention}, give me a word beginning "
-                f"with **{next_letter}**!")
+                f"with **{next_letter}**! (beta)")
             if not first_turn:
                 message = f"My Word: **{word}**\n\n" + message
             await interaction.followup.send(content=message)
