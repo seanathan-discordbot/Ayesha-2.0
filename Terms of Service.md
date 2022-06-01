@@ -14,16 +14,17 @@ Likewise users must follow Discord's Terms of Services and Privacy Policywhere a
 * Acceptable and inoffensive imagery (e.g. when setting an association icon with `/association edit`)
 * Any other command that involves user input must be used as they are intended i.e. to improve a player's statistical strength in a respectful way.
 
-# Affiliation
+## Affiliation
 Ayesha is not affiliated with Discord Inc. or any other corporation, nor do we claim ownership of any corporation's assets or intellectual property.
 
-# Liability
+## Liability
 The user acknowledges the terms of above. The owner of the bot may not be made liable for individuals breaking these terms, or Discord's rules.
 We trust that users will engage in the bot's features in a mindful way, and will disable problematic features should any issues arise.
 Although we trust that individual server owners will manage its members to use the bot's features as they are intended, problematic users and bot features can be reported in the [support server](https://discord.gg/FRTTARhN44) by contacting a server Admin.
 
-# Useful Links
+## Useful Links
 [Discord Community Guidelines](https://discord.com/guidelines)
 [Discord Terms of Service](https://discord.com/terms)
 [Discord Privacy Policy](https://discord.com/privacy)
+[Ayesha Bot Privacy Policy](https://github.com/seanathan-discordbot/Ayesha-2.0/blob/main/Privacy%20Policy.md)
 [Official Ayesha Support Server](https://discord.com/terms)
