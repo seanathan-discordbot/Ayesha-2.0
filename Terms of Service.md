@@ -27,4 +27,4 @@ Although we trust that individual server owners will manage its members to use t
 [Discord Terms of Service](https://discord.com/terms)\
 [Discord Privacy Policy](https://discord.com/privacy)\
 [Ayesha Bot Privacy Policy](https://github.com/seanathan-discordbot/Ayesha-2.0/blob/main/Privacy%20Policy.md)\
-[Official Ayesha Support Server](https://discord.com/terms)\
+[Official Ayesha Support Server](https://discord.com/terms)
