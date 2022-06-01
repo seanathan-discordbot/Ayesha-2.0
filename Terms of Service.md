@@ -23,8 +23,8 @@ We trust that users will engage in the bot's features in a mindful way, and will
 Although we trust that individual server owners will manage its members to use the bot's features as they are intended, problematic users and bot features can be reported in the [support server](https://discord.gg/FRTTARhN44) by contacting a server Admin.
 
 ## Useful Links
-[Discord Community Guidelines](https://discord.com/guidelines)
-[Discord Terms of Service](https://discord.com/terms)
-[Discord Privacy Policy](https://discord.com/privacy)
-[Ayesha Bot Privacy Policy](https://github.com/seanathan-discordbot/Ayesha-2.0/blob/main/Privacy%20Policy.md)
-[Official Ayesha Support Server](https://discord.com/terms)
+[Discord Community Guidelines](https://discord.com/guidelines)\
+[Discord Terms of Service](https://discord.com/terms)\
+[Discord Privacy Policy](https://discord.com/privacy)\
+[Ayesha Bot Privacy Policy](https://github.com/seanathan-discordbot/Ayesha-2.0/blob/main/Privacy%20Policy.md)\
+[Official Ayesha Support Server](https://discord.com/terms)\
