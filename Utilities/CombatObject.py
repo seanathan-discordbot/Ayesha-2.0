@@ -113,6 +113,12 @@ class Belligerent:
         acolyte2 = player.acolyte2
         assc = player.assc
 
+        # ON_PLAYER_LOAD event lol
+        if "Arsaces" in (acolyte1.acolyte_name, acolyte2.acolyte_name):
+            attack += crit * 2
+            hp += crit * 5
+            crit = 0
+
         return cls(
             name, occ, attack, crit, hp, defense, disc_id, weapon, helmet,
             bodypiece, boots, accessory, acolyte1, acolyte2, assc)
@@ -418,6 +424,9 @@ class CombatInstance:
                 agent.heal *= 2 if agent.type == "Butcher" else 1
             else:
                 agent.heal += agent.max_hp / 10
+
+            if "Nyleptha" in acolytes:
+                object.damage *= 0.75
 
         # ON_BIDE : Agents bides
         if agent.last_move == "Bide":
