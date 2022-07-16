@@ -448,6 +448,9 @@ class WordChain:
                     self.players.pop(0)
                     eliminated = True
                     break
+            
+            if eliminated:
+                continue
 
             # Check for word validity
             # 1. It has not been used
