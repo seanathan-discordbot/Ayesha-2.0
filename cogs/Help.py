@@ -147,26 +147,27 @@ class Help(commands.Cog):
             await paginator.respond(ctx.interaction)
 
         else:
+            command_list = [cmd.qualified_name 
+                for cmd in self.bot.walk_application_commands() 
+                if isinstance(cmd, SlashCommand)]
+            command_fmt = " ".join([f"`{cmd}`" for cmd in command_list])
+
             embed = discord.Embed(
                 title="Welcome to Ayesha Help!",
                 description=(
-                    f"Ayesha is an RPG adventure game bot for Discord (and "
-                    f"one of the earliest adopters of slash commands), "
+                    f"Ayesha is an RPG adventure game bot for Discord "
                     f"designed to keep you occupied in boring voice chats. "
                     f"If you are just starting, please look at the `/tutorial`."
-                    f" I know its long, but you don't have to read everything."
                     f"\n\n"
-                    f"Ayesha has unfortunately been subject to many complaints "
-                    f"that the gameplay is too complex, when it really isn't. "
                     f"If you need help with a command, use this command again "
-                    f"followed by the name of the command you need help with."
+                    f"followed by the name of the command you need help with.\n"
+                    f"Example: `/help start`"
                     f"\n\nIf you need help with something that the command "
                     f"descriptions can't tell you, you can always join the "
                     f"[support server here](https://discord.gg/FRTTARhN44) "
-                    f"and ask one of our (very responsive!) developers.\n\n"
-                    f"Thanks and have fun,\n"
-                    f"Aramythia"),
+                    f"and ask one of our (very responsive!) developers.\n\n"),
                 color=Vars.ABLUE)
+            embed.add_field(name="Command List", value=command_fmt, inline=False)
             embed.set_thumbnail(url=self.bot.user.avatar.url)
             await ctx.respond(embed=embed)
 
