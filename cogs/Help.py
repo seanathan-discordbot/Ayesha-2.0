@@ -175,14 +175,35 @@ class Help(commands.Cog):
     async def tutorial(self, ctx, topic : Option(str,
             description="What you want to read about",
             required=False,
-            default="Quick-Start Guide",
+            default="Simple",
             choices=[
+                OptionChoice("Simple"),
                 OptionChoice("Quick-Start Guide"),
                 OptionChoice("Combat"),
                 OptionChoice("Gravitas"),
                 OptionChoice("Work")])):
         """Learn how to play!"""
-        if topic == "Quick-Start Guide":
+        if topic == "Simple":
+            page1 = (
+                f"`/start <character name>` to create a character\n"
+                f"`/profile` to view your character\n"
+                f"`/pve <level>` to fight enemies\n"
+                f"`/inventory` to view your weapons\n"
+                f"`/equip` to equip a weapon\n"
+                f"`/summon` to get new weapons and acolytes\n"
+                f"`/tavern` to view your acolytes\n"
+                f"`/recruit` to equip an acolyte (you can have 2 equipped)\n\n"
+                f"Read the `/tutorial` with topic 'Quick-Start Guide' to get "
+                f"more in-depth explanations of these commands!"
+            )
+            embed = discord.Embed(
+                title="Simple Tutorial",
+                description=page1,
+                color=Vars.ABLUE)
+            embed.set_thumbnail(url=self.bot.user.avatar.url)
+            await ctx.respond(embed=embed)
+
+        elif topic == "Quick-Start Guide":
             page1 = (
                 f"Welcome to Ayesha! Read the next few pages for a general "
                 f"overview of how to play the game.\n\n"
