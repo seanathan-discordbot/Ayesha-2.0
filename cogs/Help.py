@@ -173,7 +173,7 @@ class Help(commands.Cog):
                 title="Ayesha Command List",
                 description=command_fmt,
                 color=Vars.ABLUE)
-            embed2.set_footer(text="'/help <command>' for command information")
+            embed2.set_footer(text="'/help <command>' for command information!")
             embed2.set_thumbnail(url=self.bot.user.avatar.url)
 
             embeds = [embed1, embed2]
