@@ -152,7 +152,7 @@ class Help(commands.Cog):
                 if isinstance(cmd, SlashCommand)]
             command_fmt = " ".join([f"`{cmd}`" for cmd in command_list])
 
-            embed = discord.Embed(
+            embed1 = discord.Embed(
                 title="Welcome to Ayesha Help!",
                 description=(
                     f"Ayesha is an RPG adventure game bot for Discord "
@@ -167,9 +167,18 @@ class Help(commands.Cog):
                     f"[support server here](https://discord.gg/FRTTARhN44) "
                     f"and ask one of our (very responsive!) developers.\n\n"),
                 color=Vars.ABLUE)
-            embed.add_field(name="Command List", value=command_fmt, inline=False)
-            embed.set_thumbnail(url=self.bot.user.avatar.url)
-            await ctx.respond(embed=embed)
+            embed1.set_thumbnail(url=self.bot.user.avatar.url)
+
+            embed2 = discord.Embed(
+                title="Ayesha Command List",
+                description=command_fmt,
+                color=Vars.ABLUE)
+            embed2.set_footer(text="'/help <command>' for command information")
+            embed2.set_thumbnail(url=self.bot.user.avatar.url)
+
+            embeds = [embed1, embed2]
+            paginator = pages.Paginator(pages=embeds, timeout=30)
+            await paginator.respond(ctx.interaction)
 
     @commands.slash_command()
     async def tutorial(self, ctx, topic : Option(str,
