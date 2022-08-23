@@ -210,20 +210,30 @@ class Items(commands.Cog):
                 conn, record['accessory_id']) 
                 for record in wardrobe] # Turn them into objects (for the name)
 
-        if len(inventory) > 0:
+        if inventory:
             inventory_embeds = [
                 self.create_item_embed(i, inventory, len(inventory)) 
                 for i in range(0, len(inventory), 5)]
         else:
             inventory_embeds = [
-                discord.Embed(title="Your inventory is empty!", color=Vars.ABLUE)
+                discord.Embed(title="You have no weapons!", color=Vars.ABLUE)
             ]
 
-        armor_embeds = [self.create_armor_embed2(i, armory, len(armory)) 
-            for i in range(0, len(armory), 5)]
+        if armory:
+            armor_embeds = [self.create_armor_embed2(i, armory, len(armory)) 
+                for i in range(0, len(armory), 5)]
+        else:
+            armor_embeds = [
+                discord.Embed(title="You have no armor!", color=Vars.ABLUE)
+            ]
 
-        accessory_embeds = [self.create_accessory_embed(i, wardrobe)
-            for i in range(0, len(wardrobe), 5)]
+        if wardrobe:
+            accessory_embeds = [self.create_accessory_embed(i, wardrobe)
+                for i in range(0, len(wardrobe), 5)]
+        else:
+            accessory_embeds = [
+                discord.Embed(title="You have no accessories!", color=Vars.ABLUE)
+            ]
 
         inv_pages = pages.PageGroup(pages=inventory_embeds, label="View Weapons")
         arm_pages = pages.PageGroup(pages=armor_embeds, label="View Armor")
