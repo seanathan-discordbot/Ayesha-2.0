@@ -7,6 +7,7 @@ import random
 
 from Utilities import Checks, Vars, PlayerObject, ItemObject
 from Utilities.Analytics import stringify_gains
+from Utilities.ConfirmationMenu import PlayerOnlyView
 from Utilities.Finances import Transaction
 from Utilities.AyeshaBot import Ayesha
 
@@ -105,7 +106,76 @@ class Items(commands.Cog):
 
         return embed
     
+
     # COMMANDS
+    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_player)
+    async def full_inventory(self, ctx):
+        await ctx.defer()
+        psql1 = """
+                WITH thing AS (
+                    SELECT equipped_item
+                    FROM players
+                    WHERE user_id = $1
+                )
+                SELECT items.item_id, items.weapontype, items.user_id, 
+                    items.attack, items.crit, items.weapon_name, 
+                    items.rarity
+                FROM items
+                INNER JOIN thing ON items.item_id = thing.equipped_item;
+                """
+        psql2 = """
+                SELECT item_id, weapontype, user_id, 
+                    attack, crit, weapon_name, rarity
+                FROM items
+                WHERE user_id = $1
+                ORDER BY item_id DESC;
+                """
+        psql3 = """
+                SELECT armor_id, armor_type, armor_slot
+                FROM armor
+                WHERE user_id = $1
+                ORDER BY armor_id DESC;
+                """
+        psql4 = """
+                SELECT accessory_id
+                FROM accessories
+                WHERE user_id = $1
+                ORDER BY accessory_id DESC; 
+                """
+
+        # Pull relevant records from db
+        async with self.bot.db.acquire() as conn:
+            equipped_item = await conn.fetch(psql1, ctx.author.id)
+            got_eq = len(equipped_item) > 0
+            inventory = await conn.fetch(psql2, ctx.author.id)
+            inventory = list(equipped_item) + list(inventory)
+
+            armory = await conn.fetch(psql3, ctx.author.id)
+
+            wardrobe = await conn.fetch(psql4, ctx.author.id)
+            wardrobe = [await ItemObject.get_accessory_by_id(
+                conn, record['accessory_id']) 
+                for record in wardrobe] # Turn them into objects (for the name)
+
+        inventory_embeds = [self.create_embed(i, inventory, got_eq) 
+            for i in range(0, len(inventory), 5)]
+
+        armor_embeds = [self.create_armor_embed(i, armory) 
+            for i in range(0, len(armory), 5)]
+
+        accessory_embeds = [self.create_accessory_embed(i, wardrobe)
+            for i in range(0, len(wardrobe), 5)]
+
+        inv_pages = pages.PageGroup(pages=inventory_embeds, label="View Weapons")
+        arm_pages = pages.PageGroup(pages=armor_embeds, label="View Armor")
+        war_pages = pages.PageGroup(pages=accessory_embeds, label="View Accessories")
+
+        # Display to player
+        paginator = pages.Paginator(pages=[inv_pages, arm_pages, war_pages], show_menu=True)
+        await paginator.respond(ctx.interaction, ephemeral=False)
+        
+
     @commands.slash_command()
     @commands.check(Checks.is_player)
     async def inventory(self, ctx,
