@@ -200,7 +200,7 @@ class WordChain:
         next_letter = random.choice(alphabet)
 
         # Make sure player reads rules and agrees to start the game
-        confirmation = ConfirmationMenu.ConfirmationMenu(self.host)
+        confirmation = ConfirmationMenu.ConfirmationMenu(user=self.host, timeout=30.0)
         interaction = await self.ctx.reply(self.BASE_RULES, view=confirmation)
         await confirmation.wait()
         if confirmation.value is None:

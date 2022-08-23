@@ -7,23 +7,7 @@ import asyncio
 
 from Utilities import Checks, ItemObject, Vars, Analytics, PlayerObject
 from Utilities.AyeshaBot import Ayesha
-
-class ConfirmButton(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=10.0)
-        self.value = None
-
-    @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green)
-    async def confirm(self, button : discord.ui.Button, 
-            interaction : discord.Interaction):
-        self.value = True
-        self.stop()
-
-    @discord.ui.button(label="Decline", style=discord.ButtonStyle.grey)
-    async def decline(self, button : discord.ui.Button, 
-            interaction : discord.Interaction):
-        self.value = False
-        self.stop()
+from Utilities.ConfirmationMenu import ConfirmationMenu
 
 class Profile(commands.Cog):
     """Create a character and view your stats!"""
@@ -202,7 +186,7 @@ class Profile(commands.Cog):
             name=f"Your Name: {name}",
             value=(f"You can customize your name by redoing this command with "
                    f"the `name` parameter filled!"))
-        view = ConfirmButton()
+        view = ConfirmationMenu(user=ctx.author, timeout=30.0)
         msg = await ctx.respond(embed=embed, view=view)
         await view.wait()
         if view.value is None:

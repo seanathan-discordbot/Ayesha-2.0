@@ -7,30 +7,9 @@ import random
 
 from Utilities import Checks, Vars, PlayerObject, ItemObject
 from Utilities.Analytics import stringify_gains
+from Utilities.ConfirmationMenu import ConfirmationMenu
 from Utilities.Finances import Transaction
 from Utilities.AyeshaBot import Ayesha
-
-class OfferView(discord.ui.View):
-    """Help me. Same code as Profile.ConfirmButton. Bad code moment"""
-    def __init__(self, target : discord.Member):
-        super().__init__(timeout=15.0)
-        self.value = None
-        self.target = target
-
-    @discord.ui.button(label="Accept", style=discord.ButtonStyle.green)
-    async def accept(self, button : discord.ui.Button, 
-            interaction : discord.Interaction):
-        self.value = True
-        self.stop()
-
-    @discord.ui.button(label="Decline", style=discord.ButtonStyle.red)
-    async def decline(self, button : discord.ui.Button, 
-            interaction : discord.Interaction):
-        self.value = False
-        self.stop()
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return interaction.user.id == self.target.id
 
 class Items(commands.Cog):
     """View and manipulate your inventory"""
@@ -680,7 +659,7 @@ class Items(commands.Cog):
                 f"(You currently have `{player_char.gold}` gold.)")
 
             # Send player the offer
-            view = OfferView(target=player)
+            view = ConfirmationMenu(user=player, timeout=30.0)
             self.bot.trading_players[ctx.author.id] = 0
             msg = await ctx.respond(content=message, view=view)
             await view.wait()
