@@ -55,7 +55,7 @@ class Items(commands.Cog):
         return embed
 
     def create_item_embed(self, start, inv, size):
-        embed = discord.Embed(title=f"Your Inventory", color=Vars.ABLUE)
+        embed = discord.Embed(title=f"Your Weapons", color=Vars.ABLUE)
 
         iteration = 0
         while start < len(inv) and iteration < 5:
@@ -110,9 +110,25 @@ class Items(commands.Cog):
     # COMMANDS
     @commands.slash_command(guild_ids=[762118688567984151])
     @commands.check(Checks.is_player)
-    async def full_inventory(self, ctx):
+    async def full_inventory(self, ctx,
+            weapon_order : Option(str, description="Order by ATK or Crit",
+                default="item_id",
+                choices=[
+                    OptionChoice(name="Attack", value="attack"),
+                    OptionChoice(name="Crit", value="crit"),
+                    OptionChoice(name="ID", value="item_id")],
+                required=False),
+            weapon_rarity : Option(str, description="Get only a specific rarity",
+                choices=[OptionChoice(name=r) for r in Vars.RARITIES.keys()],
+                required=False),
+            weapon_type : Option(str, description="Get only a specific weapontype",
+                choices=[OptionChoice(name=t) for t in Vars.WEAPON_TYPES],
+                required=False)
+    ):
+        """View your complete inventory, including weapons, armor, and accessories."""
         await ctx.defer()
-        inventory_query = """
+        # Get the query for inventory based on input
+        inventory_query = f"""
             SELECT item_id, weapontype, user_id, attack, crit, weapon_name, 
                 rarity, 
                 (
@@ -125,7 +141,11 @@ class Items(commands.Cog):
                 AS equipped
             FROM items
             WHERE user_id = $1
-            ORDER BY equipped DESC
+                {f"AND rarity = '{weapon_rarity}'"
+                    if weapon_rarity is not None else ""}
+                {f"AND weapontype = '{weapon_type}'"
+                    if weapon_type is not None else ""}
+            ORDER BY equipped DESC, {weapon_order} DESC;
             """
         psql3 = """
                 SELECT armor_id, armor_type, armor_slot
@@ -151,9 +171,14 @@ class Items(commands.Cog):
                 conn, record['accessory_id']) 
                 for record in wardrobe] # Turn them into objects (for the name)
 
-        inventory_embeds = [
-            self.create_item_embed(i, inventory, len(inventory)) 
-            for i in range(0, len(inventory), 5)]
+        if len(inventory) > 0:
+            inventory_embeds = [
+                self.create_item_embed(i, inventory, len(inventory)) 
+                for i in range(0, len(inventory), 5)]
+        else:
+            inventory_embeds = [
+                discord.Embed(title="Your inventory is empty!", color=Vars.ABLUE)
+            ]
 
         armor_embeds = [self.create_armor_embed(i, armory) 
             for i in range(0, len(armory), 5)]
