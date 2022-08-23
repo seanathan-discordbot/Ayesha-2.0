@@ -76,6 +76,26 @@ class Items(commands.Cog):
             start += 1
         return embed
 
+    def create_item_embed(self, start, inv):
+        embed = discord.Embed(title=f"Your Inventory", color=Vars.ABLUE)
+
+        iteration = 0
+        while start < len(inv) and iteration < 5:
+            name = f"{inv[start]['weapon_name']}: `{inv[start]['item_id']}`"
+            name += "[EQUIPPED]" if inv[start]['equipped'] else ""
+
+            embed.add_field(name=name,
+                value=(
+                    f"**Attack:** {inv[start]['attack']}, **Crit:** "
+                    f"{inv[start]['crit']}, **Type:** "
+                    f"{inv[start]['weapontype']}, **Rarity:** "
+                    f"{inv[start]['rarity']}"
+                ),
+                inline=False)
+            iteration += 1
+            start += 1
+        return embed
+
     def create_armor_embed(self, start, inv):
         embed = discord.Embed(title="Your Armory", color=Vars.ABLUE)
 
@@ -112,25 +132,21 @@ class Items(commands.Cog):
     @commands.check(Checks.is_player)
     async def full_inventory(self, ctx):
         await ctx.defer()
-        psql1 = """
-                WITH thing AS (
-                    SELECT equipped_item
-                    FROM players
-                    WHERE user_id = $1
-                )
-                SELECT items.item_id, items.weapontype, items.user_id, 
-                    items.attack, items.crit, items.weapon_name, 
-                    items.rarity
-                FROM items
-                INNER JOIN thing ON items.item_id = thing.equipped_item;
-                """
-        psql2 = """
-                SELECT item_id, weapontype, user_id, 
-                    attack, crit, weapon_name, rarity
-                FROM items
-                WHERE user_id = $1
-                ORDER BY item_id DESC;
-                """
+        inventory_query = """
+            SELECT item_id, weapontype, user_id, attack, crit, weapon_name, 
+                rarity, 
+                (
+                    item_id = (
+                        SELECT equipped_item 
+                        FROM players 
+                        WHERE user_id = $1
+                    )
+                ) 
+                AS equipped
+            FROM items
+            WHERE user_id = $1
+            ORDER BY equipped DESC
+            """
         psql3 = """
                 SELECT armor_id, armor_type, armor_slot
                 FROM armor
@@ -146,10 +162,7 @@ class Items(commands.Cog):
 
         # Pull relevant records from db
         async with self.bot.db.acquire() as conn:
-            equipped_item = await conn.fetch(psql1, ctx.author.id)
-            got_eq = len(equipped_item) > 0
-            inventory = await conn.fetch(psql2, ctx.author.id)
-            inventory = list(equipped_item) + list(inventory)
+            inventory = await conn.fetch(inventory_query, ctx.author.id)
 
             armory = await conn.fetch(psql3, ctx.author.id)
 
@@ -158,8 +171,7 @@ class Items(commands.Cog):
                 conn, record['accessory_id']) 
                 for record in wardrobe] # Turn them into objects (for the name)
 
-        inventory_embeds = [self.create_embed(i, inventory, got_eq) 
-            for i in range(0, len(inventory), 5)]
+        inventory_embeds = [self.create_item_embed(i, inventory) for i in range(0, len(inventory), 5)]
 
         armor_embeds = [self.create_armor_embed(i, armory) 
             for i in range(0, len(armory), 5)]
