@@ -76,7 +76,7 @@ class Items(commands.Cog):
             start += 1
         return embed
 
-    def create_item_embed(self, start, inv):
+    def create_item_embed(self, start, inv, size):
         embed = discord.Embed(title=f"Your Inventory", color=Vars.ABLUE)
 
         iteration = 0
@@ -92,6 +92,8 @@ class Items(commands.Cog):
                     f"{inv[start]['rarity']}"
                 ),
                 inline=False)
+            embed.set_footer(text=f"{size} items listed")
+
             iteration += 1
             start += 1
         return embed
@@ -171,7 +173,9 @@ class Items(commands.Cog):
                 conn, record['accessory_id']) 
                 for record in wardrobe] # Turn them into objects (for the name)
 
-        inventory_embeds = [self.create_item_embed(i, inventory) for i in range(0, len(inventory), 5)]
+        inventory_embeds = [
+            self.create_item_embed(i, inventory, len(inventory)) 
+            for i in range(0, len(inventory), 5)]
 
         armor_embeds = [self.create_armor_embed(i, armory) 
             for i in range(0, len(armory), 5)]
