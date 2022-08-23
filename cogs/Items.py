@@ -23,67 +23,53 @@ class Items(commands.Cog):
         print("Items is ready.")
 
     # AUXILIARY FUNCTIONS
-    def create_item_embed(self, start, inv, size):
-        embed = discord.Embed(title=f"Your Weapons", color=Vars.ABLUE)
+    def create_embed(self, source, title, field_write_func, items_per_page):
+        if not source:
+            return [discord.Embed(title="Your inventory is empty!", color=Vars.ABLUE)]
 
-        iteration = 0
-        while start < len(inv) and iteration < 5:
-            name = f"{inv[start]['weapon_name']}: `{inv[start]['item_id']}` "
-            name += "[EQUIPPED]" if inv[start]['equipped'] else ""
+        embeds = []
 
-            embed.add_field(name=name,
-                value=(
-                    f"**Attack:** {inv[start]['attack']}, **Crit:** "
-                    f"{inv[start]['crit']}, **Type:** "
-                    f"{inv[start]['weapontype']}, **Rarity:** "
-                    f"{inv[start]['rarity']}"
-                ),
-                inline=False)
-            embed.set_footer(text=f"{size} items listed")
-
-            iteration += 1
-            start += 1
-        return embed
-
-    def create_armor_embed(self, start, inv, size):
-        embed = discord.Embed(title="Your Armory", color=Vars.ABLUE)
-
-        iteration = 0
-        while start < len(inv) and iteration < 5:
-            mat = inv[start]['armor_type']
-            slot = inv[start]['armor_slot']
-
-            name = f"{mat} {slot}: `{inv[start]['armor_id']}` "
-            name += "[EQUIPPED]" if inv[start]['equipped'] else ""
-            embed.add_field(
-                name=name,
-                value=f"**Defense:** {Vars.ARMOR_DEFENSE[slot][mat]}%",
-                inline=False)
-            embed.set_footer(text=f"{size} items listed")
-            
-            iteration += 1
-            start += 1
+        source_size = len(source)
         
-        return embed
+        for i in range(0, source_size, items_per_page):
+            embed = discord.Embed(title=title, color=Vars.ABLUE)
+            embed.set_footer(text=f"{source_size} items listed.")
 
-    def create_accessory_embed(self, start, inv, size):
-        embed = discord.Embed(title="Your Wardrobe", color=Vars.ABLUE)
+            current = i
+            items_in_page = 0
+            while current < source_size and items_in_page < items_per_page:
+                field_values = field_write_func(source[current])
+                embed.add_field(**field_values)
+                items_in_page += 1
+                current += 1
+            
+            embeds.append(embed)
+        
+        return embeds
 
-        iteration = 0
-        while start < len(inv) and iteration < 5:
-            name = f"{inv[start].name}: `{inv[start].id}` "
-            name += "[EQUIPPED]" if inv[start].equipped else ""
+    def weapons_field_values(self, record) -> dict:
+        name = f"{record['weapon_name']}: `{record['item_id']}` "
+        name += "EQUIPPED" if record['equipped'] else ""
+        value = (
+            f"**Attack:** {record['attack']}, **Crit:** "
+            f"{record['crit']}, **Type:** "
+            f"{record['weapontype']}, **Rarity:** "
+            f"{record['rarity']}")
+        return {"name" : name, "value" : value, "inline" : False}
 
-            embed.add_field(
-                name=name,
-                value=inv[start].bonus,
-                inline=False)
-            embed.set_footer(text=f"{size} items listed")
+    def armor_field_values(self, record) -> dict:
+        mat = record['armor_type']
+        slot = record['armor_slot']
+        name = f"{mat} {slot}: `{record['armor_id']}` "
+        name += "[EQUIPPED]" if record['equipped'] else ""
+        value=f"**Defense:** {Vars.ARMOR_DEFENSE[slot][mat]}%"
+        return {"name" : name, "value" : value, "inline" : False}
 
-            iteration += 1
-            start += 1
-
-        return embed
+    def accessory_field_values(self, record : ItemObject.Accessory):
+        name = f"{record.name}: `{record.id}` "
+        name += "[EQUIPPED]" if record.equipped else ""
+        value=record.bonus
+        return {"name" : name, "value" : value, "inline" : False}
     
 
     # COMMANDS
@@ -196,30 +182,9 @@ class Items(commands.Cog):
                 wardrobe_items.append(temp)
             wardrobe = wardrobe_items
 
-        if inventory:
-            inventory_embeds = [
-                self.create_item_embed(i, inventory, len(inventory)) 
-                for i in range(0, len(inventory), 5)]
-        else:
-            inventory_embeds = [
-                discord.Embed(title="You have no weapons!", color=Vars.ABLUE)
-            ]
-
-        if armory:
-            armor_embeds = [self.create_armor_embed(i, armory, len(armory)) 
-                for i in range(0, len(armory), 5)]
-        else:
-            armor_embeds = [
-                discord.Embed(title="You have no armor!", color=Vars.ABLUE)
-            ]
-
-        if wardrobe:
-            accessory_embeds = [self.create_accessory_embed(i, wardrobe, len(wardrobe))
-                for i in range(0, len(wardrobe), 5)]
-        else:
-            accessory_embeds = [
-                discord.Embed(title="You have no accessories!", color=Vars.ABLUE)
-            ]
+        inventory_embeds = self.create_embed(inventory, "Your Weapons", self.weapons_field_values, 5)
+        armor_embeds = self.create_embed(armory, "Your Armor", self.armor_field_values, 5)
+        accessory_embeds = self.create_embed(wardrobe, "Your Accessories", self.accessory_field_values, 5)
 
         inv_pages = pages.PageGroup(pages=inventory_embeds, label="View Weapons")
         arm_pages = pages.PageGroup(pages=armor_embeds, label="View Armor")
