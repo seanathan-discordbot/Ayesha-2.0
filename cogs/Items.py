@@ -169,8 +169,13 @@ class Items(commands.Cog):
                 required=False),
             armor_material : Option(str, description="Get only a specific armor material",
                 choices=[OptionChoice(m) for m in Vars.ARMOR_DEFENSE["Boots"]],
-                required=False)
-    ):
+                required=False),
+            accessory_effect : Option(str, description="Sort for a specific effect",
+                choices=[OptionChoice(p) for p in Vars.ACCESSORY_BONUS],
+                required=False),
+            accessory_material : Option(str, description="Sort for a specific core material",
+                choices=[OptionChoice(m) for m in Vars.ACCESSORY_BONUS['Lucky']],
+                required=False)):
         """View your complete inventory, including weapons, armor, and accessories."""
         await ctx.defer()
         # Get the query for inventory based on input
@@ -221,7 +226,7 @@ class Items(commands.Cog):
                     if armor_material is not None else ""}
             ORDER BY equipped DESC, armor_id DESC;
             """
-        accessory_query = """
+        accessory_query = f"""
             SELECT accessory_id, 
                 (
                     accessory_id = (
@@ -231,6 +236,10 @@ class Items(commands.Cog):
                 AS equipped
             FROM accessories
             WHERE user_id = $1
+                {f"AND prefix = '{accessory_effect}'"
+                    if accessory_effect is not None else ""}
+                {f"AND accessory_type = '{accessory_material}'"
+                    if accessory_material is not None else ""}
             ORDER BY equipped DESC, accessory_id DESC; 
             """
 
