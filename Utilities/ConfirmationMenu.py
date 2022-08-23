@@ -1,5 +1,11 @@
 import discord
 
+class PlayerOnlyView(discord.ui.View):
+    def __init__(self, author : discord.Member, *args, **kwargs):
+        self.author = author
+        super().__init__(*args, **kwargs)
+
+
 class ConfirmationMenu(discord.ui.View):
     def __init__(self, author : discord.Member):
         self.author = author
