@@ -97,6 +97,25 @@ class Items(commands.Cog):
         
         return embed
 
+    def create_accessory_embed2(self, start, inv, size):
+        embed = discord.Embed(title="Your Wardrobe", color=Vars.ABLUE)
+
+        iteration = 0
+        while start < len(inv) and iteration < 5:
+            name = f"{inv[start].name}: `{inv[start].id}` "
+            name += "[EQUIPPED]" if inv[start].equipped else ""
+
+            embed.add_field(
+                name=name,
+                value=inv[start].bonus,
+                inline=False)
+            embed.set_footer(text=f"{size} items listed")
+
+            iteration += 1
+            start += 1
+
+        return embed
+
     def create_armor_embed(self, start, inv):
         embed = discord.Embed(title="Your Armory", color=Vars.ABLUE)
 
@@ -202,12 +221,18 @@ class Items(commands.Cog):
                     if armor_material is not None else ""}
             ORDER BY equipped DESC, armor_id DESC;
             """
-        psql4 = """
-                SELECT accessory_id
-                FROM accessories
-                WHERE user_id = $1
-                ORDER BY accessory_id DESC; 
-                """
+        accessory_query = """
+            SELECT accessory_id, 
+                (
+                    accessory_id = (
+                        SELECT accessory FROM equips WHERE user_id = $1
+                    )
+                ) 
+                AS equipped
+            FROM accessories
+            WHERE user_id = $1
+            ORDER BY equipped DESC, accessory_id DESC; 
+            """
 
         # Pull relevant records from db
         async with self.bot.db.acquire() as conn:
@@ -215,10 +240,13 @@ class Items(commands.Cog):
 
             armory = await conn.fetch(armor_query, ctx.author.id)
 
-            wardrobe = await conn.fetch(psql4, ctx.author.id)
-            wardrobe = [await ItemObject.get_accessory_by_id(
-                conn, record['accessory_id']) 
-                for record in wardrobe] # Turn them into objects (for the name)
+            wardrobe = await conn.fetch(accessory_query, ctx.author.id)
+            wardrobe_items = []
+            for accessory in wardrobe:
+                temp = await ItemObject.get_accessory_by_id(conn, accessory['accessory_id'])
+                temp.equipped = accessory['equipped']
+                wardrobe_items.append(temp)
+            wardrobe = wardrobe_items
 
         if inventory:
             inventory_embeds = [
@@ -238,7 +266,7 @@ class Items(commands.Cog):
             ]
 
         if wardrobe:
-            accessory_embeds = [self.create_accessory_embed(i, wardrobe)
+            accessory_embeds = [self.create_accessory_embed2(i, wardrobe, len(wardrobe))
                 for i in range(0, len(wardrobe), 5)]
         else:
             accessory_embeds = [
