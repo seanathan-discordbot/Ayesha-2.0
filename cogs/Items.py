@@ -144,6 +144,12 @@ class Items(commands.Cog):
                 required=False),
             weapon_type : Option(str, description="Get only a specific weapontype",
                 choices=[OptionChoice(name=t) for t in Vars.WEAPON_TYPES],
+                required=False),
+            armor_type : Option(str, description="Get only a specific armor slot",
+                choices=[OptionChoice(s) for s in Vars.ARMOR_DEFENSE],
+                required=False),
+            armor_material : Option(str, description="Get only a specific armor material",
+                choices=[OptionChoice(m) for m in Vars.ARMOR_DEFENSE["Boots"]],
                 required=False)
     ):
         """View your complete inventory, including weapons, armor, and accessories."""
@@ -169,7 +175,7 @@ class Items(commands.Cog):
             ORDER BY equipped DESC, {weapon_order} DESC;
             """
         # Indicator of bad database design choices
-        armor_query = """
+        armor_query = f"""
             WITH helmet AS (SELECT helmet FROM equips WHERE user_id = $1),
             bodypiece AS (SELECT bodypiece FROM equips WHERE user_id = $1),
             boots AS (SELECT boots FROM equips WHERE user_id = $1)
@@ -190,6 +196,10 @@ class Items(commands.Cog):
                 AS equipped
             FROM armor
             WHERE user_id = $1
+                {f"AND armor_slot = '{armor_type}'"
+                    if armor_type is not None else ""}
+                {f"AND armor_type = '{armor_material}'"
+                    if armor_material is not None else ""}
             ORDER BY equipped DESC, armor_id DESC;
             """
         psql4 = """
