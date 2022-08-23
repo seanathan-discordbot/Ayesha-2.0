@@ -59,7 +59,7 @@ class Items(commands.Cog):
 
         iteration = 0
         while start < len(inv) and iteration < 5:
-            name = f"{inv[start]['weapon_name']}: `{inv[start]['item_id']}`"
+            name = f"{inv[start]['weapon_name']}: `{inv[start]['item_id']}` "
             name += "[EQUIPPED]" if inv[start]['equipped'] else ""
 
             embed.add_field(name=name,
@@ -74,6 +74,27 @@ class Items(commands.Cog):
 
             iteration += 1
             start += 1
+        return embed
+
+    def create_armor_embed2(self, start, inv, size):
+        embed = discord.Embed(title="Your Armory", color=Vars.ABLUE)
+
+        iteration = 0
+        while start < len(inv) and iteration < 5:
+            mat = inv[start]['armor_type']
+            slot = inv[start]['armor_slot']
+
+            name = f"{mat} {slot}: `{inv[start]['armor_id']}` "
+            name += "[EQUIPPED]" if inv[start]['equipped'] else ""
+            embed.add_field(
+                name=name,
+                value=f"**Defense:** {Vars.ARMOR_DEFENSE[slot][mat]}%",
+                inline=False)
+            embed.set_footer(text=f"{size} items listed")
+            
+            iteration += 1
+            start += 1
+        
         return embed
 
     def create_armor_embed(self, start, inv):
@@ -147,12 +168,30 @@ class Items(commands.Cog):
                     if weapon_type is not None else ""}
             ORDER BY equipped DESC, {weapon_order} DESC;
             """
-        psql3 = """
-                SELECT armor_id, armor_type, armor_slot
-                FROM armor
-                WHERE user_id = $1
-                ORDER BY armor_id DESC;
-                """
+        # Indicator of bad database design choices
+        armor_query = """
+            WITH helmet AS (SELECT helmet FROM equips WHERE user_id = $1),
+            bodypiece AS (SELECT bodypiece FROM equips WHERE user_id = $1),
+            boots AS (SELECT boots FROM equips WHERE user_id = $1)
+            SELECT armor_id, armor_type, armor_slot,
+                CASE
+                    WHEN armor_slot = 'Helmet' 
+                    THEN armor_id = (SELECT * FROM helmet)
+                    ELSE CASE
+                        WHEN armor_slot = 'Bodypiece' 
+                        THEN armor_id = (SELECT * FROM bodypiece)
+                        ELSE CASE
+                            WHEN armor_slot = 'Boots' 
+                            THEN armor_id = (SELECT * FROM boots)
+                            ELSE false
+                        END
+                    END
+                END
+                AS equipped
+            FROM armor
+            WHERE user_id = $1
+            ORDER BY equipped DESC, armor_id DESC;
+            """
         psql4 = """
                 SELECT accessory_id
                 FROM accessories
@@ -164,7 +203,7 @@ class Items(commands.Cog):
         async with self.bot.db.acquire() as conn:
             inventory = await conn.fetch(inventory_query, ctx.author.id)
 
-            armory = await conn.fetch(psql3, ctx.author.id)
+            armory = await conn.fetch(armor_query, ctx.author.id)
 
             wardrobe = await conn.fetch(psql4, ctx.author.id)
             wardrobe = [await ItemObject.get_accessory_by_id(
@@ -180,7 +219,7 @@ class Items(commands.Cog):
                 discord.Embed(title="Your inventory is empty!", color=Vars.ABLUE)
             ]
 
-        armor_embeds = [self.create_armor_embed(i, armory) 
+        armor_embeds = [self.create_armor_embed2(i, armory, len(armory)) 
             for i in range(0, len(armory), 5)]
 
         accessory_embeds = [self.create_accessory_embed(i, wardrobe)
