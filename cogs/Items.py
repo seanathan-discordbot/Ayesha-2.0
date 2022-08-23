@@ -7,7 +7,6 @@ import random
 
 from Utilities import Checks, Vars, PlayerObject, ItemObject
 from Utilities.Analytics import stringify_gains
-from Utilities.ConfirmationMenu import PlayerOnlyView
 from Utilities.Finances import Transaction
 from Utilities.AyeshaBot import Ayesha
 
@@ -188,7 +187,10 @@ class Items(commands.Cog):
         war_pages = pages.PageGroup(pages=accessory_embeds, label="View Accessories")
 
         # Display to player
-        paginator = pages.Paginator(pages=[inv_pages, arm_pages, war_pages], show_menu=True)
+        paginator = pages.Paginator(
+            pages=[inv_pages, arm_pages, war_pages], 
+            show_menu=True,
+            menu_placeholder="Select type of item to view")
         await paginator.respond(ctx.interaction, ephemeral=False)
         
 
