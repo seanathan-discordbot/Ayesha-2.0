@@ -24,6 +24,26 @@ class Items(commands.Cog):
 
     # AUXILIARY FUNCTIONS
     def create_embed(self, source, title, field_write_func, items_per_page):
+        """Create a list of embeds with the source given
+
+        Parameters
+        ----------
+        source : Iterable
+            the contents that are being made into an embed
+        title : str
+            the title of the embed
+        field_write_func : Callable
+            the function that will populate the embed fields
+            will be passed the record it is making a field for
+            must return a dictionary with the following keys: name, value, inline
+        items_per_page : int
+            the amount of items that will be listed on each embed
+
+        Returns
+        -------
+        embeds : List[discord.Embed]
+            A list of discord Embeds made with the contents of `source`        
+        """
         if not source:
             return [discord.Embed(title="Your inventory is empty!", color=Vars.ABLUE)]
 
@@ -104,7 +124,7 @@ class Items(commands.Cog):
         """View your complete inventory, including weapons, armor, and accessories."""
         await ctx.defer()
         # Get the query for inventory based on input
-        inventory_query = f"""
+        weapons_query = f"""
             SELECT item_id, weapontype, user_id, attack, crit, weapon_name, 
                 rarity, 
                 (
@@ -170,29 +190,32 @@ class Items(commands.Cog):
 
         # Pull relevant records from db
         async with self.bot.db.acquire() as conn:
-            inventory = await conn.fetch(inventory_query, ctx.author.id)
+            weapons = await conn.fetch(weapons_query, ctx.author.id)
 
             armory = await conn.fetch(armor_query, ctx.author.id)
 
-            wardrobe = await conn.fetch(accessory_query, ctx.author.id)
+            accessories = await conn.fetch(accessory_query, ctx.author.id)
             wardrobe_items = []
-            for accessory in wardrobe:
+            for accessory in accessories:
                 temp = await ItemObject.get_accessory_by_id(conn, accessory['accessory_id'])
                 temp.equipped = accessory['equipped']
                 wardrobe_items.append(temp)
-            wardrobe = wardrobe_items
+            accessories = wardrobe_items
 
-        inventory_embeds = self.create_embed(inventory, "Your Weapons", self.weapons_field_values, 5)
-        armor_embeds = self.create_embed(armory, "Your Armor", self.armor_field_values, 5)
-        accessory_embeds = self.create_embed(wardrobe, "Your Accessories", self.accessory_field_values, 5)
+        inventory_embeds = self.create_embed(weapons, "Your Weapons", 
+            self.weapons_field_values, 5)
+        armor_embeds = self.create_embed(armory, "Your Armor", 
+            self.armor_field_values, 5)
+        accessory_embeds = self.create_embed(accessories, "Your Accessories", 
+            self.accessory_field_values, 5)
 
-        inv_pages = pages.PageGroup(pages=inventory_embeds, label="View Weapons")
-        arm_pages = pages.PageGroup(pages=armor_embeds, label="View Armor")
-        war_pages = pages.PageGroup(pages=accessory_embeds, label="View Accessories")
+        weapon_pages = pages.PageGroup(pages=inventory_embeds, label="View Weapons")
+        armor_pages = pages.PageGroup(pages=armor_embeds, label="View Armor")
+        accessory_pages = pages.PageGroup(pages=accessory_embeds, label="View Accessories")
 
         # Display to player
         paginator = pages.Paginator(
-            pages=[inv_pages, arm_pages, war_pages], 
+            pages=[weapon_pages, armor_pages, accessory_pages], 
             show_menu=True,
             menu_placeholder="Select type of item to view")
         await paginator.respond(ctx.interaction, ephemeral=False)
