@@ -9,7 +9,7 @@ import random
 
 from Utilities import Checks, CombatObject, PlayerObject, Vars
 from Utilities.CombatObject import Belligerent, CombatInstance
-from Utilities.ConfirmationMenu import OfferMenu
+from Utilities.ConfirmationMenu import ConfirmationMenu
 from Utilities.AyeshaBot import Ayesha
 
 class JoinMenu(discord.ui.View):
@@ -49,7 +49,7 @@ class PvP(commands.Cog):
                 f"You cannot challenge yourself.")
 
         # Ask for permission to perform PvP
-        view = OfferMenu(author, opponent)
+        view = ConfirmationMenu(user=opponent)
         interaction = await ctx.respond(
             content=(
                 f"{opponent.mention}, {author.mention} is challenging you "

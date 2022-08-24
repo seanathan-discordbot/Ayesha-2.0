@@ -82,7 +82,7 @@ class Occupations(commands.Cog):
         """Choose your character's occupation or origin."""
         if setting == "Occ":
             # Create a menu of the occupations for player to choose
-            view = ConfirmationMenu(ctx.author)
+            view = ConfirmationMenu(user=ctx.author, timeout=30.0)
             menu = OccupationMenu(ctx.author)
             view.add_item(menu)
             embed = discord.Embed(title="Career Changing Menu")
@@ -112,7 +112,7 @@ class Occupations(commands.Cog):
             await msg.delete_original_message()
 
         else:
-            view = ConfirmationMenu(ctx.author)
+            view = ConfirmationMenu(user=ctx.author, timeout=30.0)
             menu = OriginMenu(ctx.author)
             view.add_item(menu)
             embed = discord.Embed(title="Origin Changing Menu")

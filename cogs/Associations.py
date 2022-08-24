@@ -18,14 +18,6 @@ from Utilities.ConfirmationMenu import ConfirmationMenu
 from Utilities.Finances import Transaction
 from Utilities.AyeshaBot import Ayesha
 
-class InviteMenu(ConfirmationMenu):
-    def __init__(self, author, target : discord.Member):
-        self.target = target
-        super().__init__(author)
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return interaction.user.id == self.target.id
-
 class Associations(commands.Cog):
     """Association Text"""
 
@@ -503,7 +495,7 @@ class Associations(commands.Cog):
                 value=(
                     f"{target.mention}, {ctx.author.mention} is inviting you "
                     f"to join their {assc.type}."))
-            view = InviteMenu(author=ctx.author, target=target)
+            view = ConfirmationMenu(user=target)
             msg = await ctx.respond(target.mention, embed=embed, view=view)
             await view.wait()
             if view.value is None:
