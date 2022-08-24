@@ -245,11 +245,10 @@ class Help(commands.Cog):
                 f"do `/equip`, select 'Equip a Weapon', select the id option, "
                 f"and type your weapon's ID there. You have equipped your "
                 f"first weapon! When you get armor and accessories in the "
-                f"future, you can find your owned items with the `/armory` "
-                f"and `/wardrobe` commands, then equip them in the same way "
-                f"you equipped your weapon. You can get some types of armor "
-                f"for gold by buying them in the `/shop`, but accessories "
-                f"are attainable only through PvE."
+                f"future, you can find them in the `/inventory` as well "
+                f"and  equip them in the same way you equipped your weapon. "
+                f"You can get some types of armor for gold by buying them in "
+                f"the `/shop`, but accessories are attainable only through PvE."
             )
             page3 = (
                 f"Finally you can get to the fun parts! You have 10 rubidics "
