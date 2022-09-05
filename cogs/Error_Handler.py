@@ -118,8 +118,7 @@ class Error_Handler(commands.Cog):
             await ctx.respond(message)
             print_traceback = False
 
-        if isinstance(
-                error, Checks.PlayerNotInSpecifiedAssociation):
+        if isinstance(error, Checks.PlayerNotInSpecifiedAssociation):
             message = (
                 f"This player is not in your {error.type}.")
             await ctx.respond(message)
