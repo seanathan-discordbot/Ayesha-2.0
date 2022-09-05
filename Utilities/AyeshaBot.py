@@ -57,7 +57,7 @@ class Ayesha(commands.AutoShardedBot):
                 #   i.e. this still printed when the player responded to the 
                 #   original command. The things I have to do...
                 return await interaction.response.send_message(
-                    f"Finish your training first.")
+                    f"Finish your operation first.")
 
         return await super().on_interaction(interaction)
 

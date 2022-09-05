@@ -4,14 +4,14 @@ from discord import Option, OptionChoice
 from discord.ext import commands
 from discord.ext.commands import BucketType, cooldown
 
-import json
 import random
 import time
 
 from Utilities import AcolyteObject, AssociationObject, Checks, PlayerObject, ItemObject, Vars
 from Utilities.Analytics import stringify_gains
-from Utilities.Finances import Transaction
 from Utilities.AyeshaBot import Ayesha
+from Utilities.ConfirmationMenu import LockedConfirmationMenu
+from Utilities.Finances import Transaction
 
 class Travel(commands.Cog):
     """Go on an adventure!"""
@@ -580,7 +580,7 @@ class Travel(commands.Cog):
             
     @commands.slash_command()
     @commands.check(Checks.is_player)
-    async def upgrade(self, ctx, 
+    async def upgrade(self, ctx : discord.ApplicationContext, 
             weapon_id : Option(int, 
                 name="weapon",
                 description="The ID of the weapon you are upgrading"),
@@ -630,21 +630,48 @@ class Travel(commands.Cog):
 
             purchase = await Transaction.calc_cost(conn, player, gold_cost)
 
+            # Prompt player to continue or cancel the operation
+            key = str(random.random())
+            self.bot.training_players[ctx.author.id] = key
+            view = LockedConfirmationMenu(ctx.author, key, timeout=15.0)
+            message = (
+                f"Upgrading your `{weapon.weapon_id}`: **{weapon.name}** "
+                f"{iter} {verb} to increase its AK to {weapon.attack + iter} "
+                f"will cost `{purchase.paying_price}` (`{purchase.tax_amount}` "
+                f"from taxes) gold and `{iron_cost}` iron.\n"
+                f"You currently have `{player.gold}` gold and "
+                f"`{player.resources['iron']}` iron. Proceed with the upgrade?"
+            )
+            interaction = await ctx.respond(message, view=view)
+            interaction.custom_id = key
+            await view.wait()
+            self.bot.training_players.pop(ctx.author.id)
+            if view.value is None:
+                return await interaction.edit_original_message(
+                    content="Timed out.", view=None)
+            elif not view.value:
+                return await interaction.edit_original_message(
+                    content="You cancelled the upgrade.", view=None)
+
             if player.gold < purchase.paying_price:
+                await interaction.edit_original_message(view=None)
                 raise Checks.NotEnoughGold(purchase.paying_price, player.gold)
             if player.resources["iron"] < iron_cost:
+                await interaction.edit_original_message(view=None)
                 raise Checks.NotEnoughResources(
                     "iron", iron_cost, player.resources["iron"])
 
             # If all else clears, upgrade the item
             await weapon.set_attack(conn, weapon.attack + iter)
             print_tax = await purchase.log_transaction(conn, "purchase")
-            await player.give_resource(conn, "iron", iron_cost*-1)
-            await ctx.respond((
-                f"You upgraded your `{weapon.weapon_id}`: {weapon.name} "
+            message = (
+                f"You upgraded your `{weapon.weapon_id}`: **{weapon.name}** "
                 f"{iter} {verb} for `{purchase.paying_price}` gold and "
                 f"`{iron_cost}` iron, increasing its ATK to "
-                f"`{weapon.attack}`! {print_tax}"))
+                f"`{weapon.attack}`! {print_tax}")
+            await player.give_resource(conn, "iron", iron_cost*-1)
+            await interaction.edit_original_message(
+                content=message, view=None)
 
 def setup(bot):
     bot.add_cog(Travel(bot))
