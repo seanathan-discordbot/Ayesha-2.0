@@ -38,7 +38,8 @@ class Error_Handler(commands.Cog):
                 error.__class__, error, error.__traceback__, file=sys.stderr)
 
     @commands.Cog.listener()
-    async def on_application_command_error(self, ctx, error):
+    async def on_application_command_error(self, 
+            ctx : discord.ApplicationContext, error):
         """The error handler for the bot.
         
         Apparently any errors raised during the actual command body will
@@ -273,8 +274,16 @@ class Error_Handler(commands.Cog):
             print_traceback = False
 
         if print_traceback:
+            error_context = (
+                f"----------------------------------\n"
+                f"COMMAND : {ctx.command.qualified_name}\n"
+                f"   USER : {ctx.author.id}\n"
+                f"  GUILD : {ctx.guild_id}\n"
+                f"OPTIONS : {ctx.selected_options}\n"
+                f"   OMIT : {ctx.unselected_options}\n"
+            )
             with open(ERROR_LOG_FILE, "a") as error_log:
-                print("----------------------------------", file=error_log)
+                print(error_context, file=error_log)
                 traceback.print_exception(
                     error.__class__, error, error.__traceback__, 
                     file=error_log)
