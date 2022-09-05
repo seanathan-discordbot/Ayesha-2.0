@@ -26,6 +26,25 @@ class ConfirmationMenu(PlayerOnlyView):
         self.value = False
         self.stop()
 
+class LockedConfirmationMenu(PlayerOnlyView):
+    def __init__(self, user : discord.Member, custom_id : str, *args, **kwargs):
+        super().__init__(user=user, *args, **kwargs)
+        self.custom_id = custom_id
+        self.value = None
+
+    @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green, row=4)
+    async def confirm(self, button : discord.ui.Button, 
+            interaction : discord.Interaction):
+        self.value = True
+        interaction.custom_id = self.custom_id
+        self.stop()
+
+    @discord.ui.button(label="Decline", style=discord.ButtonStyle.red, row=4)
+    async def decline(self, button : discord.ui.Button, 
+            interaction : discord.Interaction):
+        self.value = False
+        interaction.custom_id = self.custom_id
+        self.stop()
 
 class OneButtonView(discord.ui.View):
     """Creates a view with one button to press"""
