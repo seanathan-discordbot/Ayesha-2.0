@@ -277,7 +277,7 @@ class Travel(commands.Cog):
                     "gold", gold, gold_bonus_sources)
                 embed = discord.Embed(title="Expedition Complete!", 
                     color=Vars.ABLUE)
-                embed.set_thumbnail(url=ctx.author.avatar.url)
+                embed.set_thumbnail(url=ctx.author.display_avatar.url)
                 e_message = (
                     f"While on your journey, you gained these resources:\n"
                     f"{gold_gains_str}\n{xp_gains_str}\n")

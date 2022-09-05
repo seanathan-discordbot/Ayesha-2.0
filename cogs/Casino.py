@@ -130,7 +130,8 @@ class Casino(commands.Cog):
             # Game is printed as an embed            
             display = discord.Embed(
                 title=f"Craps: {ctx.author.display_name}", color=Vars.ABLUE)
-            display.set_footer(text=ctx.author, icon_url=ctx.author.avatar.url)
+            display.set_footer(text=ctx.author, 
+                icon_url=ctx.author.display_avatar.url)
             display.add_field(
                 name=f"Press Shoot! to roll the die!", 
                 value=(f"Numbers to win: 7, 11\nNumbers to lose: 2, 3, 12"))
