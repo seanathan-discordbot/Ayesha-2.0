@@ -83,6 +83,21 @@ class Error_Handler(commands.Cog):
             await ctx.respond(message)
             print_traceback = False
 
+        # --- ASSOCIATIONS ---
+        if isinstance(error, Checks.NotInAssociation):
+            if error.req is None:
+                message = (
+                    "You need to be in an association to use this "
+                    "command!\n Ask for an invitation to one or found your "
+                    "own with `/association create`!")
+            else:
+                message = (
+                    f"You need to be in a {error.req} to use this "
+                    f"command!\nAsk for an invitation to one or found "
+                    f"your own with `/association create`!")
+            await ctx.respond(message)
+            print_traceback = False
+
         # --- CONCURRENCY ERROR ---
         if isinstance(error, commands.MaxConcurrencyReached):
             await ctx.respond(
@@ -191,6 +206,8 @@ class Error_Handler(commands.Cog):
 
             # --- ASSOCIATIONS ---
             if isinstance(error.original, Checks.NotInAssociation):
+                # NOTE: this might be unnecessary
+                # pycord's error handling is just inconsistent
                 if error.original.req is None:
                     message = (
                         "You need to be in an association to use this "
