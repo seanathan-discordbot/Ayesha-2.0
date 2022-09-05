@@ -11,6 +11,7 @@ from discord.ui.item import Item
 
 from Utilities import Checks
 from Utilities.AyeshaBot import Ayesha
+from Utilities.config import ERROR_LOG_FILE
 
 class Error_Handler(commands.Cog):
     """Bot error handler."""
@@ -255,8 +256,12 @@ class Error_Handler(commands.Cog):
             print_traceback = False
 
         if print_traceback:
-            traceback.print_exception(
-                error.__class__, error, error.__traceback__, file=sys.stderr)
+            with open(ERROR_LOG_FILE, "a") as error_log:
+                print("----------------------------------", file=error_log)
+                traceback.print_exception(
+                    error.__class__, error, error.__traceback__, 
+                    file=error_log)
+                print("\n", file=error_log)
 
 def setup(bot):
     bot.add_cog(Error_Handler(bot))
