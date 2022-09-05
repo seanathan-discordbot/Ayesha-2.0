@@ -99,6 +99,35 @@ class Error_Handler(commands.Cog):
             await ctx.respond(message)
             print_traceback = False
 
+        if isinstance(error, Checks.InAssociation):
+            message = "You are already in an association!"
+            await ctx.respond(message)
+            print_traceback = False
+
+        if isinstance(error, Checks.IncorrectAssociationRank):
+            message = (
+                f"You need to be an Association {error.rank} "
+                f"to use this command.")
+            await ctx.respond(message)
+            print_traceback = False
+
+        if isinstance(error, Checks.PlayerAlreadyChampion):
+            message = (
+                f"The player you have specified is already oen of your "
+                f"brotherhood's champions.")
+            await ctx.respond(message)
+            print_traceback = False
+
+        if isinstance(
+                error, Checks.PlayerNotInSpecifiedAssociation):
+            message = (
+                f"This player is not in your {error.type}.")
+            await ctx.respond(message)
+            print_traceback = False
+
+        if isinstance(error, commands.CommandNotFound):
+            print_traceback = False
+
         # --- CONCURRENCY ERROR ---
         if isinstance(error, commands.MaxConcurrencyReached):
             await ctx.respond(
@@ -203,52 +232,6 @@ class Error_Handler(commands.Cog):
             if isinstance(error.original, Checks.NotAcolyteOwner):
                 message = f"You do not own an acolyte with this ID."
                 await ctx.respond(message)
-                print_traceback = False
-
-            # --- ASSOCIATIONS ---
-            if isinstance(error.original, Checks.NotInAssociation):
-                # NOTE: this might be unnecessary
-                # pycord's error handling is just inconsistent
-                if error.original.req is None:
-                    message = (
-                        "You need to be in an association to use this "
-                        "command!\n Ask for an invitation to one or found your "
-                        "own with `/association create`!")
-                else:
-                    message = (
-                        f"You need to be in a {error.original.req} to use this "
-                        f"command!\nAsk for an invitation to one or found "
-                        f"your own with `/association create`!")
-                await ctx.respond(message)
-                print_traceback = False
-
-            if isinstance(error.original, Checks.InAssociation):
-                message = "You are already in an association!"
-                await ctx.respond(message)
-                print_traceback = False
-
-            if isinstance(error.original, Checks.IncorrectAssociationRank):
-                message = (
-                    f"You need to be an Association {error.original.rank} "
-                    f"to use this command.")
-                await ctx.respond(message)
-                print_traceback = False
-
-            if isinstance(error.original, Checks.PlayerAlreadyChampion):
-                message = (
-                    f"The player you have specified is already oen of your "
-                    f"brotherhood's champions.")
-                await ctx.respond(message)
-                print_traceback = False
-
-            if isinstance(
-                    error.original, Checks.PlayerNotInSpecifiedAssociation):
-                message = (
-                    f"This player is not in your {error.original.type}.")
-                await ctx.respond(message)
-                print_traceback = False
-
-            if isinstance(error.original, commands.CommandNotFound):
                 print_traceback = False
 
         # --- OFFICES ---
