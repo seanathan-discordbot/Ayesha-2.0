@@ -6,6 +6,7 @@ import sys
 from Utilities import config, Vars
 from Utilities.AyeshaBot import Ayesha
 
+# Create base logger
 logger = logging.getLogger('discord')
 logger.setLevel(logging.INFO)
 handler = logging.FileHandler(filename=config.LOG_FILE, 
@@ -14,6 +15,10 @@ handler = logging.FileHandler(filename=config.LOG_FILE,
 handler.setFormatter(logging.Formatter(
     '%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
+
+# Wipe error logger
+with open(config.ERROR_LOG_FILE, "w") as f:
+    pass
 
 # Load Cogs
 init_cogs = [
@@ -44,7 +49,7 @@ if "-b" in sys.argv: # Run beta version
 bot = Ayesha(init_cogs)
 bot.run(config.TOKEN)
 
-# Ping command
+# Ping command; currently not in use
 @bot.slash_command(guild_ids=[762118688567984151])
 async def ping(ctx):
     """Ping to see if bot is working."""
