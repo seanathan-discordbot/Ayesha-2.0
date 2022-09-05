@@ -52,7 +52,8 @@ class Error_Handler(commands.Cog):
         # --- CHARACTER RELATED ---
         if isinstance(error, Checks.HasChar):
             message = (f"You already have a character.\nFor help, read the "
-                       f"`/tutorial` or go to the `/support` server.")
+                       f"`/tutorial` or go to the support server (found in "
+                       f"the `/help` command).")
             await ctx.respond(message)
             print_traceback = False
 
