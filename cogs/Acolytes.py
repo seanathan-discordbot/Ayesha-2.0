@@ -4,10 +4,12 @@ from discord import Option, OptionChoice
 from discord.ext import commands, pages
 
 import asyncpg
+import random
 from typing import List
 
 from Utilities import Checks, Vars, AcolyteObject, PlayerObject
 from Utilities.AyeshaBot import Ayesha
+from Utilities.ConfirmationMenu import LockedConfirmationMenu
 
 def acolyte_equipped(player,acolyte_id):
     id_1=player.acolyte1.acolyte_id
@@ -222,7 +224,7 @@ class Acolytes(commands.Cog):
 
     @commands.slash_command()
     @commands.check(Checks.is_player)
-    async def train(self, ctx, 
+    async def train(self, ctx : discord.ApplicationContext, 
             instance_id : Option(int, description="The acolyte's ID"), 
             iterations : Option(int,
                 description="The amount of training sessions",
@@ -243,23 +245,54 @@ class Acolytes(commands.Cog):
                     f"{acolyte_info['Name']} is already at maximum level!")
            
             mat=acolyte_info['Mat']
-            #Make sure player has the resources and gold to train
+            # Calculate resource expenditure
             gold_needed=300*iterations
             mat_needed=75*iterations
             mat_dict=await player.get_backpack(conn)
             player_mat=mat_dict[mat]
             total_xp=5000*iterations
+            max_iterations = int(min(player.gold / 300, player_mat / 75))
 
+            # Allow player to confirm the training and resource expenditure
+            # Place player in trader dict to ensure they don't exploit the
+            #   time window given to spend their resources elsewhere.
+            training_key = str(random.random())
+            self.bot.training_players[ctx.author.id] = training_key
+            view = LockedConfirmationMenu(ctx.author, training_key, timeout=15.0)
+            message = (
+                f"This training will cost `{gold_needed}` gold and "
+                f"`{mat_needed}` {mat}. **{acolyte.acolyte_name}** will gain "
+                f"`{total_xp}` xp.\n"
+                f"You currently have `{player.gold}` gold and `{player_mat}` "
+                f"{mat}. Proceed with the training?\n"
+                f"You can perform up to `{max_iterations}` training "
+                f"iterations with your current resources."
+            )
+            interaction = await ctx.respond(message, view=view)
+            interaction.custom_id = training_key
+            await view.wait()
+            self.bot.training_players.pop(ctx.author.id)
+            if view.value is None:
+                return await interaction.edit_original_message(
+                    content="Timed out.", view=None)
+            elif not view.value:
+                return await interaction.edit_original_message(
+                    content="You cancelled the training.", view=None)
+
+            # Make changes to acolytes
             if player_mat < mat_needed:
+                await interaction.edit_original_message(view=None)
                 raise Checks.NotEnoughResources(mat, mat_needed, player_mat)
             if player.gold < gold_needed:
+                await interaction.edit_original_message(view=None)
                 raise Checks.NotEnoughGold(gold_needed, player.gold)
 
-            await ctx.respond((
+            message = (
                 f"You trained with `{acolyte_info['Name']}`, " 
                 f"consuming `{mat_needed}` {acolyte_info['Mat']} and" 
                 f" `{gold_needed}` gold in the process. As a result," 
-                f" `{acolyte_info['Name']}` gained {total_xp} exp!"))
+                f" `{acolyte_info['Name']}` gained {total_xp} exp!")
+            await interaction.edit_original_message(content=message, view=None)
             await acolyte.check_xp_increase(conn, ctx, total_xp)
             await player.give_gold(conn, gold_needed*-1)
             await player.give_resource(conn, mat, mat_needed*-1)
