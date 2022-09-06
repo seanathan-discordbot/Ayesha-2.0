@@ -42,15 +42,15 @@ class Casino(commands.Cog):
             if player.gold < wager:
                 raise Checks.NotEnoughGold(wager, player.gold)
 
-            msg = f"The coin landed on **{call}**!"
+            msg = lambda x : f"The coin landed on **{x}**!"
             if random.choice(["Heads", "Tails"]) == call:
                 await player.give_gold(conn, wager)
-                await ctx.respond(f"{msg} You made `{wager}` gold.")
+                await ctx.respond(f"{msg(call)} You made `{wager}` gold.")
             else:
                 await player.give_gold(conn, -wager)
                 call = "Tails" if call == "Heads" else "Heads"
                 await ctx.respond(
-                    f"{msg} You lost your `{wager}` gold wager.")
+                    f"{msg(call)} You lost your `{wager}` gold wager.")
 
     @commands.slash_command()
     @commands.check(Checks.is_player)
@@ -130,7 +130,8 @@ class Casino(commands.Cog):
             # Game is printed as an embed            
             display = discord.Embed(
                 title=f"Craps: {ctx.author.display_name}", color=Vars.ABLUE)
-            display.set_footer(text=ctx.author, icon_url=ctx.author.avatar.url)
+            display.set_footer(text=ctx.author, 
+                icon_url=ctx.author.display_avatar.url)
             display.add_field(
                 name=f"Press Shoot! to roll the die!", 
                 value=(f"Numbers to win: 7, 11\nNumbers to lose: 2, 3, 12"))

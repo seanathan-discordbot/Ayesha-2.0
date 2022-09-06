@@ -11,6 +11,7 @@ from discord.ui.item import Item
 
 from Utilities import Checks
 from Utilities.AyeshaBot import Ayesha
+from Utilities.config import ERROR_LOG_FILE
 
 class Error_Handler(commands.Cog):
     """Bot error handler."""
@@ -37,7 +38,8 @@ class Error_Handler(commands.Cog):
                 error.__class__, error, error.__traceback__, file=sys.stderr)
 
     @commands.Cog.listener()
-    async def on_application_command_error(self, ctx, error):
+    async def on_application_command_error(self, 
+            ctx : discord.ApplicationContext, error):
         """The error handler for the bot.
         
         Apparently any errors raised during the actual command body will
@@ -50,7 +52,8 @@ class Error_Handler(commands.Cog):
         # --- CHARACTER RELATED ---
         if isinstance(error, Checks.HasChar):
             message = (f"You already have a character.\nFor help, read the "
-                       f"`/tutorial` or go to the `/support` server.")
+                       f"`/tutorial` or go to the support server (found in "
+                       f"the `/help` command).")
             await ctx.respond(message)
             print_traceback = False
 
@@ -80,6 +83,49 @@ class Error_Handler(commands.Cog):
             message = ("You are not travelling at the moment. "
                         "Begin one with `/travel`!")
             await ctx.respond(message)
+            print_traceback = False
+
+        # --- ASSOCIATIONS ---
+        if isinstance(error, Checks.NotInAssociation):
+            if error.req is None:
+                message = (
+                    "You need to be in an association to use this "
+                    "command!\n Ask for an invitation to one or found your "
+                    "own with `/association create`!")
+            else:
+                message = (
+                    f"You need to be in a {error.req} to use this "
+                    f"command!\nAsk for an invitation to one or found "
+                    f"your own with `/association create`!")
+            await ctx.respond(message)
+            print_traceback = False
+
+        if isinstance(error, Checks.InAssociation):
+            message = "You are already in an association!"
+            await ctx.respond(message)
+            print_traceback = False
+
+        if isinstance(error, Checks.IncorrectAssociationRank):
+            message = (
+                f"You need to be an Association {error.rank} "
+                f"to use this command.")
+            await ctx.respond(message)
+            print_traceback = False
+
+        if isinstance(error, Checks.PlayerAlreadyChampion):
+            message = (
+                f"The player you have specified is already oen of your "
+                f"brotherhood's champions.")
+            await ctx.respond(message)
+            print_traceback = False
+
+        if isinstance(error, Checks.PlayerNotInSpecifiedAssociation):
+            message = (
+                f"This player is not in your {error.type}.")
+            await ctx.respond(message)
+            print_traceback = False
+
+        if isinstance(error, commands.CommandNotFound):
             print_traceback = False
 
         # --- CONCURRENCY ERROR ---
@@ -188,50 +234,6 @@ class Error_Handler(commands.Cog):
                 await ctx.respond(message)
                 print_traceback = False
 
-            # --- ASSOCIATIONS ---
-            if isinstance(error.original, Checks.NotInAssociation):
-                if error.original.req is None:
-                    message = (
-                        "You need to be in an association to use this "
-                        "command!\n Ask for an invitation to one or found your "
-                        "own with `/association create`!")
-                else:
-                    message = (
-                        f"You need to be in a {error.original.req} to use this "
-                        f"command!\nAsk for an invitation to one or found "
-                        f"your own with `/association create`!")
-                await ctx.respond(message)
-                print_traceback = False
-
-            if isinstance(error.original, Checks.InAssociation):
-                message = "You are already in an association!"
-                await ctx.respond(message)
-                print_traceback = False
-
-            if isinstance(error.original, Checks.IncorrectAssociationRank):
-                message = (
-                    f"You need to be an Association {error.original.rank} "
-                    f"to use this command.")
-                await ctx.respond(message)
-                print_traceback = False
-
-            if isinstance(error.original, Checks.PlayerAlreadyChampion):
-                message = (
-                    f"The player you have specified is already oen of your "
-                    f"brotherhood's champions.")
-                await ctx.respond(message)
-                print_traceback = False
-
-            if isinstance(
-                    error.original, Checks.PlayerNotInSpecifiedAssociation):
-                message = (
-                    f"This player is not in your {error.original.type}.")
-                await ctx.respond(message)
-                print_traceback = False
-
-            if isinstance(error.original, commands.CommandNotFound):
-                print_traceback = False
-
         # --- OFFICES ---
         if isinstance(error, Checks.NotMayor):
             message = (
@@ -255,8 +257,20 @@ class Error_Handler(commands.Cog):
             print_traceback = False
 
         if print_traceback:
-            traceback.print_exception(
-                error.__class__, error, error.__traceback__, file=sys.stderr)
+            error_context = (
+                f"----------------------------------\n"
+                f"COMMAND : {ctx.command.qualified_name}\n"
+                f"   USER : {ctx.author.id}\n"
+                f"  GUILD : {ctx.guild_id}\n"
+                f"OPTIONS : {ctx.selected_options}\n"
+                f"   OMIT : {ctx.unselected_options}\n"
+            )
+            with open(ERROR_LOG_FILE, "a") as error_log:
+                print(error_context, file=error_log)
+                traceback.print_exception(
+                    error.__class__, error, error.__traceback__, 
+                    file=error_log)
+                print("\n", file=error_log)
 
 def setup(bot):
     bot.add_cog(Error_Handler(bot))

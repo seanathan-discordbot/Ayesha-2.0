@@ -16,6 +16,7 @@ class Ayesha(commands.AutoShardedBot):
         self.daily_claimers = {}
         self.recent_voters = {}
         self.trading_players = {}
+        self.training_players = {}
 
         super().__init__(command_prefix = "%", case_insensitive = True)
 
@@ -44,10 +45,19 @@ class Ayesha(commands.AutoShardedBot):
 
         print("Ayesha is online.")
 
-    async def on_interaction(self, interaction):
+    async def on_interaction(self, interaction : discord.Interaction):
         if interaction.user.id in self.trading_players:
             return await interaction.response.send_message(
                 f"Finish your trade first.")
+
+        if interaction.user.id in self.training_players:
+            if self.training_players[interaction.user.id] != interaction.custom_id:
+                # NOTE: This entire operation exists solely to prevent this
+                #   message from being printed after the training goes through
+                #   i.e. this still printed when the player responded to the 
+                #   original command. The things I have to do...
+                return await interaction.response.send_message(
+                    f"Finish your operation first.")
 
         return await super().on_interaction(interaction)
 

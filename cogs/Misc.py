@@ -191,7 +191,7 @@ class Misc(commands.Cog):
             title=f"{ctx.author.display_name}'s Cooldowns",
             description="\n".join(cooldowns),
             color=Vars.ABLUE)
-        embed.set_thumbnail(url=ctx.author.avatar.url)
+        embed.set_thumbnail(url=ctx.author.display_avatar.url)
         embed.add_field(
             name="Adventure Status",
             value=adv_status)

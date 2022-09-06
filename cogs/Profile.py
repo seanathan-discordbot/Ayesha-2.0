@@ -49,7 +49,7 @@ class Profile(commands.Cog):
                 title=f"Character Information: {profile.char_name}",
                 color=Vars.ABLUE
             )
-            page1.set_thumbnail(url=player.avatar.url)
+            page1.set_thumbnail(url=player.display_avatar.url)
             page1.add_field(name="Experience",
                 value=(
                     f"Level: `{level}`\n"
@@ -76,7 +76,7 @@ class Profile(commands.Cog):
                 title=f"Combat Loadout: {profile.char_name}",
                 color=Vars.ABLUE
             )
-            page2.set_thumbnail(url=player.avatar.url)
+            page2.set_thumbnail(url=player.display_avatar.url)
             page2.add_field(name="General",
                 value=(
                     f"Attack: `{profile.get_attack()}`\n"
@@ -125,7 +125,7 @@ class Profile(commands.Cog):
                 title=f"Backpack: {profile.char_name}",
                 color=Vars.ABLUE
             )
-            page3.set_thumbnail(url=player.avatar.url)
+            page3.set_thumbnail(url=player.display_avatar.url)
             for resource in Vars.MATERIALS:
                 page3.add_field(name=resource, value=pack[resource.lower()])
 

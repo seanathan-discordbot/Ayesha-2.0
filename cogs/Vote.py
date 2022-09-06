@@ -37,6 +37,7 @@ class Vote_Handler:
 
     async def bot_list_stats(self):
         l = f"https://discordbotlist.com/api/v1/bots/{self.bot.user.id}/stats"
+        t = f"https://top.gg/api/bots/{self.bot.user.id}/stats"
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
             async with aiohttp.ClientSession() as client:
@@ -48,9 +49,12 @@ class Vote_Handler:
                         },
                         headers = {"Authorization" : config.DBL_TOKEN}
                         )
+                    await client.post(url=t,
+                        data = {"server_count" : len(self.bot.guilds)},
+                        headers = {"Authorization" : config.TOPGG_TOKEN})
                 # print(resp.status)
 
-            await asyncio.sleep(3600 * 24)
+            await asyncio.sleep(1800)
 
     async def get_handler(self, request):
         return web.Response(text='Idk what I\'m doing\n-Aramythia')
@@ -120,6 +124,6 @@ class Vote(commands.Cog):
         self.update_stats.cancel()
 
 def setup(client):
-    client.dbl = dbl.DBLClient(client, config.TOPGG_TOKEN, autopost=True)
+    # client.dbl = dbl.DBLClient(client, config.TOPGG_TOKEN, autopost=True)
 
     client.add_cog(Vote(client))
