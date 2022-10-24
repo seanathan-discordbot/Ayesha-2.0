@@ -208,14 +208,6 @@ class Player:
 
             await ctx.respond(embed=embed)
 
-        # Check xp for the equipped acolytes
-        a_xp = int(xp / 10)
-        if self.acolyte1.acolyte_name is not None:
-            await self.acolyte1.check_xp_increase(conn, ctx, a_xp)
-
-        if self.acolyte2.acolyte_name is not None:
-            await self.acolyte2.check_xp_increase(conn, ctx, a_xp)
-
     async def set_char_name(self, conn : asyncpg.Connection, name : str):
         """Sets the player's character name. Limit 32 characters."""
         if len(name) > 32:
