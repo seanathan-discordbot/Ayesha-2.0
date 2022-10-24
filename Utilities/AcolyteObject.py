@@ -1,12 +1,8 @@
 import discord
 
 import asyncpg
-import coolname
 
-import json
-import random
-
-from Utilities import Checks, Vars
+from Utilities import Checks
 
 class Acolyte:
     """An acolyte object. Changing the object attributes are not permanent,
