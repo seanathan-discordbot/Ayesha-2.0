@@ -57,30 +57,20 @@ class Acolyte:
             self.acolyte_id = record['acolyte_id']
             self.owner_id = record['user_id']
             self.acolyte_name = record['acolyte_name']
-            self.xp = record['xp']
-            self.level = self.get_level()
-            self.dupes = 10 if record['duplicate'] > 10 else record['duplicate']
-            # Having more than 10 dupes has no gameplay effect
         else:
             self.is_empty = True
             self.gen_dict = {
                 'Name' : None,
                 'Attack' : 0,
-                'Scale' : 0,
                 'Crit' : 0,
                 'HP' : 0,
-                'Rarity' : 0,
                 'Effect' : None,
-                'Mat' : None,
                 'Story' : None,
                 'Image' : None
             }
             self.acolyte_id = None
             self.owner_id = None
             self.acolyte_name = None
-            self.xp = 0
-            self.level = 0
-            self.dupes = 0
 
     @staticmethod
     async def get_acolyte_by_name(name : str, conn : asyncpg.Connection) -> dict:
