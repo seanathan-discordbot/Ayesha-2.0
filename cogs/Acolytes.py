@@ -56,9 +56,7 @@ class Acolytes(commands.Cog):
             #add whether acolyte is equipped or not. 
             if acolyte_equipped(player,inv[start].acolyte_id):
                 embed.add_field(
-                    name=( 
-                        f"({info['Rarity']}\u2B50) {info['Name']}: "
-                        f"`{inv[start].acolyte_id}` [EQUIPPED]"),
+                    name=f"{info['Name']}: `{inv[start].acolyte_id}` [EQUIPPED]",
                     value=(
                         f"**Attack:** {inv[start].get_attack()}, "
                         f"**Crit:** {inv[start].get_crit()}\n"
@@ -66,9 +64,7 @@ class Acolytes(commands.Cog):
                     inline=False)
             else:
                 embed.add_field(
-                    name=( 
-                        f"({info['Rarity']}\u2B50) {info['Name']}: "
-                        f"`{inv[start].acolyte_id}`"),
+                    name=f"{info['Name']}: `{inv[start].acolyte_id}`",
                     value=(
                         f"**Attack:** {inv[start].get_attack()}, "
                         f"**Crit:** {inv[start].get_crit()}\n"
