@@ -56,45 +56,34 @@ class Gacha(commands.Cog):
         # Get a list of all acolytes sorted by rarity
         psql = """
                 SELECT name
-                FROM acolyte_list
-                WHERE rarity = $1; 
+                FROM acolyte_list; 
                 """
         async with self.bot.db.acquire() as conn:
-            self.rarities = {
-                rarity : [
-                    record['name'] for record in await conn.fetch(psql, rarity)]
-                for rarity in range(1, 6)}
+            self.rarities = await conn.fetch(psql)
 
         print("Gacha is ready.")
 
     # INVISIBLE
     async def roll_acolyte(self, conn : asyncpg.Connection, 
-            player : PlayerObject.Player, 
-            rarity : int) -> discord.Embed:
-        """Creates a random acolyte of the specified rarity.
+            player : PlayerObject.Player) -> discord.Embed:
+        """Creates a random acolyte.
         Returns a tuple containing an informational string (for Dropdown Menu)
         and an embed listing the acolyte's information.
         """
-        acolyte_name = random.choice(self.rarities[rarity])
+        acolyte_name = random.choice(self.rarities)
         acolyte = await AcolyteObject.create_acolyte(
             conn, player.disc_id, acolyte_name)
 
         embed=discord.Embed(
-            title=(
-                f"{acolyte.acolyte_name} ({acolyte.gen_dict['Rarity']}⭐) has "
-                f"entered the tavern!"),
+            title=f"{acolyte.acolyte_name} has entered the tavern!",
             color=Vars.ABLUE)
         if acolyte.gen_dict['Image'] is not None:
             embed.set_thumbnail(url=acolyte.gen_dict['Image'])
-        embed.add_field(name="Attack",
-            value=f"{acolyte.gen_dict['Attack']} + {acolyte.gen_dict['Scale']}")
+        embed.add_field(name="Attack", value=f"{acolyte.gen_dict['Attack']}")
         embed.add_field(name="Crit", value = acolyte.gen_dict['Crit'])
         embed.add_field(name="HP", value=acolyte.gen_dict['HP'])
-        embed.add_field(name="Effect",
-            value=(
-                f"{acolyte.gen_dict['Effect']}\n {acolyte.acolyte_name} uses `"
-                f"{acolyte.gen_dict['Mat']}` to level up."))
-        return (f"{rarity}⭐ Acolyte: {acolyte_name}", embed)
+        embed.add_field(name="Effect", value=f"{acolyte.gen_dict['Effect']}")
+        return (f"Acolyte: {acolyte_name}", embed)
 
     # COMMANDS
     @commands.slash_command()
@@ -116,7 +105,7 @@ class Gacha(commands.Cog):
             # This essentially calculates the results (type and rarity)
             r_types = random.choices(
                 population=["weapon", "acolyte"],
-                weights=[75, 25],
+                weights=[99, 1],
                 k=pulls)
             r_rarities = random.choices(
                 population=range(1,6),
@@ -135,16 +124,15 @@ class Gacha(commands.Cog):
             # result_list[SUMMON NUMBER][0 IF STR ELSE 1]
             for i in range(pulls):
                 if player.pity_counter >= 79:
-                    # Give 5 star acolyte
-                    result_list.append(await self.roll_acolyte(conn, player, 5))
+                    # Give some acolyte
+                    result_list.append(await self.roll_acolyte(conn, player))
                     player.pity_counter = 0
                     continue
 
                 # Create a random new weapon or acolyte
                 # Write an embed for this and add it to the list
                 if r_types[i] == "acolyte":
-                    result_list.append(await self.roll_acolyte(
-                        conn, player, r_rarities[i]))
+                    result_list.append(await self.roll_acolyte(conn, player))
 
                 else:
                     weapon = await ItemObject.create_weapon(

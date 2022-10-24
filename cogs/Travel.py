@@ -7,7 +7,7 @@ from discord.ext.commands import BucketType, cooldown
 import random
 import time
 
-from Utilities import AcolyteObject, AssociationObject, Checks, PlayerObject, ItemObject, Vars
+from Utilities import AssociationObject, Checks, PlayerObject, ItemObject, Vars
 from Utilities.Analytics import stringify_gains
 from Utilities.AyeshaBot import Ayesha
 from Utilities.ConfirmationMenu import LockedConfirmationMenu
@@ -23,18 +23,6 @@ class Travel(commands.Cog):
     # EVENTS
     @commands.Cog.listener()
     async def on_ready(self):
-        # Get a list of all acolytes sorted by rarity - same code as in Gacha
-        psql = """
-                SELECT name
-                FROM acolyte_list
-                WHERE rarity = $1; 
-                """
-        async with self.bot.db.acquire() as conn:
-            self.rarities = {
-                rarity : [
-                    record['name'] for record in await conn.fetch(psql, rarity)]
-                for rarity in range(1, 6)}
-
         print("Travel is ready.")
 
     # AUXILIARY FUNCTIONS
@@ -318,18 +306,6 @@ class Travel(commands.Cog):
                         resource = "cacao"
 
                 e_message += f"You gained `{mats}` {resource}.\n"
-                # Traveler 50% chance to get acolyte on long expeditions
-                right_occ = player.occupation == "Traveler"
-                a = hours >= 72 and random.randint(1, 2) == 1
-                b = hours >= 144 and random.randint(1, 2) == 1
-                if right_occ and (a or b):
-                    rarity = random.choices(range(1,6), (1, 60, 35, 3, 1))[0]
-                    name = random.choice(self.rarities[rarity])
-                    acolyte = await AcolyteObject.create_acolyte(
-                        conn, player.disc_id, name)
-                    e_message += (
-                        f"During your expedition you befriended a new acolyte: "
-                        f"{acolyte.acolyte_name} ({rarity}⭐)")
                 await player.give_resource(conn, resource, mats)
                 await player.give_gravitas(conn, gravitas)
                 await player.set_adventure(conn, None, None)

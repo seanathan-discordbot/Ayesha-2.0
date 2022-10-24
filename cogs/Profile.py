@@ -109,16 +109,10 @@ class Profile(commands.Cog):
                 ),
                 inline=False)
             page2.add_field(name="Acolyte",
-                value=(
-                    f"{profile.acolyte1.acolyte_name} (`"
-                    f"{profile.acolyte1.gen_dict['Rarity']}⭐`)"
-                ),
+                value=profile.acolyte1.acolyte_name,
                 inline=True)
             page2.add_field(name="Acolyte",
-                value=(
-                    f"{profile.acolyte2.acolyte_name} (`"
-                    f"{profile.acolyte2.gen_dict['Rarity']}⭐`)"
-                ),
+                value=profile.acolyte2.acolyte_name,
                 inline=True)
 
             page3 = discord.Embed(            

@@ -59,22 +59,19 @@ class Acolytes(commands.Cog):
                     name=( 
                         f"({info['Rarity']}\u2B50) {info['Name']}: "
                         f"`{inv[start].acolyte_id}` [EQUIPPED]"),
-                    value=( 
-                        f"**Level:** {inv[start].level}, " 
-                        f"**Attack:** {inv[start].get_attack()}, **Crit:** "
-                        f"{inv[start].get_crit()}, **Dupes:** "
-                        f"{inv[start].dupes}\n**Effect:** {info['Effect']}"),
+                    value=(
+                        f"**Attack:** {inv[start].get_attack()}, "
+                        f"**Crit:** {inv[start].get_crit()}\n"
+                        f"**Effect:** {info['Effect']}"),
                     inline=False)
             else:
                 embed.add_field(
                     name=( 
                         f"({info['Rarity']}\u2B50) {info['Name']}: "
                         f"`{inv[start].acolyte_id}`"),
-                    value=( 
-                        f"**Level:** {inv[start].level}, " 
+                    value=(
                         f"**Attack:** {inv[start].get_attack()}, "
-                        f"**Crit:** {inv[start].get_crit()}, " 
-                        f"**Dupes:** {inv[start].dupes}\n"
+                        f"**Crit:** {inv[start].get_crit()}\n"
                         f"**Effect:** {info['Effect']}"),
                     inline=False)
             iteration += 1
@@ -94,27 +91,20 @@ class Acolytes(commands.Cog):
                 psql = """
                         SELECT name
                         FROM acolyte_list
-                        WHERE rarity = $1
                         ORDER BY name;
                         """
-                results = [ # Gets list of acolytes divided by rarity
-                    await conn.fetch(psql, rarity) 
-                    for rarity in range(1, 6)]
+                acolytes = await conn.fetch(psql)
 
-            embeds = []
-            for i, acolytes in enumerate(results[::-1]): # Desc rarity order
-                rarity = 5 - i
-                acolyte_names = [
-                    f"({rarity}⭐) {record['name']}" for record in acolytes]
-                embed = discord.Embed(
-                    title="Attainable Acolytes",
-                    description="\n".join(acolyte_names),
-                    color=Vars.ABLUE)
-                embed.set_footer(text=f"{len(acolyte_names)} acolytes.")
-                embeds.append(embed)
-        
-            paginator = pages.Paginator(pages=embeds, timeout=30)
-            return await paginator.respond(ctx.interaction)
+            acolyte_names = [f"{record['name']}" for record in acolytes]
+            embed = discord.Embed(
+                title="Attainable Acolytes",
+                description="\n".join(acolyte_names),
+                color=Vars.ABLUE)
+            embed.set_footer(text=f"{len(acolyte_names)} acolytes.")
+            return await ctx.respond(embed=embed)
+
+            # paginator = pages.Paginator(pages=embeds, timeout=30)
+            # return await paginator.respond(ctx.interaction)
 
         # Otherwise get acolyte asked for
         if name.lower() == "prxrdr":
@@ -144,14 +134,9 @@ class Acolytes(commands.Cog):
             inline=False)
         embed.add_field(name="Stats",
             value=(
-                f"Attack: {acolyte_info['Attack']} + {acolyte_info['Scale']}"
-                f"/lvl \n"
+                f"Attack: {acolyte_info['Attack']}\n"
                 f"Crit: {acolyte_info['Crit']} \n"
                 f"HP: {acolyte_info['HP']}"))
-        embed.add_field(name="Details",
-            value=(
-                f"Rarity: {acolyte_info['Rarity']}\u2B50\n"
-                f"Upgrade Material: {acolyte_info['Mat'].title()}"))
         await ctx.respond(embed=embed)
 
     @commands.slash_command()
@@ -160,35 +145,28 @@ class Acolytes(commands.Cog):
             order : Option(str,
                 description="Sorts your tavern in a specific way",
                 required=False,
-                default="Rarity",
+                default="Name",
                 choices=[
-                    OptionChoice("Order by Experience", "xp"),
-                    OptionChoice("Order by Rarity", "Rarity"),
                     OptionChoice("Order by Attack", "Attack"),
                     OptionChoice("Order by Crit", "Crit"),
-                    OptionChoice("Order by Duplicates", "Dupe")
                 ])):
         """View a list of all your owned acolytes."""
         async with self.bot.db.acquire() as conn:
             acolytes= await get_all_acolytes(conn, ctx.author.id)
 
-            if order == "xp":
-                pass
-            elif order == "Attack":
+            if order == "Attack":
                 acolytes.sort(key=lambda a : a.get_attack(), reverse=True)
             elif order == "Crit":
                 acolytes.sort(key=lambda a : a.get_crit(), reverse=True)
-            elif order == "Dupe":
-                acolytes.sort(key=lambda a : a.dupes, reverse=True)
-            else: # Order by rarity by default
-                acolytes.sort(key=lambda a : a.gen_dict["Rarity"], reverse=True)
+            else: # Sort by name by default
+                acolytes.sort(key=lambda a : a.acolyte_name)
 
             player=await PlayerObject.get_player_by_id(conn, ctx.author.id)
             embeds = []
             for i in range(0, len(acolytes), 5): #list 5 entries at a time
                 embeds.append(self.write(i, acolytes, player))
             if len(embeds) == 0:
-                await ctx.reply('Your tavern is empty!')
+                await ctx.respond('Your tavern is empty!')
             elif len(embeds) == 1:
                 await ctx.respond(embed=embeds[0])
             else:
@@ -222,80 +200,6 @@ class Acolytes(commands.Cog):
                 await ctx.respond(
                     f"Equipped acolyte: {player.acolyte2.acolyte_name}")
 
-    @commands.slash_command()
-    @commands.check(Checks.is_player)
-    async def train(self, ctx : discord.ApplicationContext, 
-            instance_id : Option(int, description="The acolyte's ID"), 
-            iterations : Option(int,
-                description="The amount of training sessions",
-                default=1,
-                required=False,
-                min_value=1,
-                max_value=100)):
-        """Train your acolyte, spending gold and resources for xp."""
-        async with self.bot.db.acquire() as conn:
-            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
-            if await player.is_acolyte_owner(conn,instance_id)==False:
-                raise Checks.NotAcolyteOwner
-            acolyte=await AcolyteObject.get_acolyte_by_id(conn,instance_id)
-            acolyte_info=acolyte.gen_dict
-            #you can not have an acolyte over level 100
-            if acolyte.level >= 100:
-                return await ctx.respond(
-                    f"{acolyte_info['Name']} is already at maximum level!")
-           
-            mat=acolyte_info['Mat']
-            # Calculate resource expenditure
-            gold_needed=300*iterations
-            mat_needed=75*iterations
-            mat_dict=await player.get_backpack(conn)
-            player_mat=mat_dict[mat]
-            total_xp=5000*iterations
-            max_iterations = int(min(player.gold / 300, player_mat / 75))
-
-            # Allow player to confirm the training and resource expenditure
-            # Place player in trader dict to ensure they don't exploit the
-            #   time window given to spend their resources elsewhere.
-            training_key = str(random.random())
-            self.bot.training_players[ctx.author.id] = training_key
-            view = LockedConfirmationMenu(ctx.author, training_key, timeout=15.0)
-            message = (
-                f"This training will cost `{gold_needed}` gold and "
-                f"`{mat_needed}` {mat}. **{acolyte.acolyte_name}** will gain "
-                f"`{total_xp}` xp.\n"
-                f"You currently have `{player.gold}` gold and `{player_mat}` "
-                f"{mat}. Proceed with the training?\n"
-                f"You can perform up to `{max_iterations}` training "
-                f"iterations with your current resources."
-            )
-            interaction = await ctx.respond(message, view=view)
-            interaction.custom_id = training_key
-            await view.wait()
-            self.bot.training_players.pop(ctx.author.id)
-            if view.value is None:
-                return await interaction.edit_original_message(
-                    content="Timed out.", view=None)
-            elif not view.value:
-                return await interaction.edit_original_message(
-                    content="You cancelled the training.", view=None)
-
-            # Make changes to acolytes
-            if player_mat < mat_needed:
-                await interaction.edit_original_message(view=None)
-                raise Checks.NotEnoughResources(mat, mat_needed, player_mat)
-            if player.gold < gold_needed:
-                await interaction.edit_original_message(view=None)
-                raise Checks.NotEnoughGold(gold_needed, player.gold)
-
-            message = (
-                f"You trained with `{acolyte_info['Name']}`, " 
-                f"consuming `{mat_needed}` {acolyte_info['Mat']} and" 
-                f" `{gold_needed}` gold in the process. As a result," 
-                f" `{acolyte_info['Name']}` gained {total_xp} exp!")
-            await interaction.edit_original_message(content=message, view=None)
-            await acolyte.check_xp_increase(conn, ctx, total_xp)
-            await player.give_gold(conn, gold_needed*-1)
-            await player.give_resource(conn, mat, mat_needed*-1)
 
 def setup(bot):
     bot.add_cog(Acolytes(bot))
