@@ -37,24 +37,6 @@ class Acolyte:
         The acolyte's level
     dupes : int
         The amount of duplicates this acolyte's owner has
-
-    Methods
-    -------
-    get_level()
-        Calculates an acolyte's level using its current xp value
-    check_xp_increase()
-        Increase the acolyte's xp by the given amount and checks for levelups.
-    get_attack()
-        Calculates and returns the acolyte's attack stat
-    get_crit()
-        Calculates and returns the acolyte's crit stat
-    get_hp()
-        Calculates and returns the acolyte's HP stat
-    await get_acolyte_by_name(str)
-        Retrieves the information of an acolyte with a specific name from
-        the json file containing all acolytes and returns it as a dict
-    await add_duplicate()
-        Increases the acolyte's dupes value by 1
     """
     def __init__(self, record : asyncpg.Record = None, base_info : dict = None):
         """
@@ -108,8 +90,7 @@ class Acolyte:
         """
         psql = """
                 SELECT 
-                    attack, scale, crit, hp, rarity, effect, material, story, 
-                    image
+                    attack, crit, hp, effect, story, image
                 FROM acolyte_list
                 WHERE name = $1;
                 """
@@ -117,117 +98,83 @@ class Acolyte:
         return {
             "Name" : name,
             "Attack" : acolyte['attack'],
-            "Scale" : round(acolyte['scale'], 2),
             "Crit" : acolyte['crit'],
             "HP" : acolyte['hp'],
-            "Rarity" : acolyte['rarity'],
             "Effect" : acolyte['effect'],
-            "Mat" : acolyte['material'],
             "Story" : acolyte['story'],
             "Image" : acolyte['image']
         }
 
-    def get_level(self) -> int:
-        """Returns the acolyte's level."""
-        def f(x):
-            return int(300 * (x**2))
+    # def get_level(self) -> int:
+    #     """Returns the acolyte's level."""
+    #     def f(x):
+    #         return int(300 * (x**2))
 
-        level = 0
-        while (self.xp >= f(level)):
-            level += 1
-        level -= 1
+    #     level = 0
+    #     while (self.xp >= f(level)):
+    #         level += 1
+    #     level -= 1
 
-        if level > 100:
-            level = 100
+    #     if level > 100:
+    #         level = 100
 
-        return level
+    #     return level
 
-    async def check_xp_increase(self, conn : asyncpg.Connection, 
-            ctx : discord.ApplicationContext, xp : int):
-        """Increases the acolyte's xp by the given amount.
-        If the xp increase results in a level-up, prints this out to Discord.        
-        """
-        if self.is_empty:
-            raise Checks.EmptyObject
+    # async def check_xp_increase(self, conn : asyncpg.Connection, 
+    #         ctx : discord.ApplicationContext, xp : int):
+    #     """Increases the acolyte's xp by the given amount.
+    #     If the xp increase results in a level-up, prints this out to Discord.        
+    #     """
+    #     if self.is_empty:
+    #         raise Checks.EmptyObject
 
-        old_level = self.level
-        self.xp += xp
-        psql = """
-                UPDATE acolytes
-                SET xp = xp + $1
-                WHERE acolyte_id = $2;
-                """
-        await conn.execute(psql, xp, self.acolyte_id)
-        self.level = self.get_level()
-        if self.level > old_level:
-            await ctx.respond(
-                f"{self.acolyte_name} levelled up to level {self.level}!")
+    #     old_level = self.level
+    #     self.xp += xp
+    #     psql = """
+    #             UPDATE acolytes
+    #             SET xp = xp + $1
+    #             WHERE acolyte_id = $2;
+    #             """
+    #     await conn.execute(psql, xp, self.acolyte_id)
+    #     self.level = self.get_level()
+    #     if self.level > old_level:
+    #         await ctx.respond(
+    #             f"{self.acolyte_name} levelled up to level {self.level}!")
 
 
     def get_attack(self) -> int:
         """Returns the acolyte's attack stat."""
-        # Duplicates give bonuses depending on acolyte rarity
-        if self.gen_dict['Rarity'] == 5:
-            attack = self.dupes * 3
-        elif self.gen_dict['Rarity'] == 4:
-            attack = self.dupes * 2.5
-        else:
-            attack = self.dupes * 2
-
-        attack += self.gen_dict['Attack']
-        attack += self.level * self.gen_dict['Scale']
-
-        return int(attack)
+        return int(self.gen_dict['Attack'])
 
     def get_crit(self) -> int:
         """Returns the acolyte's crit stat."""
-        crit = self.gen_dict['Crit']
-        
-        # Duplicates give bonuses depending on acolyte rarity        
-        if self.gen_dict['Rarity'] == 5:
-            crit += self.dupes
-        elif self.gen_dict['Rarity'] == 4:
-            crit += self.dupes * .5
-        else:
-            crit += self.dupes * .2
-
-        return int(crit)
+        return int(self.gen_dict['Crit'])
 
     def get_hp(self) -> int:
         """Returns the acolyte's HP stat."""
-        hp = self.gen_dict['HP']
+        return int(self.gen_dict['HP'])
 
-        # Duplicates give bonuses depending on acolyte rarity        
-        if self.gen_dict['Rarity'] == 5:
-            hp += self.dupes * 10
-        elif self.gen_dict['Rarity'] == 4:
-            hp += self.dupes * 7.5
-        else:
-            hp += self.dupes * 5
+    # async def add_duplicate(self, conn : asyncpg.Connection):
+    #     """Increments the acolyte's duplicate value by 1"""
+    #     if self.is_empty:
+    #         raise Checks.EmptyObject   
 
-        return int(hp)
+    #     self.dupes += 1
 
-    async def add_duplicate(self, conn : asyncpg.Connection):
-        """Increments the acolyte's duplicate value by 1"""
-        if self.is_empty:
-            raise Checks.EmptyObject   
+    #     psql = """
+    #             UPDATE acolytes
+    #             SET duplicate = duplicate + 1
+    #             WHERE acolyte_id = $1
+    #             """
 
-        self.dupes += 1
-
-        psql = """
-                UPDATE acolytes
-                SET duplicate = duplicate + 1
-                WHERE acolyte_id = $1
-                """
-
-        await conn.execute(psql, self.acolyte_id)
+    #     await conn.execute(psql, self.acolyte_id)
 
 
 async def get_acolyte_by_id(conn : asyncpg.Connection, 
         acolyte_id : int) -> Acolyte:
     """Return an acolyte object of the acolyte with the given ID."""
     psql = """
-            SELECT acolyte_id, user_id, acolyte_name, xp, duplicate
+            SELECT acolyte_id, user_id, acolyte_name
             FROM acolytes
             WHERE acolyte_id = $1;
             """
@@ -252,12 +199,8 @@ async def create_acolyte(conn : asyncpg.Connection, owner_id : int,
             WHERE user_id = $1 AND acolyte_name = $2;
             """
 
-    acolyte_id = await conn.fetchval(psql, owner_id, acolyte)
-
-    if acolyte_id is not None: # Then increment duplicate count
-        aco_obj = await get_acolyte_by_id(conn, acolyte_id)
-        await aco_obj.add_duplicate(conn)
-        return aco_obj
+    if await conn.fetchval(psql, owner_id, acolyte) is not None:
+        raise Checks.DuplicateAcolyte
 
     else: # Then create a new acolyte and add it to their tavern
         psql = """

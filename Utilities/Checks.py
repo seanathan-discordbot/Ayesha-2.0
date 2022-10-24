@@ -148,6 +148,10 @@ class NonexistentPlayer(Exception):
 class NotAdmin(Exception):
     pass
 
+class DuplicateAcolyte(Exception):
+    pass
+
+
 # --- NOW FOR THE ACTUAL CHECKS :) ---
 
 async def not_player(ctx):
