@@ -95,43 +95,6 @@ class Acolyte:
             "Image" : acolyte['image']
         }
 
-    # def get_level(self) -> int:
-    #     """Returns the acolyte's level."""
-    #     def f(x):
-    #         return int(300 * (x**2))
-
-    #     level = 0
-    #     while (self.xp >= f(level)):
-    #         level += 1
-    #     level -= 1
-
-    #     if level > 100:
-    #         level = 100
-
-    #     return level
-
-    # async def check_xp_increase(self, conn : asyncpg.Connection, 
-    #         ctx : discord.ApplicationContext, xp : int):
-    #     """Increases the acolyte's xp by the given amount.
-    #     If the xp increase results in a level-up, prints this out to Discord.        
-    #     """
-    #     if self.is_empty:
-    #         raise Checks.EmptyObject
-
-    #     old_level = self.level
-    #     self.xp += xp
-    #     psql = """
-    #             UPDATE acolytes
-    #             SET xp = xp + $1
-    #             WHERE acolyte_id = $2;
-    #             """
-    #     await conn.execute(psql, xp, self.acolyte_id)
-    #     self.level = self.get_level()
-    #     if self.level > old_level:
-    #         await ctx.respond(
-    #             f"{self.acolyte_name} levelled up to level {self.level}!")
-
-
     def get_attack(self) -> int:
         """Returns the acolyte's attack stat."""
         return int(self.gen_dict['Attack'])
@@ -143,21 +106,6 @@ class Acolyte:
     def get_hp(self) -> int:
         """Returns the acolyte's HP stat."""
         return int(self.gen_dict['HP'])
-
-    # async def add_duplicate(self, conn : asyncpg.Connection):
-    #     """Increments the acolyte's duplicate value by 1"""
-    #     if self.is_empty:
-    #         raise Checks.EmptyObject   
-
-    #     self.dupes += 1
-
-    #     psql = """
-    #             UPDATE acolytes
-    #             SET duplicate = duplicate + 1
-    #             WHERE acolyte_id = $1
-    #             """
-
-    #     await conn.execute(psql, self.acolyte_id)
 
 
 async def get_acolyte_by_id(conn : asyncpg.Connection, 
