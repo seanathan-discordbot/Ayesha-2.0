@@ -332,10 +332,16 @@ class Items(commands.Cog):
             item_id : Option(int, 
                 description="The ID of the item you want to sell",
                 required=False),
-            rarity : Option(str,
-                description="The rarity of the items you want to sell",
-                choices=[OptionChoice(name=r) for r in Vars.RARITIES.keys()],
-                required=False)
+            attack : Option(int,
+                description="Sell all weapons with an ATK stat below this one",
+                required=False,
+                min_value=10
+            ),
+            crit : Option(int,
+                description="Sell all weapons with a CRIT stat below this one",
+                required=False,
+                min_value=0
+            )
             ):
         """Sell an item (pass ID), or sell multiple items below a threshold."""
         async with self.bot.db.acquire() as conn:
@@ -407,37 +413,37 @@ class Items(commands.Cog):
                     f"You sold your `{item_id}`: {item.name} and made "
                     f"{gold_gain_str}.\n{print_tax}"))
 
-            elif rarity is not None: 
-                psql = """
+            elif attack is not None or crit is not None:
+                psql = f"""
                         WITH deleted AS (
                             DELETE FROM items
                             WHERE user_id = $1 AND item_id NOT IN ($2)
-                                AND rarity = $3
+                                {f"AND attack < {attack}"
+                                    if attack is not None else ""}
+                                {f"AND crit < {crit}"
+                                    if crit is not None else ""}
                             RETURNING item_id
                         )
                         SELECT COUNT(*)
                         FROM deleted;
                         """
-                # This is an enormous optimization from the old version :)
                 amount_sold = await conn.fetchval(psql, player.disc_id, 
-                    player.equipped_item.weapon_id, rarity)
+                    player.equipped_item.weapon_id)
 
                 if amount_sold == 0:
                     return await ctx.respond(
-                        "You have no items of this rarity to sell!")
+                        "You have no items of this quality to sell!")
 
-                subtotal = random.randint(a=Vars.RARITIES[rarity]['low_gold'], 
-                    b=Vars.RARITIES[rarity]['high_gold'])
-                subtotal *= amount_sold
+                subtotal = random.randint(a=500*amount_sold, b=3000*amount_sold)
                 sale = await Transaction.create_sale(conn, player, subtotal)
                 print_tax = await sale.log_transaction(conn, "sale")
                 gold_gain_str = stringify_gains(
                     "gold", sale.subtotal, sale.bonus_list)
                 await ctx.respond((
-                    f"You sold all {amount_sold} of your {rarity.lower()} "
-                    f"items and made {gold_gain_str}.\n{print_tax}"))
+                    f"You sold all {amount_sold} of your weapons of this "
+                    f"quality and made {gold_gain_str}.\n{print_tax}"))
 
-            else: # Then they passed nothing bruh
+            else: # Then they passed nothing
                 await ctx.respond("You didn't pass anything to sell.")
 
     @commands.slash_command()
