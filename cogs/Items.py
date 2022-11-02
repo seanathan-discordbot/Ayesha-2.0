@@ -403,7 +403,7 @@ class Items(commands.Cog):
                 item = await ItemObject.get_weapon_by_id(conn, item_id)
 
                 # Make the sale
-                gold = random.randint(a=500, b=3000)
+                gold = random.randint(500, 3000)
                 sale = await Transaction.create_sale(conn, player, gold)
                 print_tax = await sale.log_transaction(conn, "sale")
                 await item.destroy(conn)
