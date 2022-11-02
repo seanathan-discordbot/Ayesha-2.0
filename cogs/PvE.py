@@ -26,63 +26,47 @@ class PvE(commands.Cog):
 
     # AUXILIARY FUNCTIONS
     def level_to_rewards(self, level):
-        """Returns the rarity of weapon/armor based on the level the player beat
+        """Returns the rarity of armor/accessory based on the level the player beat
         Dict: weapon, armor
         """
         if level < 2:
-            weapon = "Common"
             armor = "Cloth"
             accessory = random.choice(["Wood", "Glass", "Copper"])
         elif level < 5:
-            weapon = "Common"
             armor = "Leather"
             accessory = random.choice(["Glass", "Copper", "Jade"])
         elif level < 9:
-            weapon = "Common"
             armor = "Gambeson"
             accessory = random.choice(["Copper", "Jade", "Pearl"])
         elif level == 9:
-            weapon = "Uncommon"
             armor = "Bearskin"
             accessory = random.choice(["Copper", "Jade", "Pearl"])
         elif level == 13:
-            weapon = "Uncommon"
             armor = "Wolfskin"
             accessory = random.choice(["Pearl", "Aquamarine", "Sappire"])
         elif level < 15:
-            weapon = "Uncommon"
             armor = "Bronze"
             accessory = "Sapphire"
         elif level < 18:
-            weapon = "Rare"
             armor = "Ceramic Plate"
             accessory = random.choice(["Sapphire", "Amethyst"])
         elif level < 21:
-            weapon = "Rare"
             armor = "Chainmail"
             accessory = random.choice(["Sapphire", "Amethyst", "Ruby"])
         elif level < 25:
-            weapon = "Rare"
             armor = "Iron"
             accessory = random.choice(["Ruby", "Garnet"])
         elif level < 40:
-            weapon = "Epic"
             armor = "Steel"
             accessory = random.choice(["Ruby", "Garnet", "Diamond"])
         elif level < 50:
-            weapon = "Epic"
             armor = random.choice(["Steel", "Mysterious"])
             accessory = random.choice(["Garnet", "Diamond", "Emerald"])
         else:
-            weapon = "Legendary"
             armor = random.choice(["Mysterious", "Dragonscale"])
             accessory = random.choice(["Emerald", "Black Opal"])
 
-        return {
-            "weapon" : weapon,
-            "armor" : armor,
-            "accessory" : accessory
-        }
+        return { "armor" : armor, "accessory" : accessory }
 
     # COMMANDS
     @commands.slash_command()
@@ -228,8 +212,19 @@ class PvE(commands.Cog):
                 # Possibly get weapons + armor
                 item_rarities = self.level_to_rewards(level)
                 if random.randint(1, 10) == 1 or player.type == "Merchant":
-                    weapon = await ItemObject.create_weapon(
-                        conn, author.disc_id, item_rarities["weapon"])
+                    if level <= 30:
+                        weapon = await ItemObject.create_weapon(
+                            conn, author.disc_id)
+                    elif level <= 50:
+                        attack = random.randint(120, 140)
+                        crit = random.randint(10, 20)
+                        weapon = await ItemObject.create_weapon(
+                            conn, author.disc_id, attack, crit)
+                    else:
+                        attack = random.randint(130, 150)
+                        crit = random.randint(15, 20)
+                        weapon = await ItemObject.create_weapon(
+                            conn, author.disc_id, attack, crit)
 
                 if random.randint(1, 15) == 1:
                     armor = await ItemObject.create_armor(
@@ -303,7 +298,7 @@ class PvE(commands.Cog):
                     name="While fighting you found a weapon!",
                     value=(
                         f"`{weapon.weapon_id}`: **{weapon.name}**, a  "
-                        f"{weapon.rarity} {weapon.type} with {weapon.attack} "
+                        f"{weapon.type} with {weapon.attack} "
                         f"ATK and {weapon.crit} crit."),
                     inline=False)
             if armor is not None:
