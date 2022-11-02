@@ -403,7 +403,7 @@ class Items(commands.Cog):
                 item = await ItemObject.get_weapon_by_id(conn, item_id)
 
                 # Make the sale
-                gold = random.randint(500, 3000)
+                gold = random.randint(100, 1200)
                 sale = await Transaction.create_sale(conn, player, gold)
                 print_tax = await sale.log_transaction(conn, "sale")
                 await item.destroy(conn)
@@ -434,7 +434,7 @@ class Items(commands.Cog):
                     return await ctx.respond(
                         "You have no items of this quality to sell!")
 
-                subtotal = random.randint(a=500*amount_sold, b=3000*amount_sold)
+                subtotal = random.randint(a=100*amount_sold, b=1200*amount_sold)
                 sale = await Transaction.create_sale(conn, player, subtotal)
                 print_tax = await sale.log_transaction(conn, "sale")
                 gold_gain_str = stringify_gains(
