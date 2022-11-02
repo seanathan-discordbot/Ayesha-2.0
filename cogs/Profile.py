@@ -94,8 +94,7 @@ class Profile(commands.Cog):
             page2.add_field(name=f"Equips",
                 value=(
                     f"{profile.equipped_item.type}: {profile.equipped_item.name} "
-                    f"({profile.equipped_item.rarity}, `"
-                    f"{profile.equipped_item.attack}` ATK, `"
+                    f"({profile.equipped_item.attack}` ATK, `"
                     f"{profile.equipped_item.crit}` CRIT)"
                     f"\n"
                     f"{profile.helmet.name} (`{profile.helmet.defense}` DEF)"
