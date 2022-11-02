@@ -73,8 +73,7 @@ class Items(commands.Cog):
         value = (
             f"**Attack:** {record['attack']}, **Crit:** "
             f"{record['crit']}, **Type:** "
-            f"{record['weapontype']}, **Rarity:** "
-            f"{record['rarity']}")
+            f"{record['weapontype']}")
         return {"name" : name, "value" : value, "inline" : False}
 
     def armor_field_values(self, record) -> dict:
@@ -103,9 +102,6 @@ class Items(commands.Cog):
                     OptionChoice(name="Crit", value="crit"),
                     OptionChoice(name="ID", value="item_id")],
                 required=False),
-            weapon_rarity : Option(str, description="Get only a specific rarity",
-                choices=[OptionChoice(name=r) for r in Vars.RARITIES.keys()],
-                required=False),
             weapon_type : Option(str, description="Get only a specific weapontype",
                 choices=[OptionChoice(name=t) for t in Vars.WEAPON_TYPES],
                 required=False),
@@ -125,8 +121,7 @@ class Items(commands.Cog):
         await ctx.defer()
         # Get the query for inventory based on input
         weapons_query = f"""
-            SELECT item_id, weapontype, user_id, attack, crit, weapon_name, 
-                rarity, 
+            SELECT item_id, weapontype, user_id, attack, crit, weapon_name,
                 (
                     item_id = (
                         SELECT equipped_item 
@@ -137,8 +132,6 @@ class Items(commands.Cog):
                 AS equipped
             FROM items
             WHERE user_id = $1
-                {f"AND rarity = '{weapon_rarity}'"
-                    if weapon_rarity is not None else ""}
                 {f"AND weapontype = '{weapon_type}'"
                     if weapon_type is not None else ""}
             ORDER BY equipped DESC, {weapon_order} DESC;
@@ -344,7 +337,7 @@ class Items(commands.Cog):
                 choices=[OptionChoice(name=r) for r in Vars.RARITIES.keys()],
                 required=False)
             ):
-        """Sell an item (pass ID), or sell multiple items of some rarity."""
+        """Sell an item (pass ID), or sell multiple items below a threshold."""
         async with self.bot.db.acquire() as conn:
             player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
 
@@ -404,8 +397,7 @@ class Items(commands.Cog):
                 item = await ItemObject.get_weapon_by_id(conn, item_id)
 
                 # Make the sale
-                gold = random.randint(a=Vars.RARITIES[item.rarity]['low_gold'], 
-                    b=Vars.RARITIES[item.rarity]['high_gold'])
+                gold = random.randint(a=500, b=3000)
                 sale = await Transaction.create_sale(conn, player, gold)
                 print_tax = await sale.log_transaction(conn, "sale")
                 await item.destroy(conn)
@@ -493,9 +485,8 @@ class Items(commands.Cog):
             # Load item and offer message
             if sale_type == "Weapon":
                 message += f"the weapon:\n"
-                message += f"`{item.weapon_id}`: {item.name}, a {item.rarity} "
-                message += f"{item.type} with `{item.attack}` ATK and "
-                message += f"`{item.crit}` CRIT.\n"
+                message += f"`{item.weapon_id}`: {item.name}, a {item.type} "
+                message += f"with `{item.attack}` ATK and `{item.crit}` CRIT.\n"
             else:
                 message += (
                     f"this armor:\n"
