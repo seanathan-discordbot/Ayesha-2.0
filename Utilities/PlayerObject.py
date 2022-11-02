@@ -816,7 +816,7 @@ async def create_character(conn : asyncpg.Connection, user_id : int,
     await conn.execute(psql4, user_id)
 
     await ItemObject.create_weapon(
-        conn, user_id, "Common", attack=20, crit=0, weapon_name="Wooden Spear", 
+        conn, user_id, attack=20, crit=0, weapon_name="Wooden Spear", 
         weapon_type="Spear")
 
     return await get_player_by_id(conn, user_id)
