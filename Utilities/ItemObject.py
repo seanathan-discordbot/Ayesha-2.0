@@ -327,7 +327,7 @@ async def create_weapon(conn : asyncpg.Connection, user_id : int,
             WITH rows AS (
                 INSERT INTO items 
                     (weapontype, user_id, attack, crit, weapon_name)
-                VALUES ($1, $2, $3, $4, $5, $6)
+                VALUES ($1, $2, $3, $4, $5)
                 RETURNING item_id
             )
             SELECT item_id FROM rows;
