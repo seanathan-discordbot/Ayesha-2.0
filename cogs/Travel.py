@@ -172,8 +172,7 @@ class Travel(commands.Cog):
                 if rewards['weapon'] >= random.randint(1,100):
                     new_weapon = await ItemObject.create_weapon(
                         conn=conn,
-                        user_id=player.disc_id,
-                        rarity="Common")
+                        user_id=player.disc_id)
                 else:
                     new_weapon = ItemObject.Weapon()
 
@@ -188,9 +187,8 @@ class Travel(commands.Cog):
                     message += (
                         f"You also found a weapon: \n"
                         f"`{new_weapon.weapon_id}`: {new_weapon.name}, "
-                        f"a {new_weapon.rarity} {new_weapon.type} with "
-                        f"`{new_weapon.attack}` ATK and `{new_weapon.crit}` "
-                        f"CRIT.")
+                        f"a {new_weapon.type} with `{new_weapon.attack}` ATK "
+                        f" and `{new_weapon.crit}` CRIT.")
                 # Sending this first so level-up messages come after
                 await ctx.respond(message) 
                 await player.give_gold(conn, gold)
@@ -567,7 +565,7 @@ class Travel(commands.Cog):
                 min_value=1,
                 max_value=15,
                 default=1)):
-        """Upgrade a weapon's ATK stat. Costs 8\*ATK iron and 35\*ATK gold."""
+        """Upgrade a weapon's ATK stat. Costs 10\*ATK iron and 40\*ATK gold."""
         async with self.bot.db.acquire() as conn:
             player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
             if player.location not in ("Aramithea", "Riverburn", "Thenuille"):
@@ -580,28 +578,16 @@ class Travel(commands.Cog):
             
             # Is item eligible for an upgrade?
             weapon = await ItemObject.get_weapon_by_id(conn, weapon_id)
-            if weapon.rarity == "Common" and weapon.attack + iter > 50:
+            if weapon.attack + iter > 160:
                 return await ctx.respond(
-                    "Common weapons can only have a maximum ATK of `50`.")
-            elif weapon.rarity == "Uncommon" and weapon.attack + iter > 75:
-                return await ctx.respond(
-                    "Uncommon weapons can only have a maximum ATK of `75`.")
-            elif weapon.rarity == "Rare" and weapon.attack + iter > 100:
-                return await ctx.respond(
-                    "Rare weapons can only have a maximum ATK of `100`.")
-            elif weapon.rarity == "Epic" and weapon.attack + iter > 125:
-                return await ctx.respond(
-                    "Epic weapons can only have a maximum ATK of `125`.")
-            elif weapon.rarity == "Legendary" and weapon.attack + iter > 160:
-                return await ctx.respond(
-                    "Legendary weapons can only be upgraded to `160` ATK. "
+                    "Weapons can only be upgraded to `160` ATK. "
                     "Use the `/merge` command to progress further.")
 
             # Calculate the costs of such an operation
             iron_cost, gold_cost = 0, 0
             for i in range(iter):
-                iron_cost += 8 * (weapon.attack + i)
-                gold_cost += 35 * (weapon.attack + i)
+                iron_cost += 10 * (weapon.attack + i)
+                gold_cost += 40 * (weapon.attack + i)
             verb = "time" if iter == 1 else "times"
 
             purchase = await Transaction.calc_cost(conn, player, gold_cost)
