@@ -3,6 +3,7 @@ Utilities/config.py
 Database/dictionary_db/*
 Database/main_db/*
 Database/*.sh
+Database/*.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
