@@ -244,8 +244,7 @@ class Misc(commands.Cog):
             name="Economy Stats",
             value=(
                 f"**Gold:** {econ_info['g']}\n"
-                f"**Rubidics:** {econ_info['r']}\n"
-                f"**Average Pity:** {round(econ_info['p'] / 80 * 100, 2)}%"))
+                f"**Rubidics:** {econ_info['r']}\n"))
         information.add_field(
             name="Gameplay Stats",
             value=(

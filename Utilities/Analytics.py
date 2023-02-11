@@ -113,13 +113,12 @@ def stringify_rank(rank : int) -> str:
 
 async def get_econ_info(conn : asyncpg.Connection):
     """Returns a record containing some information about the bot economy.
-    Keys: g (total gold), r (total rubidics), p (average pitycounter)
+    Keys: g (total gold), r (total rubidics)
     """
     psql = """
             SELECT 
                 SUM(gold) as g,
-                SUM(rubidics) AS r,
-                AVG(pitycounter) as p
+                SUM(rubidics) AS r
             FROM players;
             """
     return await conn.fetchrow(psql)

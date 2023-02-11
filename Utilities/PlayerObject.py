@@ -51,9 +51,6 @@ class Player:
         The total amount of PvE battles the player has participated in
     rubidics : int
         The player's wealth in rubidics (gacha currency)
-    pity_counter : int
-        The amount of gacha pulls the player has done since their last 
-        legendary weapon or 5-star acolyte
     adventure : int
         The endtime (time.time()) of the player's adventure
     destination : str
@@ -95,7 +92,6 @@ class Player:
         self.boss_wins = record['bosswins']
         self.boss_fights = record['bossfights']
         self.rubidics = record['rubidics']
-        self.pity_counter = record['pitycounter']
         self.adventure = record['adventure']
         self.destination = record['destination']
         self.gravitas = record['gravitas']
@@ -556,16 +552,16 @@ class Player:
                 """
         return await conn.fetchrow(psql, self.disc_id)
 
-    async def set_pity_counter(self, conn : asyncpg.Connection, counter : int):
-        """Sets the player's pitycounter."""
-        self.pity_counter = counter
+    # async def set_pity_counter(self, conn : asyncpg.Connection, counter : int):
+    #     """Sets the player's pitycounter."""
+    #     self.pity_counter = counter
 
-        psql = """
-                UPDATE players
-                SET pitycounter = $1
-                WHERE user_id = $2;
-                """
-        await conn.execute(psql, counter, self.disc_id)
+    #     psql = """
+    #             UPDATE players
+    #             SET pitycounter = $1
+    #             WHERE user_id = $2;
+    #             """
+    #     await conn.execute(psql, counter, self.disc_id)
 
     async def set_occupation(self, conn : asyncpg.Connection, occupation : str):
         """Sets the player's occupation."""
@@ -778,7 +774,6 @@ async def get_player_by_id(conn : asyncpg.Connection, user_id : int) -> Player:
                 players.bosswins,
                 players.bossfights,
                 players.rubidics,
-                players.pitycounter,
                 players.adventure,
                 players.destination,
                 players.gravitas,

@@ -60,8 +60,7 @@ class Profile(commands.Cog):
                 value=(
                     f"Gold: `{profile.gold}` (`{gold_rank}`)\n"
                     f"Gravitas: `{profile.gravitas}` (`{gravitas_rank}`)\n"
-                    f"Rubidics: `{profile.rubidics}` ("
-                    f"`{80-profile.pity_counter}` to pity)"),
+                    f"Rubidics: `{profile.rubidics}`"),
                 inline=True)
             page1.add_field(name="Lore",
                 value=(
