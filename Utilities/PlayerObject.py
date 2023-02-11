@@ -194,7 +194,7 @@ class Player:
         if self.level > old_level:
             for new_level in range(old_level+1, self.level+1):
                 gold += new_level * 500 # Handle multiple lvl-ups
-                rubidics += int(new_level / 30) + 1
+            rubidics = int(self.level/10) - int(old_level-10)
 
             await self.give_gold(conn, gold)
             await self.give_rubidics(conn, rubidics)
