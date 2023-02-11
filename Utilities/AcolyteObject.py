@@ -31,12 +31,6 @@ class Acolyte:
         The Discord ID of the owner of this acolyte
     acolyte_name : str
         The name of the acolyte, taken from gen_dict
-    xp : int
-        The acolyte's experience
-    level : int
-        The acolyte's level
-    dupes : int
-        The amount of duplicates this acolyte's owner has
     """
     def __init__(self, record : asyncpg.Record = None, base_info : dict = None):
         """
@@ -76,7 +70,7 @@ class Acolyte:
     async def get_acolyte_by_name(name : str, conn : asyncpg.Connection) -> dict:
         """
         Returns a dict of the general information of the acolyte.
-        Dict: Name, Attack, Scale, Crit, HP, Rarity, Effect, Mat, Story, Image
+        Dict: Name, Attack, Crit, HP, Rarity, Effect, Story, Image
         """
         psql = """
                 SELECT 
