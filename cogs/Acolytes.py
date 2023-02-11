@@ -77,7 +77,8 @@ class Acolytes(commands.Cog):
                     name=f"{info['Name']}: `{inv[start].acolyte_id}` [EQUIPPED]",
                     value=(
                         f"**Attack:** {inv[start].get_attack()}, "
-                        f"**Crit:** {inv[start].get_crit()}\n"
+                        f"**Crit:** {inv[start].get_crit()}, "
+                        f"**HP:** {inv[start].get_hp()}\n"
                         f"**Effect:** {info['Effect']}"),
                     inline=False)
             else:
@@ -85,7 +86,8 @@ class Acolytes(commands.Cog):
                     name=f"{info['Name']}: `{inv[start].acolyte_id}`",
                     value=(
                         f"**Attack:** {inv[start].get_attack()}, "
-                        f"**Crit:** {inv[start].get_crit()}\n"
+                        f"**Crit:** {inv[start].get_crit()}, "
+                        f"**HP:** {inv[start].get_hp()}\n"
                         f"**Effect:** {info['Effect']}"),
                     inline=False)
             iteration += 1
