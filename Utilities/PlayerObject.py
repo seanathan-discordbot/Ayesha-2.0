@@ -189,8 +189,8 @@ class Player:
         gold, rubidics = 0, 0
         if self.level > old_level:
             # 500gold/level - Follows the sum of integers formula n(n+1)/2
-            gold = (self.level*(self.level+1)) - (old_level*(old_level+1)) * 250
-            rubidics = int(self.level/10) - int(old_level-10)
+            gold = (self.level*(self.level+1) - old_level*(old_level+1)) * 250
+            rubidics = int(self.level/10) - int(old_level/10)
 
             await self.give_gold(conn, gold)
             await self.give_rubidics(conn, rubidics)
