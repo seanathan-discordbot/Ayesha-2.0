@@ -13,6 +13,8 @@ class Ayesha(commands.AutoShardedBot):
     def __init__(self, cogs : list):
         self.init_cogs = cogs
 
+        self.acolyte_list = []
+
         self.daily_claimers = {}
         self.recent_voters = {}
         self.trading_players = {}
@@ -36,6 +38,11 @@ class Ayesha(commands.AutoShardedBot):
     async def on_ready(self):
         gp = "Slash commands added!"
         self.loop.create_task(self.change_presence(activity=discord.Game(gp)))
+
+        # Create general lists for autocomplete
+        psql = "SELECT name FROM acolyte_list;"
+        async with self.db.acquire() as conn:
+            self.acolyte_list = [r['name'] for r in await conn.fetch(psql)]
 
         # Get Discord objects for later use
         self.announcement_channel = await self.fetch_channel(
