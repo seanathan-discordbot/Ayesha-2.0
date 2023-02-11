@@ -192,8 +192,8 @@ class Player:
         # if self.level > old_level: # Level up
         gold, rubidics = 0, 0
         if self.level > old_level:
-            for new_level in range(old_level+1, self.level+1):
-                gold += new_level * 500 # Handle multiple lvl-ups
+            # 500gold/level - Follows the sum of integers formula n(n+1)/2
+            gold = (self.level*(self.level+1)) - (old_level*(old_level+1)) * 250
             rubidics = int(self.level/10) - int(old_level-10)
 
             await self.give_gold(conn, gold)
