@@ -236,10 +236,11 @@ class Acolytes(commands.Cog):
             # Add acolyte to player's tavern
             try:
                 new_acolyte = await AcolyteObject.create_acolyte(conn, ctx.author.id, name)
-            except Checks.DuplicateAcolyte:
+            except Checks.DuplicateAcolyte as e:
                 return await ctx.respond((
-                    f"**{name}** is already in your tavern. Try again with "
-                    "another acolyte that is not yet in your tavern."))
+                    f"**{name}** (ID: `{e.original_id}`) is already in your "
+                    "tavern. Try again with another acolyte that is not yet "
+                    "in your tavern."))
             
             # Create display embed and complete transaction
             embed=discord.Embed(

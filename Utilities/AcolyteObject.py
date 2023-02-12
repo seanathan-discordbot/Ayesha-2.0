@@ -131,8 +131,9 @@ async def create_acolyte(conn : asyncpg.Connection, owner_id : int,
             WHERE user_id = $1 AND acolyte_name = $2;
             """
 
-    if await conn.fetchval(psql, owner_id, acolyte) is not None:
-        raise Checks.DuplicateAcolyte
+    original_id = await conn.fetchval(psql, owner_id, acolyte)
+    if original_id is not None:
+        raise Checks.DuplicateAcolyte(original_id)
 
     else: # Then create a new acolyte and add it to their tavern
         psql = """

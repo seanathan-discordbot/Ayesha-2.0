@@ -149,7 +149,22 @@ class NotAdmin(Exception):
     pass
 
 class DuplicateAcolyte(Exception):
-    pass
+    """Raised when there is an attempt to add an acolyte to a player who already owns said acolyte
+    
+    Attributes
+    ----------
+    original_id : int
+        the ID of the acolyte that already exists, in lieu of making a new one
+    """
+    def __init__(self, original_id : int):
+        """
+        Parameters
+        ----------
+        original_id : int 
+            the ID of the acolyte that already exists and was found when 
+            checking to see if a duplicate was going to be made
+        """
+        self.original_id = original_id
 
 
 # --- NOW FOR THE ACTUAL CHECKS :) ---
