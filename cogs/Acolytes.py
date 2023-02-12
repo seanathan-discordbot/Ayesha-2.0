@@ -119,6 +119,7 @@ class Acolytes(commands.Cog):
             return await paginator.respond(ctx.interaction)
 
         # Otherwise get acolyte asked for
+        name = name.title()
         try:
             async with self.bot.db.acquire() as conn:
                 acolyte_info = await AcolyteObject.Acolyte.get_acolyte_by_name(
@@ -207,6 +208,60 @@ class Acolytes(commands.Cog):
                 await ctx.respond(
                     f"Equipped acolyte: {player.acolyte2.acolyte_name}")
 
+    @commands.slash_command(guild_ids=[762118688567984151])
+    @commands.check(Checks.is_player)
+    async def summon(self, ctx,
+            name : Option(str, 
+                description="The name of the acolyte you want to summon",
+                max_length=32,
+                autocomplete=lambda ctx : (
+                    [name for name in ctx.bot.acolyte_list 
+                        if ctx.value.lower() in name.lower()]))):
+        """Spend 1 rubidic to add a new acolyte to your tavern!"""
+        name = name.title()
+        async with self.bot.db.acquire() as conn:
+            # Ensure player has sufficient rubidics
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+            if player.rubidics < 1:
+                raise Checks.NotEnoughResources("rubidics", 1, player.rubidics)
+
+            # Validate acolyte being summoned
+            try:
+                acolyte_info = await AcolyteObject.Acolyte.get_acolyte_by_name(
+                    name, conn)
+            except TypeError:
+                return await ctx.respond(
+                    f"There is no such acolyte with the name **{name}**.")
+
+            # Add acolyte to player's tavern
+            try:
+                new_acolyte = await AcolyteObject.create_acolyte(conn, ctx.author.id, name)
+            except Checks.DuplicateAcolyte:
+                return await ctx.respond((
+                    f"**{name}** is already in your tavern. Try again with "
+                    "another acolyte that is not yet in your tavern."))
+            
+            # Create display embed and complete transaction
+            embed=discord.Embed(
+                title=(f"{new_acolyte.acolyte_name} (ID: "
+                       f"`{new_acolyte.acolyte_id}`) has entered the tavern!"),
+                color=Vars.ABLUE)
+            if new_acolyte.gen_dict['Image'] is not None:
+                embed.set_thumbnail(url=new_acolyte.gen_dict['Image'])
+            embed.add_field(name="Attack",
+                value=new_acolyte.gen_dict['Attack'])
+            embed.add_field(name="Crit", value = new_acolyte.gen_dict['Crit'])
+            embed.add_field(name="HP", value=new_acolyte.gen_dict['HP'])
+            embed.add_field(name="Effect", value=new_acolyte.gen_dict['Effect'], 
+                inline=False)
+            embed.add_field(name="Backstory", value=new_acolyte.gen_dict['Story'], 
+                inline=False)
+            embed.set_footer(text=(
+                f"To equip {new_acolyte.acolyte_name}, use their ID with the "
+                f"/recruit command."))
+
+            await ctx.respond(embed=embed)
+            await player.give_rubidics(conn, -1)
 
 def setup(bot):
     bot.add_cog(Acolytes(bot))
