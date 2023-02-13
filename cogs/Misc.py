@@ -102,12 +102,29 @@ class Misc(commands.Cog):
 
                 # Calculate rewards
                 gold = player.level * 25
-                gold_gains_str = Analytics.stringify_gains("gold", gold, [])
                 iron = player.level * 15
-                iron_gains_str = Analytics.stringify_gains("iron", iron, [])
                 gravitas = 5
+
+                gold_bonus, iron_bonus, gravitas_bonus = [], [], []
+                if player.assc.type == "Guild":
+                    bonus = player.assc.get_level() * 30
+                    gold += bonus
+                    gold_bonus.append((bonus, "Guild"))
+                elif player.assc.type == "Brotherhood":
+                    bonus = player.assc.get_level() * 20
+                    iron += bonus
+                    iron_bonus.append((bonus, "Brotherhood"))
+                elif player.assc.type == "College":
+                    bonus = player.assc.get_level()
+                    gravitas += bonus
+                    gravitas_bonus.append((bonus, "College"))
+
+                gold_gains_str = Analytics.stringify_gains("gold", gold, 
+                    gold_bonus)
+                iron_gains_str = Analytics.stringify_gains("iron", iron, 
+                    iron_bonus)
                 gravitas_gains_str = Analytics.stringify_gains("gravitas", 
-                    gravitas, [])
+                    gravitas, gravitas_bonus)
 
                 # Distribute rewards
                 e_message = (
