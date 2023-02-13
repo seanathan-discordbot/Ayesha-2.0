@@ -93,30 +93,47 @@ class Misc(commands.Cog):
     @commands.slash_command()
     @commands.check(Checks.is_player)
     async def daily(self, ctx):
-        """Get 2 rubidics daily. Resets everyday at 12 a.m. EST."""
+        """Get a daily bonus! Resets everyday at 12 a.m. GMT."""
         if ctx.author.id not in self.bot.daily_claimers:
             self.bot.daily_claimers[ctx.author.id] = 0
             async with self.bot.db.acquire() as conn:
                 player = await PlayerObject.get_player_by_id(
                     conn, ctx.author.id)
-                await player.give_rubidics(conn, 2)
-            title = "You claimed 2 Rubidics from your daily!"
+
+                # Calculate rewards
+                gold = player.level * 25
+                gold_gains_str = Analytics.stringify_gains("gold", gold, [])
+                iron = player.level * 15
+                iron_gains_str = Analytics.stringify_gains("iron", iron, [])
+                gravitas = 5
+                gravitas_gains_str = Analytics.stringify_gains("gravitas", 
+                    gravitas, [])
+
+                # Distribute rewards
+                e_message = (
+                    f"From your bonus, you received:\n{gold_gains_str}\n"
+                    f"{iron_gains_str}\n{gravitas_gains_str}\n")
+
+                await player.give_gold(conn, gold)
+                await player.give_resource(conn, "iron", iron)
+                await player.give_gravitas(conn, gravitas)
+            title = "You claimed your daily bonus!"
         else:
             title = "You already claimed your daily today."
+            e_message= ""
 
         left_to_refresh = time.gmtime(self.daily_scheduler.idle_seconds)
-        embed = discord.Embed(
-            title=title,
-            description=(
-                f"You can claim your daily again in "
-                f"`{time.strftime('%H:%M:%S', left_to_refresh)}`."),
-            color=Vars.ABLUE
-        )
+        e_message += (
+            f"You can claim your daily again in "
+            f"`{time.strftime('%H:%M:%S', left_to_refresh)}`.")
+        # Create and send embed
+        embed = discord.Embed(title=title, description=e_message, 
+            color=Vars.ABLUE)
         embed.add_field(
-            name="Vote for the bot on top.gg to receive an additional rubidic!",
+            name="Vote for the bot on top.gg to receive a short boost!",
             value=(
-                "[**CLICK HERE**](https://top.gg/bot/767234703161294858) "
-                "to vote for the bot for rubidics!\n\n"
+                "[**CLICK HERE**](https://top.gg/bot/767234703161294858/vote) "
+                "to vote for the bot for EXTRA REWARDS!\n\n"
                 "Any questions? Join the "
                 "[**support server**](https://discord.gg/FRTTARhN44)!"))
         embed.set_thumbnail(url="https://i.imgur.com/LPxc3zI.jpeg")
