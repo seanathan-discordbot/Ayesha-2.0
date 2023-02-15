@@ -97,9 +97,12 @@ class Acolytes(commands.Cog):
     # COMMANDS
     @commands.slash_command()
     async def acolyte(self, ctx,
-        name : Option(str, 
-            description="The name of the acolyte you are viewing",
-            required=False)):
+            name : Option(str, 
+                description="The name of the acolyte you are viewing",
+                required=False,
+                autocomplete=lambda ctx : (
+                    [name for name in ctx.bot.acolyte_list 
+                        if ctx.value.lower() in name.lower()]))):
         """View an acolyte's general information."""
         # Give a list of all acolytes if no name is given
         if name is None:
