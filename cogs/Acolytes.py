@@ -95,8 +95,11 @@ class Acolytes(commands.Cog):
         return embed
     
     # COMMANDS
-    @commands.slash_command()
-    async def acolyte(self, ctx,
+    tavern = discord.commands.SlashCommandGroup("tavern", 
+        "Acolyte-viweing commands")
+
+    @tavern.command(name="list")
+    async def acolytes(self, ctx,
             name : Option(str, 
                 description="The name of the acolyte you are viewing",
                 required=False,
@@ -150,9 +153,9 @@ class Acolytes(commands.Cog):
                 f"HP: {acolyte_info['HP']}"))
         await ctx.respond(embed=embed)
 
-    @commands.slash_command()
+    @tavern.command(name="_")
     @commands.check(Checks.is_player)
-    async def tavern(self, ctx,
+    async def view_owned(self, ctx,
             order : Option(str,
                 description="Sorts your tavern in a specific way",
                 required=False,
@@ -184,9 +187,9 @@ class Acolytes(commands.Cog):
                 paginator = pages.Paginator(pages=embeds, timeout=30)
                 await paginator.respond(ctx.interaction)
 
-    @commands.slash_command()
+    @tavern.command()
     @commands.check(Checks.is_player)
-    async def recruit(self, ctx,
+    async def equip(self, ctx,
             slot : Option(int, 
                 description="The slot you want to add the acolyte to",
                 choices = [
@@ -211,9 +214,9 @@ class Acolytes(commands.Cog):
                 await ctx.respond(
                     f"Equipped acolyte: {player.acolyte2.acolyte_name}")
 
-    @commands.slash_command(guild_ids=[762118688567984151])
+    @tavern.command()
     @commands.check(Checks.is_player)
-    async def summon(self, ctx,
+    async def recruit(self, ctx,
             name : Option(str, 
                 description="The name of the acolyte you want to summon",
                 max_length=32,
