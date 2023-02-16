@@ -9,7 +9,7 @@ from typing import List
 
 from Utilities import Checks, Vars, AcolyteObject, PlayerObject
 from Utilities.AyeshaBot import Ayesha
-from Utilities.ConfirmationMenu import LockedConfirmationMenu
+from Utilities.ConfirmationMenu import ConfirmationMenu
 
 def acolyte_equipped(player,acolyte_id):
     id_1=player.acolyte1.acolyte_id
@@ -236,14 +236,40 @@ class Acolytes(commands.Cog):
                 return await ctx.respond(
                     f"There is no such acolyte with the name **{name}**.")
 
+            # Send confirmation box
+            embed = discord.Embed(
+                title=(
+                    f"Are you sure you want to add {acolyte_info['Name']} "
+                    "to your tavern?"),
+                description=(
+                    f"This action will cost `1` rubidic. You currently have "
+                    f"`{player.rubidics}` rubidics. "),
+                color=Vars.ABLUE)
+            if acolyte_info['Image'] is not None:
+                embed.set_thumbnail(url=acolyte_info['Image'])
+            view = ConfirmationMenu(user=ctx.author, timeout=30.0)
+            msg = await ctx.respond(embed=embed, view=view)
+
+            await view.wait()
+            if view.value is None:
+                await msg.delete_original_message()
+                return await ctx.respond("Timed out.")
+            elif not view.value:
+                await msg.delete_original_message()
+                return await ctx.respond("Cancelled the transaction.")
+
             # Add acolyte to player's tavern
             try:
-                new_acolyte = await AcolyteObject.create_acolyte(conn, ctx.author.id, name)
+                new_acolyte = await AcolyteObject.create_acolyte(conn, 
+                    ctx.author.id, name)
             except Checks.DuplicateAcolyte as e:
-                return await ctx.respond((
-                    f"**{name}** (ID: `{e.original_id}`) is already in your "
-                    "tavern. Try again with another acolyte that is not yet "
-                    "in your tavern."))
+                return await msg.edit_original_message(
+                    content=(
+                        f"**{name}** (ID: `{e.original_id}`) is already in your "
+                        "tavern. Try again with another acolyte that is not yet "
+                        "in your tavern."),
+                    embed=None,
+                    view=None)
             
             # Create display embed and complete transaction
             embed=discord.Embed(
@@ -264,7 +290,7 @@ class Acolytes(commands.Cog):
                 f"To equip {new_acolyte.acolyte_name}, use their ID with the "
                 f"/recruit command."))
 
-            await ctx.respond(embed=embed)
+            await msg.edit_original_message(embed=embed, view=None)
             await player.give_rubidics(conn, -1)
 
 def setup(bot):
