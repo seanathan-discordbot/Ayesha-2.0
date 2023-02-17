@@ -297,7 +297,19 @@ class Acolytes(commands.Cog):
             await player.give_rubidics(conn, -1)
 
     @commands.slash_command()
-    async def newtavern(self, ctx : discord.ApplicationContext):
+    async def newtavern(self, ctx : discord.ApplicationContext, 
+            order : Option(str,
+                description="List acolytes in a certain order",
+                required=False,
+                default="Oldest",
+                choices=[
+                    OptionChoice("First Recruited", "Oldest"),
+                    OptionChoice("Last Recruited", "Newest"),
+                    OptionChoice("Highest Attack", "Attack"),
+                    OptionChoice("Highest Crit", "Crit"),
+                    OptionChoice("Highest HP", "HP"),
+                    OptionChoice("Not Yet Hired", "Unowned")
+                ])):
         """Tavern stuff"""
         psql = """
                 SELECT uid, name AS acolyte_name, acolytes.user_id, 
@@ -325,7 +337,24 @@ class Acolytes(commands.Cog):
             acolytes = new_acolytes
         
             player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
-        acolytes.sort(
+        
+        # Sort according to argument passed
+        BIGN = 9223372036854775807
+        match order:
+            case "Oldest": # The or statements move `None` to the back
+                acolytes.sort(key=lambda x : x.acolyte_id or BIGN)
+            case "Newest":
+                acolytes.sort(key=lambda x : x.acolyte_id or 0, reverse=True)
+            case "Attack":
+                acolytes.sort(key=lambda x : x.get_attack(), reverse=True)
+            case "Crit":
+                acolytes.sort(key=lambda x : x.get_crit(), reverse=True)
+            case "HP":
+                acolytes.sort(key=lambda x : x.get_hp(), reverse=True)
+            case "Unowned":
+                acolytes.sort(key=lambda x : x.acolyte_id is None, reverse=True)
+
+        acolytes.sort( # Put the equipped acolytes at the top
             key=lambda x : x.acolyte_id in (
                 player.acolyte1.acolyte_id, player.acolyte2.acolyte_id),
             reverse=True)
