@@ -41,25 +41,7 @@ class Acolytes(commands.Cog):
     async def on_ready(self):
         print("Acolyte is ready.")
 
-    #add logic to add when not equipped 
-    def generic_write(self, start : int, inv : List[asyncpg.Record]):
-        """Write function like below, but for the `/acolyte` command."""
-        embed = discord.Embed(title=f"Attainable Acolytes", color=Vars.ABLUE)
-        iteration = 0
-        while start < len(inv) and iteration < 5:
-            info = inv[start]
-            embed.add_field(
-                name=f"`{info['uid']}`: {info['name']}",
-                value=(
-                    f"**Attack:** {info['attack']}, "
-                    f"**Crit:** {info['crit']}, "
-                    f"**HP:** {info['hp']}\n"
-                    f"**Effect:** {info['effect']}"),
-                inline=False)
-            iteration += 1
-            start += 1
-        return embed
-
+    #add logic to add when not equipped
     def write(self, start : int, inv: List[AcolyteObject.Acolyte], 
             player : PlayerObject.Player) -> discord.Embed:
         """
