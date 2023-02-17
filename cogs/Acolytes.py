@@ -99,93 +99,74 @@ class Acolytes(commands.Cog):
         "Acolyte-viweing commands")
 
     @tavern.command(name="list")
-    async def acolytes(self, ctx,
-            name : Option(str, 
-                description="The name of the acolyte you are viewing",
-                required=False,
-                autocomplete=lambda ctx : (
-                    [name for name in ctx.bot.acolyte_list 
-                        if ctx.value.lower() in name.lower()]))):
-        """View an acolyte's general information."""
-        # Give a list of all acolytes if no name is given
-        if name is None:
-            async with self.bot.db.acquire() as conn:
-                psql = """
-                        SELECT uid, name, attack, crit, hp, effect
-                        FROM acolyte_list
-                        ORDER BY uid;
-                        """
-                acolytes = await conn.fetch(psql)
-
-            embeds = []
-            for i in range(0, len(acolytes), 5):
-                embeds.append(self.generic_write(i, acolytes))
-
-            paginator = pages.Paginator(pages=embeds, timeout=30)
-            return await paginator.respond(ctx.interaction)
-
-        # Otherwise get acolyte asked for
-        name = name.title()
-        try:
-            async with self.bot.db.acquire() as conn:
-                acolyte_info = await AcolyteObject.Acolyte.get_acolyte_by_name(
-                    name, conn)
-        except TypeError:
-            return await ctx.respond(
-                f"There is no such acolyte with the name {name}."
-            )
-        
-        embed = discord.Embed(            
-                title=acolyte_info["Name"],
-                color=Vars.ABLUE)
-
-        if acolyte_info["Image"] is not None:
-            embed.set_thumbnail(url=acolyte_info["Image"])
-        embed.add_field(name="Backstory", value=acolyte_info["Story"])
-        embed.add_field(
-            name="Effect", 
-            value=acolyte_info["Effect"], 
-            inline=False)
-        embed.add_field(name="Stats",
-            value=(
-                f"Attack: {acolyte_info['Attack']}\n"
-                f"Crit: {acolyte_info['Crit']} \n"
-                f"HP: {acolyte_info['HP']}"))
-        await ctx.respond(embed=embed)
-
-    @tavern.command(name="_")
-    @commands.check(Checks.is_player)
-    async def view_owned(self, ctx,
+    async def _viewall(self, ctx : discord.ApplicationContext, 
             order : Option(str,
-                description="Sorts your tavern in a specific way",
+                description="List acolytes in a certain order",
                 required=False,
-                default="Name",
+                default="Oldest",
                 choices=[
-                    OptionChoice("Order by Attack", "Attack"),
-                    OptionChoice("Order by Crit", "Crit"),
+                    OptionChoice("First Recruited", "Oldest"),
+                    OptionChoice("Last Recruited", "Newest"),
+                    OptionChoice("Highest Attack", "Attack"),
+                    OptionChoice("Highest Crit", "Crit"),
+                    OptionChoice("Highest HP", "HP"),
+                    OptionChoice("Not Yet Hired", "Unowned")
                 ])):
-        """View a list of all your owned acolytes."""
+        """View the list of acolytes"""
+        psql = """
+                SELECT uid, name AS acolyte_name, acolytes.user_id, 
+                    acolytes.acolyte_id, attack, crit, hp, effect, story, image
+                FROM acolyte_list
+                LEFT JOIN acolytes 
+                    ON acolyte_list.name = acolytes.acolyte_name 
+                        AND acolytes.user_id = $1
+                ORDER BY (acolytes.acolyte_id IS NOT NULL) DESC, uid;
+               """
+        # Creates the list of acolytes
         async with self.bot.db.acquire() as conn:
-            acolytes= await get_all_acolytes(conn, ctx.author.id)
+            acolytes = await conn.fetch(psql, ctx.author.id)
+            new_acolytes = []
+            for record in acolytes:
+                if record['acolyte_id'] is not None:
+                    new_acolytes.append(
+                        await AcolyteObject.get_acolyte_by_id(
+                            conn, record['acolyte_id']))
+                else:
+                    base_info = await AcolyteObject.Acolyte.get_acolyte_by_name(
+                        record['acolyte_name'], conn)
+                    new_acolytes.append(
+                        AcolyteObject.Acolyte(record, base_info))
+            acolytes = new_acolytes
+        
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+        
+        # Sort according to argument passed
+        BIGN = 9223372036854775807
+        match order:
+            case "Oldest": # The or statements move `None` to the back
+                acolytes.sort(key=lambda x : x.acolyte_id or BIGN)
+            case "Newest":
+                acolytes.sort(key=lambda x : x.acolyte_id or 0, reverse=True)
+            case "Attack":
+                acolytes.sort(key=lambda x : x.get_attack(), reverse=True)
+            case "Crit":
+                acolytes.sort(key=lambda x : x.get_crit(), reverse=True)
+            case "HP":
+                acolytes.sort(key=lambda x : x.get_hp(), reverse=True)
+            case "Unowned":
+                acolytes.sort(key=lambda x : x.acolyte_id is None, reverse=True)
 
-            if order == "Attack":
-                acolytes.sort(key=lambda a : a.get_attack(), reverse=True)
-            elif order == "Crit":
-                acolytes.sort(key=lambda a : a.get_crit(), reverse=True)
-            else: # Sort by name by default
-                acolytes.sort(key=lambda a : a.acolyte_name)
+        acolytes.sort( # Put the equipped acolytes at the top
+            key=lambda x : x.acolyte_id in (
+                player.acolyte1.acolyte_id, player.acolyte2.acolyte_id),
+            reverse=True)
 
-            player=await PlayerObject.get_player_by_id(conn, ctx.author.id)
-            embeds = []
-            for i in range(0, len(acolytes), 5): #list 5 entries at a time
-                embeds.append(self.write(i, acolytes, player))
-            if len(embeds) == 0:
-                await ctx.respond('Your tavern is empty!')
-            elif len(embeds) == 1:
-                await ctx.respond(embed=embeds[0])
-            else:
-                paginator = pages.Paginator(pages=embeds, timeout=30)
-                await paginator.respond(ctx.interaction)
+        # Display initial tavern embed
+        embeds = [self.write(i, new_acolytes, player) 
+            for i in range(0, len(acolytes), 5)]
+        
+        paginator = pages.Paginator(pages=embeds, timeout=30)
+        await paginator.respond(ctx.interaction)
 
     @tavern.command()
     @commands.check(Checks.is_player)
@@ -296,75 +277,6 @@ class Acolytes(commands.Cog):
             await msg.edit_original_message(embed=embed, view=None)
             await player.give_rubidics(conn, -1)
 
-    @commands.slash_command()
-    async def newtavern(self, ctx : discord.ApplicationContext, 
-            order : Option(str,
-                description="List acolytes in a certain order",
-                required=False,
-                default="Oldest",
-                choices=[
-                    OptionChoice("First Recruited", "Oldest"),
-                    OptionChoice("Last Recruited", "Newest"),
-                    OptionChoice("Highest Attack", "Attack"),
-                    OptionChoice("Highest Crit", "Crit"),
-                    OptionChoice("Highest HP", "HP"),
-                    OptionChoice("Not Yet Hired", "Unowned")
-                ])):
-        """Tavern stuff"""
-        psql = """
-                SELECT uid, name AS acolyte_name, acolytes.user_id, 
-                    acolytes.acolyte_id, attack, crit, hp, effect, story, image
-                FROM acolyte_list
-                LEFT JOIN acolytes 
-                    ON acolyte_list.name = acolytes.acolyte_name 
-                        AND acolytes.user_id = $1
-                ORDER BY (acolytes.acolyte_id IS NOT NULL) DESC, uid;
-               """
-        # Creates the list of acolytes
-        async with self.bot.db.acquire() as conn:
-            acolytes = await conn.fetch(psql, ctx.author.id)
-            new_acolytes = []
-            for record in acolytes:
-                if record['acolyte_id'] is not None:
-                    new_acolytes.append(
-                        await AcolyteObject.get_acolyte_by_id(
-                            conn, record['acolyte_id']))
-                else:
-                    base_info = await AcolyteObject.Acolyte.get_acolyte_by_name(
-                        record['acolyte_name'], conn)
-                    new_acolytes.append(
-                        AcolyteObject.Acolyte(record, base_info))
-            acolytes = new_acolytes
-        
-            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
-        
-        # Sort according to argument passed
-        BIGN = 9223372036854775807
-        match order:
-            case "Oldest": # The or statements move `None` to the back
-                acolytes.sort(key=lambda x : x.acolyte_id or BIGN)
-            case "Newest":
-                acolytes.sort(key=lambda x : x.acolyte_id or 0, reverse=True)
-            case "Attack":
-                acolytes.sort(key=lambda x : x.get_attack(), reverse=True)
-            case "Crit":
-                acolytes.sort(key=lambda x : x.get_crit(), reverse=True)
-            case "HP":
-                acolytes.sort(key=lambda x : x.get_hp(), reverse=True)
-            case "Unowned":
-                acolytes.sort(key=lambda x : x.acolyte_id is None, reverse=True)
-
-        acolytes.sort( # Put the equipped acolytes at the top
-            key=lambda x : x.acolyte_id in (
-                player.acolyte1.acolyte_id, player.acolyte2.acolyte_id),
-            reverse=True)
-
-        # Display initial tavern embed
-        embeds = [self.write(i, new_acolytes, player) 
-            for i in range(0, len(acolytes), 5)]
-        
-        paginator = pages.Paginator(pages=embeds, timeout=30)
-        await paginator.respond(ctx.interaction)
 
 def setup(bot):
     bot.add_cog(Acolytes(bot))
