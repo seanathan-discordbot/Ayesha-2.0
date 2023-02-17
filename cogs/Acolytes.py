@@ -331,16 +331,10 @@ class Acolytes(commands.Cog):
             reverse=True)
 
         # Display initial tavern embed
-        embeds = [
-            self.write(i, new_acolytes, player) for i in range(0, len(acolytes), 5)]
-        p = []
-        for embed in embeds:
-            page = pages.Page(
-                embeds=[embed], 
-                custom_view=ConfirmationMenu(user=ctx.author, timeout=30.0))
-            p.append(page)
+        embeds = [self.write(i, new_acolytes, player) 
+            for i in range(0, len(acolytes), 5)]
         
-        paginator = pages.Paginator(pages=p, timeout=30)
+        paginator = pages.Paginator(pages=embeds, timeout=30)
         await paginator.respond(ctx.interaction)
 
 def setup(bot):
