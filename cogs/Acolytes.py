@@ -169,8 +169,13 @@ class Acolytes(commands.Cog):
         async with self.bot.db.acquire() as conn:
             player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
             if name is None: # Unequip from slot
+                if slot == 1:
+                    old_name = player.acolyte1.acolyte_name
+                else:
+                    old_name = player.acolyte2.acolyte_name
                 await player.unequip_acolyte(conn, slot)
-                return await ctx.respond("Unequipped acolyte.")
+                return await ctx.respond(
+                    f"**{old_name}** left slot {slot} of your party.")
 
             # Perform search for acolyte ID using the name
             name = name.title()
@@ -184,12 +189,11 @@ class Acolytes(commands.Cog):
 
             await player.equip_acolyte(conn, ids[0], slot)
 
+            get_str = lambda x : f"**{x}** joined your party in slot {slot}."
             if slot == 1:
-                await ctx.respond(
-                    f"Equipped acolyte: {player.acolyte1.acolyte_name}")
+                await ctx.respond(get_str(player.acolyte1.acolyte_name))
             else:
-                await ctx.respond(
-                    f"Equipped acolyte: {player.acolyte2.acolyte_name}")
+                await ctx.respond(get_str(player.acolyte2.acolyte_name))
 
     @tavern.command()
     @commands.check(Checks.is_player)
