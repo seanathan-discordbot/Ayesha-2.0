@@ -152,23 +152,37 @@ class Acolytes(commands.Cog):
 
     @tavern.command()
     @commands.check(Checks.is_player)
-    async def equip(self, ctx,
+    async def equip(self, ctx : discord.ApplicationContext,
             slot : Option(int, 
                 description="The slot you want to add the acolyte to",
                 choices = [
                     OptionChoice(name="Slot 1", value=1),
                     OptionChoice(name="Slot 2", value=2)]),
-            instance_id : Option(int, 
-                description="Id of acolyte to add to slot",
-                required=False)):
+            name : Option(str, 
+                description="The name of the acolyte you are adding to your party",
+                max_length=32,
+                required=False,
+                autocomplete=lambda ctx : (
+                    [name for name in ctx.bot.acolyte_list 
+                     if ctx.value.lower() in name.lower()]))):
         """Equip or unequip an acolyte in a given slot."""
         async with self.bot.db.acquire() as conn:
             player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
-            if instance_id is None: # Unequip from slot
-                await player.unequip_acolyte(conn,slot)
+            if name is None: # Unequip from slot
+                await player.unequip_acolyte(conn, slot)
                 return await ctx.respond("Unequipped acolyte.")
 
-            await player.equip_acolyte(conn, instance_id, slot)
+            # Perform search for acolyte ID using the name
+            name = name.title()
+            all_acolytes = await get_all_acolytes(conn, ctx.author.id)
+            ids = [a.acolyte_id for a in all_acolytes if name == a.acolyte_name]
+
+            # Equip acolyte and send message
+            if not ids:
+                return await ctx.respond(
+                    (f"There is no acolyte named **{name}** in your tavern."))
+
+            await player.equip_acolyte(conn, ids[0], slot)
 
             if slot == 1:
                 await ctx.respond(
