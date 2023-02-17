@@ -296,5 +296,52 @@ class Acolytes(commands.Cog):
             await msg.edit_original_message(embed=embed, view=None)
             await player.give_rubidics(conn, -1)
 
+    @commands.slash_command()
+    async def newtavern(self, ctx : discord.ApplicationContext):
+        """Tavern stuff"""
+        psql = """
+                SELECT uid, name AS acolyte_name, acolytes.user_id, 
+                    acolytes.acolyte_id, attack, crit, hp, effect, story, image
+                FROM acolyte_list
+                LEFT JOIN acolytes 
+                    ON acolyte_list.name = acolytes.acolyte_name 
+                        AND acolytes.user_id = $1
+                ORDER BY (acolytes.acolyte_id IS NOT NULL) DESC, uid;
+               """
+        # Creates the list of acolytes
+        async with self.bot.db.acquire() as conn:
+            acolytes = await conn.fetch(psql, ctx.author.id)
+            new_acolytes = []
+            for record in acolytes:
+                if record['acolyte_id'] is not None:
+                    new_acolytes.append(
+                        await AcolyteObject.get_acolyte_by_id(
+                            conn, record['acolyte_id']))
+                else:
+                    base_info = await AcolyteObject.Acolyte.get_acolyte_by_name(
+                        record['acolyte_name'], conn)
+                    new_acolytes.append(
+                        AcolyteObject.Acolyte(record, base_info))
+            acolytes = new_acolytes
+        
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+        acolytes.sort(
+            key=lambda x : x.acolyte_id in (
+                player.acolyte1.acolyte_id, player.acolyte2.acolyte_id),
+            reverse=True)
+
+        # Display initial tavern embed
+        embeds = [
+            self.write(i, new_acolytes, player) for i in range(0, len(acolytes), 5)]
+        p = []
+        for embed in embeds:
+            page = pages.Page(
+                embeds=[embed], 
+                custom_view=ConfirmationMenu(user=ctx.author, timeout=30.0))
+            p.append(page)
+        
+        paginator = pages.Paginator(pages=p, timeout=30)
+        await paginator.respond(ctx.interaction)
+
 def setup(bot):
     bot.add_cog(Acolytes(bot))
