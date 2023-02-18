@@ -159,7 +159,7 @@ class Misc(commands.Cog):
 
     @commands.slash_command()
     @commands.check(Checks.is_player)
-    async def cooldowns(self, ctx):
+    async def cooldowns(self, ctx : discord.ApplicationContext):
         """View any of your active cooldowns."""
         # Iterate through commands to get cooldowns
         cooldowns = [] # Player's list of cooldowns
@@ -209,16 +209,13 @@ class Misc(commands.Cog):
                 f"Your adventure is completed and you can safely `/arrive` "
                 f"at **{player.destination}**.")
 
-        # Check if player has claiemd daily today
-        if ctx.author.id in self.bot.daily_claimers:
-            to_reset = time.gmtime(self.daily_scheduler.idle_seconds)
-            daily = (
-                f"You can claim your daily again in "
-                f"`{time.strftime('%H:%M:%S', to_reset)}`.")
+        # Check if player has claimed daily today
+        if not player.eligible_to_claim_daily():
+            to_reset = PlayerObject.Player.get_time_to_midnight()
+            daily = f"You can claim your daily again in `{to_reset}`."
         else:
             daily = (
-                "You can claim your free daily 2 rubidics with the `/daily` "
-                "command.")
+                "You can claim your daily rewards with the `/daily` command.")
 
         # Create an embed
         embed = discord.Embed(
