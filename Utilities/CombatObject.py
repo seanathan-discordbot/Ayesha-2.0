@@ -455,11 +455,11 @@ class CombatInstance:
         if "Thorp" in acolytes:
             choice = random.randint(1,4)
             if choice == 1:
-                agent.attack *= 1.02
+                agent.attack *= 1.05
             elif choice == 2:
                 agent.crit *= 1.05
             elif choice == 3:
-                agent.current_hp *= 1.01
+                agent.current_hp *= 1.05
             else:
                 agent.defense *= 1.05
 
