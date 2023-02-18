@@ -689,7 +689,7 @@ class Player:
         midnight_today = datenow.replace(
             hour=0, minute=0, second=0, microsecond=0)
         last_date_claimed = datetime.fromtimestamp(self.last_daily)
-        return last_date_claimed > midnight_today
+        return last_date_claimed < midnight_today
     
     @staticmethod
     def get_time_to_midnight() -> timedelta:
