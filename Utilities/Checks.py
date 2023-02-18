@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 import discord
 
 from discord.ext import commands
 
-from datetime import datetime, timedelta
-
 from Utilities.config import ADMINS
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from datetime import timedelta
 
 class HasChar(commands.CheckFailure):
     def __init__(self, user, *args, **kwargs):
@@ -179,15 +183,8 @@ class AlreadyClaimedDaily(Exception):
     time_to_midnight : timedelta
         the time from the current time to midnight tomorrow
     """
-    def __init__(self, now : datetime):
-        """
-        Parameters
-        ----------
-        now : datetime
-            the current time
-        """        
-        midnight = (now + timedelta(1)).replace(hour=0, minute=0, second=0)
-        self.time_to_midnight = midnight - now
+    def __init__(self, time_to_midnight : timedelta):
+        self.time_to_midnight = time_to_midnight
 
 
 # --- NOW FOR THE ACTUAL CHECKS :) ---
