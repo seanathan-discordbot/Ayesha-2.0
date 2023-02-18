@@ -42,18 +42,6 @@ class Misc(commands.Cog):
 
     def __init__(self, bot : Ayesha):
         self.bot = bot
-        self.daily_scheduler = schedule.Scheduler()
-
-        def clear_dailies():
-            self.bot.daily_claimers.clear()
-
-        async def update_dailies():
-            self.daily_scheduler.every().day.at("00:00").do(clear_dailies)
-            while True:
-                self.daily_scheduler.run_pending()
-                await asyncio.sleep(self.daily_scheduler.idle_seconds)
-
-        asyncio.ensure_future(update_dailies())
 
     # EVENTS
     @commands.Cog.listener()
