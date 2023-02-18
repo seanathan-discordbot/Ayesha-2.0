@@ -684,7 +684,23 @@ class Player:
         await conn.execute(psql, self.disc_id)
 
     async def collect_daily(self, conn : asyncpg.Connection) -> timedelta:
-        """Gives the player daily rewards and increments their counter"""
+        """Gives the player daily rewards and increments their counter.
+
+        Parameters
+        ----------
+        conn : asyncpg.Connection
+            a connection to the bot database
+
+        Returns
+        -------
+        timedelta
+            the time to midnight tomorrow
+
+        Raises
+        ------
+        Checks.AlreadyClaimedDaily
+            if the player has already collected their daily on the current date
+        """        
         datenow = datetime.now()
 
         midnight_tomorrow = (datenow + timedelta(1)).replace(
