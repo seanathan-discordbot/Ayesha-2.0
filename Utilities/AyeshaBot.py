@@ -15,7 +15,6 @@ class Ayesha(commands.AutoShardedBot):
 
         self.acolyte_list = []
 
-        self.daily_claimers = {}
         self.recent_voters = {}
         self.trading_players = {}
         self.training_players = {}
