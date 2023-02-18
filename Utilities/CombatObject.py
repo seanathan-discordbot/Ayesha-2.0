@@ -411,7 +411,7 @@ class CombatInstance:
 
         # ON_BLOCK : Agent blocks
         if "Demi" in acolytes and object.last_move == "Attack":
-            agent.damage += agent.defense * 2
+            agent.damage += agent.defense * 3
 
 
         # ON_PARRY : Agent parries
