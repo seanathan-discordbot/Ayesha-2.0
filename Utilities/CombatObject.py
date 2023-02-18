@@ -448,8 +448,8 @@ class CombatInstance:
         if self.turn == 3 and "Onion" in acolytes:
             agent.crit *= 2
         if "Ajar" in acolytes:
-            agent.attack += 20
-            agent.current_hp -= 50
+            agent.attack += 30
+            agent.current_hp -= 35
         if "Lauren" in acolytes and object.damage < 100:
             agent.attack *= 1.08
         if "Thorp" in acolytes:
