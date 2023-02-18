@@ -426,7 +426,7 @@ class CombatInstance:
                 agent.heal += agent.max_hp / 10
 
             if "Nyleptha" in acolytes:
-                object.damage *= 0.75
+                object.damage *= 0.6
 
         # ON_BIDE : Agents bides
         if agent.last_move == "Bide":
