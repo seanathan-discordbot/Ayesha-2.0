@@ -3,6 +3,8 @@ import discord
 import asyncpg
 import time
 
+from datetime import datetime, timedelta
+
 from Utilities import Checks, ItemObject, Vars, AcolyteObject, AssociationObject
 from Utilities.ItemObject import Weapon
 from Utilities.AcolyteObject import Acolyte
@@ -61,6 +63,9 @@ class Player:
         A dictionary containing the player's resources
     daily_streak : int
         The amount of days in a row the player has used the `daily` command
+    last_daily : int
+        The time (time.time()) in seconds since the last time this player has
+        claimed their daily with `/daily`
     """
     def __init__(self, record : asyncpg.Record):
         """
@@ -97,6 +102,8 @@ class Player:
         self.gravitas = record['gravitas']
         self.resources = None
         self.pve_limit = record['pve_limit']
+        self.daily_streak = record['daily_streak']
+        self.last_daily = record['last_daily']
 
     async def _load_equips(self, conn : asyncpg.Connection):
         """Converts object variables from their IDs into the proper objects.
@@ -676,6 +683,35 @@ class Player:
                 """
         await conn.execute(psql, self.disc_id)
 
+    async def collect_daily(self, conn : asyncpg.Connection):
+        """Gives the player daily rewards and increments their counter"""
+        datenow = datetime.now()
+
+        # Check if daily can be claimed or if the streak should be reset
+        midnight_yesterday = (datenow - timedelta(days=1)).replace(
+            hour=0, minute=0, second=0, microsecond=0)
+        midnight_today = datenow.replace(
+            hour=0, minute=0, second=0, microsecond=0)
+        last_date_claimed = datetime.fromtimestamp(self.last_daily)
+        # Here's a timeline explaining the actions being done:
+        # <------------------|------------------|------------------>
+        #   before yesterday |     yesterday    |    today
+        #  elif: reset streak| proceed normally | if: already claimed, stop fcn
+        if last_date_claimed > midnight_today:
+            pass # TODO: STREAK ALREADY CLAIMED RAISE ERROR
+        elif last_date_claimed < midnight_yesterday:
+            self.daily_streak = 0
+
+        # Log the daily
+        self.daily_streak += 1
+        psql = """
+                UPDATE players
+                SET daily_streak = $1,
+                    last_daily = $2
+                WHERE user_id = $3;
+                """
+        await conn.execute(psql, self.daily_streak, time.time(), self.disc_id)
+
     def get_attack(self) -> int:
         """Returns the player's attack stat, calculated from all other sources.
         The value returned by this method is 'the final say' on the stat.
@@ -778,6 +814,8 @@ async def get_player_by_id(conn : asyncpg.Connection, user_id : int) -> Player:
                 players.destination,
                 players.gravitas,
                 players.pve_limit,
+                players.daily_streak,
+                players.last_daily,
                 equips.helmet,
                 equips.bodypiece,
                 equips.boots,
