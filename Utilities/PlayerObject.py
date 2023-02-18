@@ -683,6 +683,14 @@ class Player:
                 """
         await conn.execute(psql, self.disc_id)
 
+    def eligible_to_claim_daily(self) -> bool:
+        """Return true if player can collect their daily."""
+        datenow = datetime.now()
+        midnight_today = datenow.replace(
+            hour=0, minute=0, second=0, microsecond=0)
+        last_date_claimed = datetime.fromtimestamp(self.last_daily)
+        return last_date_claimed > midnight_today
+
     async def collect_daily(self, conn : asyncpg.Connection) -> timedelta:
         """Gives the player daily rewards and increments their counter.
 
@@ -710,14 +718,12 @@ class Player:
         # Check if daily can be claimed or if the streak should be reset
         midnight_yesterday = (datenow - timedelta(days=1)).replace(
             hour=0, minute=0, second=0, microsecond=0)
-        midnight_today = datenow.replace(
-            hour=0, minute=0, second=0, microsecond=0)
         last_date_claimed = datetime.fromtimestamp(self.last_daily)
         # Here's a timeline explaining the actions being done:
         # <------------------|------------------|------------------>
         #   before yesterday |     yesterday    |    today
         #  elif: reset streak| proceed normally | if: already claimed, stop fcn
-        if last_date_claimed > midnight_today:
+        if not self.eligible_to_claim_daily():
             raise Checks.AlreadyClaimedDaily(time_to_midnight)
         elif last_date_claimed < midnight_yesterday:
             self.daily_streak = 0
