@@ -2,6 +2,8 @@ import discord
 
 from discord.ext import commands
 
+from datetime import datetime, timedelta
+
 from Utilities.config import ADMINS
 
 class HasChar(commands.CheckFailure):
@@ -165,6 +167,27 @@ class DuplicateAcolyte(Exception):
             checking to see if a duplicate was going to be made
         """
         self.original_id = original_id
+
+class AlreadyClaimedDaily(Exception):
+    """Raised when there is an attempt to claim a daily twice in one day.
+    A "day" is the time period between 00:00 and 23:59, so players can claim
+    their daily twice in a 24 hour period, although they must be on separate
+    dates.
+
+    Attributes
+    ----------
+    time_to_midnight : timedelta
+        the time from the current time to midnight tomorrow
+    """
+    def __init__(self, now : datetime):
+        """
+        Parameters
+        ----------
+        now : datetime
+            the current time
+        """        
+        midnight = (now + timedelta(1)).replace(hour=0, minute=0, second=0)
+        self.time_to_midnight = midnight - now
 
 
 # --- NOW FOR THE ACTUAL CHECKS :) ---

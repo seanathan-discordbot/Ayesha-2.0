@@ -698,7 +698,7 @@ class Player:
         #   before yesterday |     yesterday    |    today
         #  elif: reset streak| proceed normally | if: already claimed, stop fcn
         if last_date_claimed > midnight_today:
-            pass # TODO: STREAK ALREADY CLAIMED RAISE ERROR
+            raise Checks.AlreadyClaimedDaily(datenow)
         elif last_date_claimed < midnight_yesterday:
             self.daily_streak = 0
 
