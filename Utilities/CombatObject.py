@@ -115,8 +115,8 @@ class Belligerent:
 
         # ON_PLAYER_LOAD event lol
         if "Arsaces" in (acolyte1.acolyte_name, acolyte2.acolyte_name):
-            attack += crit * 2
-            hp += crit * 5
+            attack += crit * 4
+            hp += crit * 7
             crit = 0
 
         return cls(
