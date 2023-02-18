@@ -400,7 +400,7 @@ class CombatInstance:
         acolytes = [a.acolyte_name for a in (agent.acolyte1, agent.acolyte2)]
         # ON_DAMAGE : Any time the agent deals damage
         if "Paterius" in acolytes:
-            agent.damage += 15
+            agent.damage = (agent.damage * 1.15) + 15
 
         if self.turn == 1 and agent.type == "Hunter":
             # Hunters get first hit bonus
