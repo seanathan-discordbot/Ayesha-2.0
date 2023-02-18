@@ -92,13 +92,20 @@ class Misc(commands.Cog):
     # COMMANDS
     @commands.slash_command()
     @commands.check(Checks.is_player)
-    async def daily(self, ctx):
+    async def daily(self, ctx : discord.ApplicationContext):
         """Get a daily bonus! Resets everyday at 12 a.m. GMT."""
-        if ctx.author.id not in self.bot.daily_claimers:
-            self.bot.daily_claimers[ctx.author.id] = 0
-            async with self.bot.db.acquire() as conn:
-                player = await PlayerObject.get_player_by_id(
-                    conn, ctx.author.id)
+        refresh_str = lambda x : f"You can claim your daily again in `{x}`."
+
+        async with self.bot.db.acquire() as conn:
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+
+            try:
+                refresh_time = await player.collect_daily(conn)
+            except Checks.AlreadyClaimedDaily as e:
+                title = "You already claimed your daily today."
+                e_message = refresh_str(e.time_to_midnight)
+            else:
+                title = "You claimed your daily bonus!"
 
                 # Calculate rewards
                 gold = player.level * 25
@@ -129,20 +136,13 @@ class Misc(commands.Cog):
                 # Distribute rewards
                 e_message = (
                     f"From your bonus, you received:\n{gold_gains_str}\n"
-                    f"{iron_gains_str}\n{gravitas_gains_str}\n")
+                    f"{iron_gains_str}\n{gravitas_gains_str}\n"
+                    f"{refresh_str(refresh_time)}")
 
                 await player.give_gold(conn, gold)
                 await player.give_resource(conn, "iron", iron)
                 await player.give_gravitas(conn, gravitas)
-            title = "You claimed your daily bonus!"
-        else:
-            title = "You already claimed your daily today."
-            e_message= ""
 
-        left_to_refresh = time.gmtime(self.daily_scheduler.idle_seconds)
-        e_message += (
-            f"You can claim your daily again in "
-            f"`{time.strftime('%H:%M:%S', left_to_refresh)}`.")
         # Create and send embed
         embed = discord.Embed(title=title, description=e_message, 
             color=Vars.ABLUE)
