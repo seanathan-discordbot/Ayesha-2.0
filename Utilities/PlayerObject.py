@@ -683,9 +683,13 @@ class Player:
                 """
         await conn.execute(psql, self.disc_id)
 
-    async def collect_daily(self, conn : asyncpg.Connection):
+    async def collect_daily(self, conn : asyncpg.Connection) -> timedelta:
         """Gives the player daily rewards and increments their counter"""
         datenow = datetime.now()
+
+        midnight_tomorrow = (datenow + timedelta(1)).replace(
+            hour=0, minute=0, second=0)
+        time_to_midnight = midnight_tomorrow - datenow
 
         # Check if daily can be claimed or if the streak should be reset
         midnight_yesterday = (datenow - timedelta(days=1)).replace(
@@ -698,7 +702,7 @@ class Player:
         #   before yesterday |     yesterday    |    today
         #  elif: reset streak| proceed normally | if: already claimed, stop fcn
         if last_date_claimed > midnight_today:
-            raise Checks.AlreadyClaimedDaily(datenow)
+            raise Checks.AlreadyClaimedDaily(time_to_midnight)
         elif last_date_claimed < midnight_yesterday:
             self.daily_streak = 0
 
@@ -711,6 +715,7 @@ class Player:
                 WHERE user_id = $3;
                 """
         await conn.execute(psql, self.daily_streak, time.time(), self.disc_id)
+        return time_to_midnight
 
     def get_attack(self) -> int:
         """Returns the player's attack stat, calculated from all other sources.
