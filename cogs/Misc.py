@@ -79,13 +79,13 @@ class Misc(commands.Cog):
 
     def calc_daily_rewards(self, player : PlayerObject.Player):
         # Separate possible rewards into different tiers
-        if player.daily_streak > 3:
+        if player.daily_streak < 3:
             tier = 5
-        elif player.daily_streak > 7:
+        elif player.daily_streak < 7:
             tier = 4
-        elif player.daily_streak > 14:
+        elif player.daily_streak < 14:
             tier = 3
-        elif player.daily_streak > 30:
+        elif player.daily_streak < 30:
             tier = 2
         else:
             tier = 1
