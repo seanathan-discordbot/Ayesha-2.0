@@ -113,8 +113,8 @@ class Misc(commands.Cog):
                 gravitas = 3
                 rubidics = 0
             case 1:
-                gold = player.daily_streak * 125
-                iron = player.daily_streak * 40
+                gold = player.daily_streak * 180
+                iron = player.daily_streak * 70
                 gravitas = 5
                 rubidics = 1 if random.randint(1, 100) == 1 else 0
         rubidics = 1 if player.daily_streak % 30 == 0 else rubidics
