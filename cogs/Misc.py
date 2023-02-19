@@ -77,6 +77,57 @@ class Misc(commands.Cog):
             f"\n{'-'*len(max(ranks, key=len))}\n"
             f"{author_rank} | {names[-1]} | {author_val}```")
 
+    def calc_daily_rewards(self, player : PlayerObject.Player):
+        # Separate possible rewards into different tiers
+        if player.daily_streak > 3:
+            tier = 5
+        elif player.daily_streak > 7:
+            tier = 4
+        elif player.daily_streak > 14:
+            tier = 3
+        elif player.daily_streak > 30:
+            tier = 2
+        else:
+            tier = 1
+
+        # Calculate tier rewards
+        match tier:
+            case 5:
+                gold = player.daily_streak * 80
+                iron = 0
+                gravitas = 0
+                rubidics = 0
+            case 4:
+                gold = player.daily_streak * 100
+                iron = player.daily_streak * 40
+                gravitas = 0
+                rubidics = 0
+            case 3:
+                gold = player.daily_streak * 130
+                iron = player.daily_streak * 45
+                gravitas = 1
+                rubidics = 0
+            case 2:
+                gold = player.daily_streak * 150
+                iron = player.daily_streak * 55
+                gravitas = 3
+                rubidics = 0
+            case 1:
+                gold = player.daily_streak * 125
+                iron = player.daily_streak * 40
+                gravitas = 5
+                rubidics = 1 if random.randint(1, 100) == 1 else 0
+        rubidics = 1 if player.daily_streak % 30 == 0 else rubidics
+
+        return { 
+            "Tier" : tier,
+            "Gold" : gold,
+            "Iron" : iron,
+            "Gravitas" : gravitas,
+            "Rubidics" : rubidics
+        }
+
+
     # COMMANDS
     @commands.slash_command()
     @commands.check(Checks.is_player)
@@ -91,56 +142,67 @@ class Misc(commands.Cog):
                 refresh_time = await player.collect_daily(conn)
             except Checks.AlreadyClaimedDaily as e:
                 title = "You already claimed your daily today."
-                e_message = refresh_str(e.time_to_midnight)
+                e_message = ""
+                refresh_msg = refresh_str(e.time_to_midnight)
             else:
                 title = "You claimed your daily bonus!"
+                refresh_msg = refresh_str(refresh_time)
 
-                # Calculate rewards
-                gold = player.level * 25
-                iron = player.level * 15
-                gravitas = 5
-
+                # Calculate and distribute rewards
+                rewards = self.calc_daily_rewards(player)
                 gold_bonus, iron_bonus, gravitas_bonus = [], [], []
+                e_message = "From your bonus, you received:\n"
+
                 if player.assc.type == "Guild":
                     bonus = player.assc.get_level() * 30
-                    gold += bonus
-                    gold_bonus.append((bonus, "Guild"))
-                elif player.assc.type == "Brotherhood":
-                    bonus = player.assc.get_level() * 20
-                    iron += bonus
-                    iron_bonus.append((bonus, "Brotherhood"))
-                elif player.assc.type == "College":
-                    bonus = player.assc.get_level()
-                    gravitas += bonus
-                    gravitas_bonus.append((bonus, "College"))
+                    rewards["Gold"] += bonus
+                    gold_bonus.append((bonus, "Guild")) 
+                await player.give_gold(conn, rewards["Gold"])
+                e_message += Analytics.stringify_gains("gold", 
+                        rewards["Gold"], gold_bonus) + "\n"
 
-                gold_gains_str = Analytics.stringify_gains("gold", gold, 
-                    gold_bonus)
-                iron_gains_str = Analytics.stringify_gains("iron", iron, 
-                    iron_bonus)
-                gravitas_gains_str = Analytics.stringify_gains("gravitas", 
-                    gravitas, gravitas_bonus)
+                if rewards["Iron"] > 0:
+                    if player.assc.type == "Brotherhood":
+                        bonus = player.assc.get_level() * 20
+                        rewards["Iron"] += bonus
+                        iron_bonus.append((bonus, "Brotherhood"))
+                    await player.give_resource(conn, "iron", rewards["Iron"])
+                e_message += Analytics.stringify_gains("iron", 
+                        rewards["Iron"], iron_bonus) + "\n"
 
-                # Distribute rewards
-                e_message = (
-                    f"From your bonus, you received:\n{gold_gains_str}\n"
-                    f"{iron_gains_str}\n{gravitas_gains_str}\n"
-                    f"{refresh_str(refresh_time)}")
-
-                await player.give_gold(conn, gold)
-                await player.give_resource(conn, "iron", iron)
-                await player.give_gravitas(conn, gravitas)
+                if rewards["Gravitas"] > 0:
+                    if player.assc.type == "College":
+                        bonus = int(player.assc.get_level() / 2)
+                        rewards["Gravitas"] += bonus
+                        gravitas_bonus.append((bonus, "College"))
+                    await player.give_gravitas(conn, rewards["Gravitas"])
+                e_message += Analytics.stringify_gains("gravitas", 
+                        rewards["Gravitas"], gravitas_bonus) + "\n"
+                
+                if rewards["Rubidics"] > 0:
+                    e_message += Analytics.stringify_gains("rubidic",
+                        rewards["Rubidics"], [])
+                    await player.give_rubidics(conn, rewards["Rubidics"])
 
         # Create and send embed
         embed = discord.Embed(title=title, description=e_message, 
             color=Vars.ABLUE)
+        embed.add_field(
+            name=refresh_msg,
+            value=(
+                f"You have claimed your `/daily` for `{player.daily_streak}` "
+                f"{'days' if player.daily_streak > 1 else 'day'} in a row. "
+                "Maintain a longer streak to receive even larger rewards in "
+                "the future!"),
+            inline=False)
         embed.add_field(
             name="Vote for the bot on top.gg to receive a short boost!",
             value=(
                 "[**CLICK HERE**](https://top.gg/bot/767234703161294858/vote) "
                 "to vote for the bot for EXTRA REWARDS!\n\n"
                 "Any questions? Join the "
-                "[**support server**](https://discord.gg/FRTTARhN44)!"))
+                "[**support server**](https://discord.gg/FRTTARhN44)!"),
+            inline=False)
         embed.set_thumbnail(url="https://i.imgur.com/LPxc3zI.jpeg")
 
         await ctx.respond(embed=embed)
