@@ -151,6 +151,40 @@ class Acolytes(commands.Cog):
         await paginator.respond(ctx.interaction)
 
     @tavern.command()
+    async def info(self, ctx : discord.ApplicationContext,
+            acolyte : Option(str, 
+                description="The name of the acolyte you wish to view",
+                max_length=32,
+                autocomplete=lambda ctx : (
+                    [name for name in ctx.bot.acolyte_list 
+                     if ctx.value.lower() in name.lower()]))):
+        """View an acolyte's detailed information."""
+        # Validate acolyte
+        acolyte = acolyte.title()
+        async with self.bot.db.acquire() as conn:
+            try:
+                acolyte_info = await AcolyteObject.Acolyte.get_acolyte_by_name(
+                    acolyte, conn)
+            except TypeError:
+                return await ctx.respond(
+                    f"There is no such acolyte with the name **{acolyte}**.")
+            
+        # Create and send embed
+        embed = discord.Embed(title=acolyte_info['Name'], color=Vars.ABLUE)
+        if acolyte_info['Image'] is not None:
+            embed.set_thumbnail(url=acolyte_info['Image'])
+        embed.add_field(name="Attack",
+            value=acolyte_info['Attack'])
+        embed.add_field(name="Crit", value = acolyte_info['Crit'])
+        embed.add_field(name="HP", value=acolyte_info['HP'])
+        embed.add_field(name="Effect", value=acolyte_info['Effect'], 
+            inline=False)
+        embed.add_field(name="Backstory", value=acolyte_info['Story'], 
+            inline=False)
+        
+        await ctx.respond(embed=embed)
+
+    @tavern.command()
     @commands.check(Checks.is_player)
     async def equip(self, ctx : discord.ApplicationContext,
             slot : Option(int, 
