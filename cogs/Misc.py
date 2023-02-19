@@ -167,8 +167,8 @@ class Misc(commands.Cog):
                         rewards["Iron"] += bonus
                         iron_bonus.append((bonus, "Brotherhood"))
                     await player.give_resource(conn, "iron", rewards["Iron"])
-                e_message += Analytics.stringify_gains("iron", 
-                        rewards["Iron"], iron_bonus) + "\n"
+                    e_message += Analytics.stringify_gains("iron", 
+                            rewards["Iron"], iron_bonus) + "\n"
 
                 if rewards["Gravitas"] > 0:
                     if player.assc.type == "College":
@@ -176,8 +176,8 @@ class Misc(commands.Cog):
                         rewards["Gravitas"] += bonus
                         gravitas_bonus.append((bonus, "College"))
                     await player.give_gravitas(conn, rewards["Gravitas"])
-                e_message += Analytics.stringify_gains("gravitas", 
-                        rewards["Gravitas"], gravitas_bonus) + "\n"
+                    e_message += Analytics.stringify_gains("gravitas", 
+                            rewards["Gravitas"], gravitas_bonus) + "\n"
                 
                 if rewards["Rubidics"] > 0:
                     e_message += Analytics.stringify_gains("rubidic",
