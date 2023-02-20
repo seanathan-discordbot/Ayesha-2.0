@@ -51,6 +51,7 @@ class Acolyte:
             self.acolyte_id = record['acolyte_id']
             self.owner_id = record['user_id']
             self.acolyte_name = record['acolyte_name']
+            self.copies = record['copies']
         else:
             self.is_empty = True
             self.gen_dict = {
@@ -65,6 +66,7 @@ class Acolyte:
             self.acolyte_id = None
             self.owner_id = None
             self.acolyte_name = None
+            self.copies = 0
 
     @staticmethod
     async def get_acolyte_by_name(name : str, conn : asyncpg.Connection) -> dict:
@@ -106,7 +108,7 @@ async def get_acolyte_by_id(conn : asyncpg.Connection,
         acolyte_id : int) -> Acolyte:
     """Return an acolyte object of the acolyte with the given ID."""
     psql = """
-            SELECT acolyte_id, user_id, acolyte_name
+            SELECT acolyte_id, user_id, acolyte_name, copies
             FROM acolytes
             WHERE acolyte_id = $1;
             """
