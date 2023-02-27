@@ -136,7 +136,7 @@ class OwnedAcolyte(InfoAcolyte):
 
         Raises
         ------
-        Checks.NotAcolyteOwner
+        Checks.AcolyteNotOwned
             If the player passed does not have any copies of the acolyte
         """
         psql = """
@@ -154,6 +154,52 @@ class OwnedAcolyte(InfoAcolyte):
         cls.copies = info['copies']
         cls._generate_effect()
         return cls
+
+    @classmethod
+    async def create_acolyte(cls, conn : asyncpg.Connection, owner_id : int, 
+            acolyte : str) -> "OwnedAcolyte":
+        """Adds a new acolyte with the given name to the passed player.
+        If the player already has this acolyte, increment their copies if 
+        within range. Returns the acolyte object in all non-error cases.
+
+        Parameters
+        ----------
+        conn : asyncpg.Connection
+            a connection to the database
+        owner_id : int
+            the discord ID of the owner of the acolyte
+        acolyte : str
+            the name of the acolyte being created
+
+        Returns
+        -------
+        OwnedAcolyte
+        """
+        try:
+            current = OwnedAcolyte.from_name(conn, owner_id, acolyte)
+            if current.copies >= 3:
+                raise Checks.DuplicateAcolyte
+            else:
+                psql = """
+                        UPDATE acolytes
+                        SET copies = copies + 1
+                        WHERE acolyte_id = $1;
+                        """
+                await conn.execute(psql, current.id)
+                current.copies += 1
+                return current
+
+        except Checks.AcolyteNotOwned:
+            psql = """
+                    WITH rows AS (
+                        INSERT INTO acolytes (user_id, acolyte_name)
+                        VALUES ($1, $2)
+                        RETURNING acolyte_id
+                    )
+                    SELECT acolyte_id FROM rows;
+                    """
+            acolyte_id = await conn.fetchval(psql, owner_id, acolyte)
+            return await get_acolyte_by_id(conn, acolyte_id)
     
     def _generate_effect(self):
         """Rewrites the effect string into the readable version."""
