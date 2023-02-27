@@ -39,7 +39,9 @@ class EmptyAcolyte: # TODO: change to 'Acolyte'
 
 
 class InfoAcolyte(EmptyAcolyte):
-    """Acolyte used for read-only information and not tied to any user."""
+    """Acolyte class for read-only purposes. Contains all base acolyte
+    information and is not tied to any user or player
+    """
     def __init__(self, name : str, info : asyncpg.Record):
         super().__init__()
         # Base Attributes
@@ -52,10 +54,8 @@ class InfoAcolyte(EmptyAcolyte):
         self.image = info['image']
 
     @classmethod
-    async def from_name(cls, conn : asyncpg.Connection, name : str) -> \
-            "InfoAcolyte":
-        """Acolyte class for read-only purposes. Contains all base acolyte
-        information and is not tied to any user or player
+    async def from_name(cls, conn : asyncpg.Connection, name : str) -> "InfoAcolyte":
+        """Load an acolyte by its name.
 
         Parameters
         ----------
@@ -79,7 +79,30 @@ class InfoAcolyte(EmptyAcolyte):
 
 
 class OwnedAcolyte(InfoAcolyte):
-    pass
+    """An acolyte for player-usage purposes."""
+
+    @classmethod
+    async def from_id(cls, conn : asyncpg.Connection, id : int) -> "OwnedAcolyte":
+        """Load an acolyte by its ID (an owned instance from the Acolytes table)
+
+        Parameters
+        ----------
+        conn : asyncpg.Connection
+            a connection to the database
+        id : int
+            the ID of the acolyte being loaded
+        """
+        psql = """
+                SELECT user_id, acolyte_name, copies
+                FROM acolytes
+                WHERE acolyte_id = $1;
+                """  
+        instance_info = await conn.fetchrow(psql, id)
+        cls = await super().from_name(conn, instance_info['acolyte_name'])
+        cls.id = id
+        cls.owner_id = instance_info['user_id']
+        cls.copies = instance_info['copies']
+        return cls
 
 
 class Acolyte:
@@ -129,7 +152,7 @@ class Acolyte:
             self.acolyte_id = record['acolyte_id']
             self.owner_id = record['user_id']
             self.acolyte_name = record['acolyte_name']
-            self.copies = record['copies']
+            self.copies = record['copies'] or 0
         else:
             self.is_empty = True
             self.gen_dict = {
