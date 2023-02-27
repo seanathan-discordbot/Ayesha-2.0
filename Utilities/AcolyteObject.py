@@ -97,13 +97,45 @@ class OwnedAcolyte(InfoAcolyte):
                 FROM acolytes
                 WHERE acolyte_id = $1;
                 """  
-        instance_info = await conn.fetchrow(psql, id)
-        cls = await super().from_name(conn, instance_info['acolyte_name'])
+        info = await conn.fetchrow(psql, id)
+        cls = await super().from_name(conn, info['acolyte_name'])
         cls.id = id
-        cls.owner_id = instance_info['user_id']
-        cls.copies = instance_info['copies']
+        cls.owner_id = info['user_id']
+        cls.copies = info['copies']
         return cls
+    
+    @classmethod
+    async def from_name(cls, conn : asyncpg.Connection, id : int, name : str) -> "OwnedAcolyte":
+        """Load an acolyte by a player's ID and the acolyte's name
+        
+        Parameters
+        ----------
+        conn : asyncpg.Connection
+            a connection to the database
+        id : int
+            the ID of the player who owns the acolyte
+        name : str
+            the name of the acolyte
 
+        Raises
+        ------
+        Checks.NotAcolyteOwner
+            If the player passed does not have any copies of the acolyte
+        """
+        psql = """
+                SELECT acolyte_id, copies
+                FROM acolytes
+                WHERE user_id = $1 AND acolyte_name = $2;
+                """
+        info = await conn.fetchrow(psql, id, name)
+        if info is None:
+            raise Checks.NotAcolyteOwner
+        
+        cls = await super().from_name(conn, name)
+        cls.id = info['acolyte_id']
+        cls.owner_id = id
+        cls.copies = info['copies']
+        return cls
 
 class Acolyte:
     """An acolyte object. Changing the object attributes are not permanent,
