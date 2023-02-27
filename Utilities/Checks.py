@@ -96,6 +96,9 @@ class InvalidResource(Exception):
 class NotAcolyteOwner(Exception):
     pass
 
+class AcolyteNotOwned(Exception):
+    pass
+
 class InvalidAcolyteEquip(Exception):
     pass
 

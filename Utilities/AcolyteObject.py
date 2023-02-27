@@ -146,7 +146,7 @@ class OwnedAcolyte(InfoAcolyte):
                 """
         info = await conn.fetchrow(psql, id, name)
         if info is None:
-            raise Checks.NotAcolyteOwner
+            raise Checks.AcolyteNotOwned
         
         cls = await super().from_name(conn, name)
         cls.id = info['acolyte_id']
