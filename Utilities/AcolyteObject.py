@@ -4,6 +4,84 @@ import asyncpg
 
 from Utilities import Checks
 
+class EmptyAcolyte: # TODO: change to 'Acolyte'
+    """Empty acolyte for placeholding purposes. It is convenient for the bot
+    to assume that a player or some other agent always has an acolyte equipped,
+    so this class creates an empty dummy object with all the attributes of the
+    `OwnedAcolyte` for similar read-only functionality.
+    """
+    def __init__(self):
+        # Base Attributes
+        self.name = None
+        self._attack = 0
+        self._crit = 0
+        self._hp = 0
+        self.effect = None
+        self.story = None
+        self.image = None
+
+        # Instance Attributes
+        self.id = None
+        self.owner_id = None
+        self.copies = 0
+
+    def get_attack(self) -> int:
+        """Returns the acolyte's attack stat."""
+        return int(self._attack)
+
+    def get_crit(self) -> int:
+        """Returns the acolyte's crit stat."""
+        return int(self._crit)
+
+    def get_hp(self) -> int:
+        """Returns the acolyte's HP stat."""
+        return int(self._hp)
+
+
+class InfoAcolyte(EmptyAcolyte):
+    """Acolyte used for read-only information and not tied to any user."""
+    def __init__(self, name : str, info : asyncpg.Record):
+        super().__init__()
+        # Base Attributes
+        self.name = name
+        self._attack = info['attack']
+        self._crit = info['crit']
+        self._hp = info['hp']
+        self.effect = info['effect']
+        self.story = info['story']
+        self.image = info['image']
+
+    @classmethod
+    async def from_name(cls, conn : asyncpg.Connection, name : str) -> \
+            "InfoAcolyte":
+        """Acolyte class for read-only purposes. Contains all base acolyte
+        information and is not tied to any user or player
+
+        Parameters
+        ----------
+        conn : asyncpg.Connection
+            a connection to the database
+        name : str
+            the name of the acolyte being created
+
+        Returns
+        -------
+        InfoAcolyte
+        """        
+        psql = """
+                SELECT attack, crit, hp, effect, story, image, effect_num
+                FROM acolyte_list
+                WHERE name = $1;
+                """
+        info = await conn.fetchrow(psql, name)
+
+        return cls(name, info)
+
+
+class OwnedAcolyte(InfoAcolyte):
+    pass
+
+
 class Acolyte:
     """An acolyte object. Changing the object attributes are not permanent,
     and are suitable for cases in which temporary changes can be advantageous
