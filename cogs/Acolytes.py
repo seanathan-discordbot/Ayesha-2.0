@@ -97,7 +97,8 @@ class Acolytes(commands.Cog):
         """View the list of acolytes"""
         psql = """
                 SELECT uid, name AS acolyte_name, acolytes.user_id, 
-                    acolytes.acolyte_id, attack, crit, hp, effect, story, image
+                    acolytes.acolyte_id, acolytes.copies, attack, crit, hp, 
+                    effect, story, image
                 FROM acolyte_list
                 LEFT JOIN acolytes 
                     ON acolyte_list.name = acolytes.acolyte_name 
