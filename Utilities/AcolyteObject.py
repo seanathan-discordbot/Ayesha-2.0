@@ -2,6 +2,8 @@ import discord
 
 import asyncpg
 
+from itertools import chain
+
 from Utilities import Checks
 
 class EmptyAcolyte: # TODO: change to 'Acolyte'
@@ -19,6 +21,7 @@ class EmptyAcolyte: # TODO: change to 'Acolyte'
         self.effect = None
         self.story = None
         self.image = None
+        self._effect_num = None
 
         # Instance Attributes
         self.id = None
@@ -49,9 +52,10 @@ class InfoAcolyte(EmptyAcolyte):
         self._attack = info['attack']
         self._crit = info['crit']
         self._hp = info['hp']
-        self.effect = info['effect']
+        self.effect = info['effect'].replace("{x}", "[{}/{}/{}]")
         self.story = info['story']
         self.image = info['image']
+        self._effect_num = info['effect_num']
 
     @classmethod
     async def from_name(cls, conn : asyncpg.Connection, name : str) -> "InfoAcolyte":
@@ -75,7 +79,19 @@ class InfoAcolyte(EmptyAcolyte):
                 """
         info = await conn.fetchrow(psql, name)
 
-        return cls(name, info)
+        cls = cls(name, info)
+        
+        # Effects have to be generated top-down, but as far as I can tell,
+        # I am forced to create these objects in the opposite direction
+        # This prevents the effect from being generated before the copies
+        # attribute is correctly populated in the case of OwnedAcolyte creation.
+        if not isinstance(cls, OwnedAcolyte):
+            cls._generate_effect()
+        return cls
+    
+    def _generate_effect(self):
+        """Rewrites the effect string into the readable version."""
+        self.effect = self.effect.format(*list(chain(*self._effect_num)))
 
 
 class OwnedAcolyte(InfoAcolyte):
@@ -102,6 +118,7 @@ class OwnedAcolyte(InfoAcolyte):
         cls.id = id
         cls.owner_id = info['user_id']
         cls.copies = info['copies']
+        cls._generate_effect()
         return cls
     
     @classmethod
@@ -135,7 +152,17 @@ class OwnedAcolyte(InfoAcolyte):
         cls.id = info['acolyte_id']
         cls.owner_id = id
         cls.copies = info['copies']
+        cls._generate_effect()
         return cls
+    
+    def _generate_effect(self):
+        """Rewrites the effect string into the readable version."""
+        index = self.copies - 1
+        if index >= 0:
+            for subarr in self._effect_num:
+                subarr[index] = f"**{subarr[index]}**"
+        
+        super()._generate_effect()
 
 class Acolyte:
     """An acolyte object. Changing the object attributes are not permanent,
