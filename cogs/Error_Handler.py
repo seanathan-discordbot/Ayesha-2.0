@@ -234,6 +234,13 @@ class Error_Handler(commands.Cog):
                 await ctx.respond(message)
                 print_traceback = False
 
+            if isinstance(error.original, Checks.AcolyteDoesNotExist):
+                message = (
+                    f"There is no such acolyte with the name "
+                    f"**{error.original.name}**.")
+                await ctx.respond(message)
+                print_traceback = False  
+
         # --- OFFICES ---
         if isinstance(error, Checks.NotMayor):
             message = (

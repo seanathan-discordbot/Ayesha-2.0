@@ -5,7 +5,7 @@ from discord.ext import commands
 
 import asyncpg
 
-from Utilities import Checks, Vars, PlayerObject, AcolyteObject, ItemObject
+from Utilities import Checks, Vars, PlayerObject, ItemObject
 from Utilities.Finances import Transaction
 from Utilities.AyeshaBot import Ayesha
 

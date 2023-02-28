@@ -7,7 +7,8 @@ import asyncpg
 import random
 from typing import List
 
-from Utilities import Checks, Vars, AcolyteObject, PlayerObject
+from Utilities import Checks, Vars, PlayerObject
+from Utilities.AcolyteObject import EmptyAcolyte, InfoAcolyte, OwnedAcolyte
 from Utilities.AyeshaBot import Ayesha
 from Utilities.ConfirmationMenu import ConfirmationMenu
 
@@ -17,8 +18,8 @@ def acolyte_equipped(player,acolyte_id):
     return (acolyte_id==id_1 or acolyte_id==id_2)
 
 async def get_all_acolytes(conn : asyncpg.Connection, 
-        user_id : int) -> List[AcolyteObject.Acolyte]:
-    """Returns a list of 'AcolyteObject.Acolyte's the player with the ID owns"""
+        user_id : int) -> List[OwnedAcolyte]:
+    """Returns a list of Acolytes the player with the ID owns"""
     psql = """
           SELECT acolyte_id
           FROM acolytes
@@ -27,7 +28,7 @@ async def get_all_acolytes(conn : asyncpg.Connection,
           """
     list_ids = await conn.fetch(psql, user_id)
     temp=[record['acolyte_id'] for record in list_ids]
-    return [await AcolyteObject.get_acolyte_by_id(conn,id) for id in temp]
+    return [await OwnedAcolyte.from_id(conn, id) for id in temp]
 
 class Acolytes(commands.Cog):
     """
@@ -42,7 +43,7 @@ class Acolytes(commands.Cog):
         print("Acolyte is ready.")
 
     #add logic to add when not equipped
-    def write(self, start : int, inv: List[AcolyteObject.Acolyte], 
+    def write(self, start : int, inv: List[EmptyAcolyte], 
             player : PlayerObject.Player) -> discord.Embed:
         """
         A helper function that creates the embeds for the tavern method
@@ -112,13 +113,10 @@ class Acolytes(commands.Cog):
             for record in acolytes:
                 if record['acolyte_id'] is not None:
                     new_acolytes.append(
-                        await AcolyteObject.get_acolyte_by_id(
-                            conn, record['acolyte_id']))
+                        await OwnedAcolyte.from_id(conn, record['acolyte_id']))
                 else:
-                    base_info = await AcolyteObject.Acolyte.get_acolyte_by_name(
-                        record['acolyte_name'], conn)
-                    new_acolytes.append(
-                        AcolyteObject.Acolyte(record, base_info))
+                    new_acolytes.append(await InfoAcolyte.from_name(
+                        conn, record['acolyte_name']))
             acolytes = new_acolytes
         
             player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
@@ -163,12 +161,7 @@ class Acolytes(commands.Cog):
         # Validate acolyte
         acolyte = acolyte.title()
         async with self.bot.db.acquire() as conn:
-            try:
-                acolyte_info = await AcolyteObject.Acolyte.get_acolyte_by_name(
-                    acolyte, conn)
-            except TypeError:
-                return await ctx.respond(
-                    f"There is no such acolyte with the name **{acolyte}**.")
+            acolyte_info = await InfoAcolyte.from_name(conn, acolyte)
             
         # Create and send embed
         embed = discord.Embed(title=acolyte_info['Name'], color=Vars.ABLUE)
@@ -248,12 +241,7 @@ class Acolytes(commands.Cog):
                 raise Checks.NotEnoughResources("rubidics", 1, player.rubidics)
 
             # Validate acolyte being summoned
-            try:
-                acolyte_info = await AcolyteObject.Acolyte.get_acolyte_by_name(
-                    name, conn)
-            except TypeError:
-                return await ctx.respond(
-                    f"There is no such acolyte with the name **{name}**.")
+            acolyte_info = await InfoAcolyte.from_name(conn, name)
 
             # Send confirmation box
             embed = discord.Embed(
@@ -279,7 +267,7 @@ class Acolytes(commands.Cog):
 
             # Add acolyte to player's tavern
             try:
-                new_acolyte = await AcolyteObject.create_acolyte(conn, 
+                new_acolyte = await OwnedAcolyte.create_acolyte(conn, 
                     ctx.author.id, name)
             except Checks.DuplicateAcolyte as e:
                 return await msg.edit_original_message(

@@ -3,7 +3,7 @@ import discord
 import random
 
 from Utilities import PlayerObject, Vars
-from Utilities.AcolyteObject import Acolyte
+from Utilities.AcolyteObject import EmptyAcolyte, InfoAcolyte, OwnedAcolyte
 from Utilities.AssociationObject import Association
 from Utilities.ItemObject import Accessory, Weapon, Armor
 
@@ -24,7 +24,8 @@ class Belligerent:
             weapon : Weapon = Weapon(), helmet : Armor = Armor(),
             bodypiece : Armor = Armor(), boots : Armor = Armor(),
             accessory : Accessory = Accessory(),
-            acolyte1 : Acolyte = Acolyte(), acolyte2 : Acolyte = Acolyte(),
+            acolyte1 : EmptyAcolyte = EmptyAcolyte(), 
+            acolyte2 : EmptyAcolyte = EmptyAcolyte(),
             assc : Association = Association()):
         """
         Parameters
@@ -53,9 +54,9 @@ class Belligerent:
             The armor object that the person has equipped in Boots slot
         accessory : Optional[ItemObject.Accessory]
             The accessory object that the person has equipped
-        acolyte1 : Optional[AcolyteObject.Acolyte]
+        acolyte1 : Optional[EmptyAcolyte]
             The acolyte object that the person has equipped in slot 1
-        acolyte2 : Optional[AcolyteObject.Acolyte]
+        acolyte2 : Optional[EmptyAcolyte]
             The acolyte object that the person has equipped in slot 2
         assc : Optional[AssociationObject.Association]
             The association that the person is in

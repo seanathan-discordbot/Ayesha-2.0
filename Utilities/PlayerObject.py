@@ -5,9 +5,9 @@ import time
 
 from datetime import datetime, timedelta
 
-from Utilities import Checks, ItemObject, Vars, AcolyteObject, AssociationObject
+from Utilities import Checks, ItemObject, Vars, AssociationObject
 from Utilities.ItemObject import Weapon
-from Utilities.AcolyteObject import Acolyte
+from Utilities.AcolyteObject import EmptyAcolyte, InfoAcolyte, OwnedAcolyte
 from Utilities.AssociationObject import Association
 
 
@@ -29,9 +29,9 @@ class Player:
         The player's level
     equipped_item : ItemObject.Weapon
         The weapon object of the item equipped by the player
-    acolyte1 : AcolyteObject.Acolyte
+    acolyte1 : EmptyAcolyte
         The acolyte object of the acolyte equipped by the player in Slot 1
-    acolyte2 : AcolyteObject.Acolyte
+    acolyte2 : EmptyAcolyte
         The acolyte object of the acolyte equipped by the player in Slot 2
     assc : AssociationObject.Association
         The association object of the association this player is in
@@ -116,10 +116,8 @@ class Player:
         self.boots = await ItemObject.get_armor_by_id(conn, self.boots)
         self.accessory = await ItemObject.get_accessory_by_id(
             conn, self.accessory)
-        self.acolyte1 = await AcolyteObject.get_acolyte_by_id(
-            conn, self.acolyte1)
-        self.acolyte2 = await AcolyteObject.get_acolyte_by_id(
-            conn, self.acolyte2)
+        self.acolyte1 = await OwnedAcolyte.from_id(conn, self.acolyte1)
+        self.acolyte2 = await OwnedAcolyte.from_id(conn, self.acolyte2)
         self.assc = await AssociationObject.get_assc_by_id(conn, self.assc)
         self.resources = dict(await self.get_backpack(conn))
 
@@ -378,16 +376,14 @@ class Player:
             raise Checks.InvalidAcolyteEquip
 
         if slot == 1:
-            self.acolyte1 = await AcolyteObject.get_acolyte_by_id(
-                conn, acolyte_id)
+            self.acolyte1 = await OwnedAcolyte.from_id(conn, acolyte_id)
             psql = """
                     UPDATE players
                     SET acolyte1 = $1
                     WHERE user_id = $2;
                     """
         elif slot == 2:
-            self.acolyte2 = await AcolyteObject.get_acolyte_by_id(
-                conn, acolyte_id)
+            self.acolyte2 = await OwnedAcolyte.from_id(conn, acolyte_id)
             psql = """
                     UPDATE players
                     SET acolyte2 = $1
@@ -401,11 +397,11 @@ class Player:
         slot must be an integer 1 or 2.
         """
         if slot == 1:
-            self.acolyte1 = Acolyte()
+            self.acolyte1 = EmptyAcolyte()
             psql = "UPDATE players SET acolyte1 = NULL WHERE user_id = $1;"
             await conn.execute(psql, self.disc_id)
         elif slot == 2:
-            self.acolyte2 = Acolyte()
+            self.acolyte2 = EmptyAcolyte()
             psql = "UPDATE players SET acolyte2 = NULL WHERE user_id = $1;"
             await conn.execute(psql, self.disc_id)
         else:

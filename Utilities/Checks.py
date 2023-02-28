@@ -102,6 +102,10 @@ class AcolyteNotOwned(Exception):
 class InvalidAcolyteEquip(Exception):
     pass
 
+class AcolyteDoesNotExist(Exception):
+    def __init__(self, name : str):
+        self.name = name
+
 class InvalidAssociationID(Exception):
     pass
 
