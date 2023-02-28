@@ -107,10 +107,10 @@ class Profile(commands.Cog):
                 ),
                 inline=False)
             page2.add_field(name="Acolyte",
-                value=profile.acolyte1.name,
+                value=f"({profile.acolyte1.stars}) {profile.acolyte1.name}",
                 inline=True)
             page2.add_field(name="Acolyte",
-                value=profile.acolyte2.name,
+                value=f"({profile.acolyte2.stars}) {profile.acolyte2.name}",
                 inline=True)
 
             page3 = discord.Embed(            

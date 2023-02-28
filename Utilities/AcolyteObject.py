@@ -28,6 +28,11 @@ class EmptyAcolyte: # TODO: change to 'Acolyte'
         self.owner_id = None
         self.copies = 0
 
+    @property
+    def stars(self) -> str:
+        """Returns the acolyte's copy count with a star emoji"""
+        return f"{self.copies}★" if self.copies > 0 else "-"
+
     def get_attack(self) -> int:
         """Returns the acolyte's attack stat."""
         return int(self._attack)
