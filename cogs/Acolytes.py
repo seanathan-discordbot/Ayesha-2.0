@@ -92,6 +92,7 @@ class Acolytes(commands.Cog):
                     OptionChoice("Highest Attack", "Attack"),
                     OptionChoice("Highest Crit", "Crit"),
                     OptionChoice("Highest HP", "HP"),
+                    OptionChoice("Most Copies", "Copies"),
                     OptionChoice("Not Yet Hired", "Unowned")
                 ])):
         """View the list of acolytes"""
@@ -133,6 +134,8 @@ class Acolytes(commands.Cog):
                 acolytes.sort(key=lambda x : x.get_crit(), reverse=True)
             case "HP":
                 acolytes.sort(key=lambda x : x.get_hp(), reverse=True)
+            case "Copies":
+                acolytes.sort(key=lambda x : x.copies, reverse=True)
             case "Unowned":
                 acolytes.sort(key=lambda x : x.id is None, reverse=True)
 
