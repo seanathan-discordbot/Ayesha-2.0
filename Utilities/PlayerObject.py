@@ -116,14 +116,20 @@ class Player:
         self.boots = await ItemObject.get_armor_by_id(conn, self.boots)
         self.accessory = await ItemObject.get_accessory_by_id(
             conn, self.accessory)
-        self.acolyte1 = await OwnedAcolyte.from_id(conn, self.acolyte1)
-        self.acolyte2 = await OwnedAcolyte.from_id(conn, self.acolyte2)
+        try:
+            self.acolyte1 = await OwnedAcolyte.from_id(conn, self.acolyte1)
+        except Checks.EmptyObject:
+            self.acolyte1 = EmptyAcolyte()
+        try:
+            self.acolyte2 = await OwnedAcolyte.from_id(conn, self.acolyte2)
+        except Checks.EmptyObject:
+            self.acolyte2 = EmptyAcolyte()
         self.assc = await AssociationObject.get_assc_by_id(conn, self.assc)
         self.resources = dict(await self.get_backpack(conn))
 
         # Radishes changes expedition time
         on_expedition = self.destination == "EXPEDITION"
-        radishes_equipped = "Radishes" in (a.acolyte_name 
+        radishes_equipped = "Radishes" in (a.name 
             for a in (self.acolyte1, self.acolyte2))
         if on_expedition and radishes_equipped:
             time_bonus = int((time.time() - self.adventure) / 10)
@@ -370,8 +376,8 @@ class Player:
         if not await self.is_acolyte_owner(conn, acolyte_id):
             raise Checks.NotAcolyteOwner
 
-        a = acolyte_id == self.acolyte1.acolyte_id
-        b = acolyte_id == self.acolyte2.acolyte_id
+        a = acolyte_id == self.acolyte1.id
+        b = acolyte_id == self.acolyte2.id
         if a or b:
             raise Checks.InvalidAcolyteEquip
 
@@ -810,7 +816,7 @@ class Player:
             base += self.assc.get_level()
         if self.accessory.prefix == "Strong":
             base += Vars.ACCESSORY_BONUS["Strong"][self.accessory.type]
-        acolytes = (self.acolyte1.acolyte_name, self.acolyte2.acolyte_name)
+        acolytes = (self.acolyte1.name, self.acolyte2.name)
         if "Sophytes" in acolytes:
             base += 5
         return base

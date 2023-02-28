@@ -115,7 +115,7 @@ class Belligerent:
         assc = player.assc
 
         # ON_PLAYER_LOAD event lol
-        if "Arsaces" in (acolyte1.acolyte_name, acolyte2.acolyte_name):
+        if "Arsaces" in (acolyte1.name, acolyte2.name):
             attack += crit * 4
             hp += crit * 7
             crit = 0
@@ -378,7 +378,7 @@ class CombatInstance:
         agent.crit_hit = True
 
         # Applicable acolytes: Aulus, Ayesha
-        acolytes = [a.acolyte_name for a in (agent.acolyte1, agent.acolyte2)]
+        acolytes = [a.name for a in (agent.acolyte1, agent.acolyte2)]
         if "Aulus" in acolytes:
             agent.attack += 50
         if "Ayesha" in acolytes:
@@ -398,7 +398,7 @@ class CombatInstance:
 
     # Below events will all be part of on_damage
     def run_events(self, agent : Belligerent, object : Belligerent):
-        acolytes = [a.acolyte_name for a in (agent.acolyte1, agent.acolyte2)]
+        acolytes = [a.name for a in (agent.acolyte1, agent.acolyte2)]
         # ON_DAMAGE : Any time the agent deals damage
         if "Paterius" in acolytes:
             agent.damage = (agent.damage * 1.15) + 15

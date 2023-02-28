@@ -13,8 +13,8 @@ from Utilities.AyeshaBot import Ayesha
 from Utilities.ConfirmationMenu import ConfirmationMenu
 
 def acolyte_equipped(player,acolyte_id):
-    id_1=player.acolyte1.acolyte_id
-    id_2=player.acolyte2.acolyte_id
+    id_1=player.acolyte1.id
+    id_2=player.acolyte2.id
     return (acolyte_id==id_1 or acolyte_id==id_2)
 
 async def get_all_acolytes(conn : asyncpg.Connection, 
@@ -53,25 +53,24 @@ class Acolytes(commands.Cog):
         iteration = 0
         while start < len(inv) and iteration < 5: 
             #Loop til 5 entries or none left
-            info=inv[start].gen_dict
             #add whether acolyte is equipped or not. 
-            if acolyte_equipped(player,inv[start].acolyte_id):
+            if acolyte_equipped(player,inv[start].id):
                 embed.add_field(
-                    name=f"{info['Name']}: `{inv[start].acolyte_id}` [EQUIPPED]",
+                    name=f"{inv[start].name}: `{inv[start].id}` [EQUIPPED]",
                     value=(
                         f"**Attack:** {inv[start].get_attack()}, "
                         f"**Crit:** {inv[start].get_crit()}, "
                         f"**HP:** {inv[start].get_hp()}\n"
-                        f"**Effect:** {info['Effect']}"),
+                        f"**Effect:** {inv[start].effect}"),
                     inline=False)
             else:
                 embed.add_field(
-                    name=f"{info['Name']}: `{inv[start].acolyte_id}`",
+                    name=f"{inv[start].name}: `{inv[start].id}`",
                     value=(
                         f"**Attack:** {inv[start].get_attack()}, "
                         f"**Crit:** {inv[start].get_crit()}, "
                         f"**HP:** {inv[start].get_hp()}\n"
-                        f"**Effect:** {info['Effect']}"),
+                        f"**Effect:** {inv[start].effect}"),
                     inline=False)
             iteration += 1
             start += 1
@@ -125,9 +124,9 @@ class Acolytes(commands.Cog):
         BIGN = 9223372036854775807
         match order:
             case "Oldest": # The or statements move `None` to the back
-                acolytes.sort(key=lambda x : x.acolyte_id or BIGN)
+                acolytes.sort(key=lambda x : x.id or BIGN)
             case "Newest":
-                acolytes.sort(key=lambda x : x.acolyte_id or 0, reverse=True)
+                acolytes.sort(key=lambda x : x.id or 0, reverse=True)
             case "Attack":
                 acolytes.sort(key=lambda x : x.get_attack(), reverse=True)
             case "Crit":
@@ -135,11 +134,10 @@ class Acolytes(commands.Cog):
             case "HP":
                 acolytes.sort(key=lambda x : x.get_hp(), reverse=True)
             case "Unowned":
-                acolytes.sort(key=lambda x : x.acolyte_id is None, reverse=True)
+                acolytes.sort(key=lambda x : x.id is None, reverse=True)
 
         acolytes.sort( # Put the equipped acolytes at the top
-            key=lambda x : x.acolyte_id in (
-                player.acolyte1.acolyte_id, player.acolyte2.acolyte_id),
+            key=lambda x : x.id in (player.acolyte1.id, player.acolyte2.id),
             reverse=True)
 
         # Display initial tavern embed
@@ -198,9 +196,9 @@ class Acolytes(commands.Cog):
             player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
             if name is None: # Unequip from slot
                 if slot == 1:
-                    old_name = player.acolyte1.acolyte_name
+                    old_name = player.acolyte1.name
                 else:
-                    old_name = player.acolyte2.acolyte_name
+                    old_name = player.acolyte2.name
                 await player.unequip_acolyte(conn, slot)
                 return await ctx.respond(
                     f"**{old_name}** left slot {slot} of your party.")
@@ -208,7 +206,7 @@ class Acolytes(commands.Cog):
             # Perform search for acolyte ID using the name
             name = name.title()
             all_acolytes = await get_all_acolytes(conn, ctx.author.id)
-            ids = [a.acolyte_id for a in all_acolytes if name == a.acolyte_name]
+            ids = [a.id for a in all_acolytes if name == a.name]
 
             # Equip acolyte and send message
             if not ids:
@@ -219,9 +217,9 @@ class Acolytes(commands.Cog):
 
             get_str = lambda x : f"**{x}** joined your party in slot {slot}."
             if slot == 1:
-                await ctx.respond(get_str(player.acolyte1.acolyte_name))
+                await ctx.respond(get_str(player.acolyte1.name))
             else:
-                await ctx.respond(get_str(player.acolyte2.acolyte_name))
+                await ctx.respond(get_str(player.acolyte2.name))
 
     @tavern.command()
     @commands.check(Checks.is_player)
@@ -280,21 +278,21 @@ class Acolytes(commands.Cog):
             
             # Create display embed and complete transaction
             embed=discord.Embed(
-                title=(f"{new_acolyte.acolyte_name} (ID: "
-                       f"`{new_acolyte.acolyte_id}`) has entered the tavern!"),
+                title=(f"{new_acolyte.name} (ID: "
+                       f"`{new_acolyte.id}`) has entered the tavern!"),
                 color=Vars.ABLUE)
-            if new_acolyte.gen_dict['Image'] is not None:
-                embed.set_thumbnail(url=new_acolyte.gen_dict['Image'])
+            if new_acolyte.image is not None:
+                embed.set_thumbnail(url=new_acolyte.image)
             embed.add_field(name="Attack",
-                value=new_acolyte.gen_dict['Attack'])
-            embed.add_field(name="Crit", value = new_acolyte.gen_dict['Crit'])
-            embed.add_field(name="HP", value=new_acolyte.gen_dict['HP'])
-            embed.add_field(name="Effect", value=new_acolyte.gen_dict['Effect'], 
+                value=new_acolyte.get_attack())
+            embed.add_field(name="Crit", value = new_acolyte.get_crit())
+            embed.add_field(name="HP", value=new_acolyte.get_hp())
+            embed.add_field(name="Effect", value=new_acolyte.effect, 
                 inline=False)
-            embed.add_field(name="Backstory", value=new_acolyte.gen_dict['Story'], 
+            embed.add_field(name="Backstory", value=new_acolyte.story, 
                 inline=False)
             embed.set_footer(text=(
-                f"To equip {new_acolyte.acolyte_name}, use their ID with the "
+                f"To equip {new_acolyte.name}, use their ID with the "
                 f"/recruit command."))
 
             await msg.edit_original_message(embed=embed, view=None)

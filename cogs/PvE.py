@@ -253,8 +253,7 @@ class PvE(commands.Cog):
             # ON GAME END event technically
             gold_bonus_sources = []
             xp_bonus_sources = []
-            acolytes = [a.acolyte_name 
-                for a in (player.acolyte1, player.acolyte2)]
+            acolytes = [a.name for a in (player.acolyte1, player.acolyte2)]
             if "Sean" in acolytes:
                 bonus = xp // 5
                 xp += bonus
