@@ -2,6 +2,7 @@ import discord
 
 import asyncpg
 
+from copy import deepcopy
 from itertools import chain
 
 from Utilities import Checks
@@ -44,6 +45,9 @@ class EmptyAcolyte: # TODO: change to 'Acolyte'
     def get_hp(self) -> int:
         """Returns the acolyte's HP stat."""
         return int(self._hp)
+    
+    def get_effect_modifier(self, effect_index : int = 0) -> int:
+        return 1
 
 
 class InfoAcolyte(EmptyAcolyte):
@@ -213,8 +217,17 @@ class OwnedAcolyte(InfoAcolyte):
     def _generate_effect(self):
         """Rewrites the effect string into the readable version."""
         index = self.copies - 1
+        temp = deepcopy(self._effect_num)
         if index >= 0:
             for subarr in self._effect_num:
                 subarr[index] = f"**{subarr[index]}**"
         
         super()._generate_effect()
+
+        self._effect_num = temp # Keep variable as List[List[int]]
+
+        print(self.effect)
+        print(self._effect_num)
+
+    def get_effect_modifier(self, effect_index : int) -> int:
+        return self._effect_num[effect_index][self.copies-1]
