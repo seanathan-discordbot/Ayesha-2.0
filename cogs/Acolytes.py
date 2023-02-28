@@ -244,14 +244,14 @@ class Acolytes(commands.Cog):
             # Send confirmation box
             embed = discord.Embed(
                 title=(
-                    f"Are you sure you want to add {acolyte_info['Name']} "
+                    f"Are you sure you want to add {acolyte_info.name} "
                     "to your tavern?"),
                 description=(
                     f"This action will cost `1` rubidic. You currently have "
                     f"`{player.rubidics}` rubidics. "),
                 color=Vars.ABLUE)
-            if acolyte_info['Image'] is not None:
-                embed.set_thumbnail(url=acolyte_info['Image'])
+            if acolyte_info.image is not None:
+                embed.set_thumbnail(url=acolyte_info.image)
             view = ConfirmationMenu(user=ctx.author, timeout=30.0)
             msg = await ctx.respond(embed=embed, view=view)
 
@@ -270,9 +270,9 @@ class Acolytes(commands.Cog):
             except Checks.DuplicateAcolyte as e:
                 return await msg.edit_original_message(
                     content=(
-                        f"**{name}** (ID: `{e.original_id}`) is already in your "
-                        "tavern. Try again with another acolyte that is not yet "
-                        "in your tavern."),
+                        f"You have already recruited **{name}** for the "
+                        "maximum of 3 times. Try again with another acolyte "
+                        "that is not yet at full strength."),
                     embed=None,
                     view=None)
             

@@ -182,9 +182,9 @@ class OwnedAcolyte(InfoAcolyte):
         OwnedAcolyte
         """
         try:
-            current = OwnedAcolyte.from_name(conn, owner_id, acolyte)
+            current = await OwnedAcolyte.from_name(conn, owner_id, acolyte)
             if current.copies >= 3:
-                raise Checks.DuplicateAcolyte
+                raise Checks.DuplicateAcolyte(current.id)
             else:
                 psql = """
                         UPDATE acolytes
@@ -193,7 +193,9 @@ class OwnedAcolyte(InfoAcolyte):
                         """
                 await conn.execute(psql, current.id)
                 current.copies += 1
-                return current
+                # Run from_name again to regenerate the effect str to reflect
+                # the new copy count
+                return await OwnedAcolyte.from_name(conn, owner_id, acolyte)
 
         except Checks.AcolyteNotOwned:
             psql = """
