@@ -162,16 +162,16 @@ class Acolytes(commands.Cog):
             acolyte_info = await InfoAcolyte.from_name(conn, acolyte)
             
         # Create and send embed
-        embed = discord.Embed(title=acolyte_info['Name'], color=Vars.ABLUE)
-        if acolyte_info['Image'] is not None:
-            embed.set_thumbnail(url=acolyte_info['Image'])
+        embed = discord.Embed(title=acolyte_info.name, color=Vars.ABLUE)
+        if acolyte_info.image is not None:
+            embed.set_thumbnail(url=acolyte_info.image)
         embed.add_field(name="Attack",
-            value=acolyte_info['Attack'])
-        embed.add_field(name="Crit", value = acolyte_info['Crit'])
-        embed.add_field(name="HP", value=acolyte_info['HP'])
-        embed.add_field(name="Effect", value=acolyte_info['Effect'], 
+            value=acolyte_info.get_attack())
+        embed.add_field(name="Crit", value = acolyte_info.get_crit())
+        embed.add_field(name="HP", value=acolyte_info.get_hp())
+        embed.add_field(name="Effect", value=acolyte_info.effect, 
             inline=False)
-        embed.add_field(name="Backstory", value=acolyte_info['Story'], 
+        embed.add_field(name="Backstory", value=acolyte_info.story, 
             inline=False)
         
         await ctx.respond(embed=embed)
