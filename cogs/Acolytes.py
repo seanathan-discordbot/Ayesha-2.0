@@ -278,8 +278,7 @@ class Acolytes(commands.Cog):
             
             # Create display embed and complete transaction
             embed=discord.Embed(
-                title=(f"{new_acolyte.name} (ID: "
-                       f"`{new_acolyte.id}`) has entered the tavern!"),
+                title=f"{new_acolyte.name} has entered the tavern!",
                 color=Vars.ABLUE)
             if new_acolyte.image is not None:
                 embed.set_thumbnail(url=new_acolyte.image)
@@ -292,8 +291,7 @@ class Acolytes(commands.Cog):
             embed.add_field(name="Backstory", value=new_acolyte.story, 
                 inline=False)
             embed.set_footer(text=(
-                f"To equip {new_acolyte.name}, use their ID with the "
-                f"/recruit command."))
+                f"Equip {new_acolyte.name} with '/recruit {new_acolyte.name}'."))
 
             await msg.edit_original_message(embed=embed, view=None)
             await player.give_rubidics(conn, -1)
