@@ -226,8 +226,5 @@ class OwnedAcolyte(InfoAcolyte):
 
         self._effect_num = temp # Keep variable as List[List[int]]
 
-        print(self.effect)
-        print(self._effect_num)
-
     def get_effect_modifier(self, effect_index : int) -> int:
         return self._effect_num[effect_index][self.copies-1]
