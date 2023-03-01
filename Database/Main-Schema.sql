@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 14.3 (Ubuntu 14.3-0ubuntu0.22.04.1)
--- Dumped by pg_dump version 14.3 (Ubuntu 14.3-0ubuntu0.22.04.1)
+-- Dumped from database version 14.6 (Ubuntu 14.6-0ubuntu0.22.10.1)
+-- Dumped by pg_dump version 14.6 (Ubuntu 14.6-0ubuntu0.22.10.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -27,9 +27,9 @@ SET default_table_access_method = heap;
 CREATE TABLE public.acolytes (
     acolyte_id bigint NOT NULL,
     user_id bigint NOT NULL,
-    acolyte_name character varying(20) NOT NULL,
-    xp integer DEFAULT 0 NOT NULL,
-    duplicate smallint DEFAULT 0 NOT NULL
+    acolyte_name character varying(32) NOT NULL,
+    copies smallint DEFAULT 1,
+    CONSTRAINT acolytes_copies_check CHECK (((copies >= 1) AND (copies <= 3)))
 );
 
 
@@ -108,8 +108,7 @@ CREATE TABLE public.items (
     user_id bigint NOT NULL,
     attack smallint NOT NULL,
     crit smallint NOT NULL,
-    weapon_name character varying(20) NOT NULL,
-    rarity character varying(10) NOT NULL
+    weapon_name character varying(20) NOT NULL
 );
 
 
@@ -159,11 +158,12 @@ CREATE TABLE public.players (
     bosswins integer DEFAULT 0 NOT NULL,
     bossfights integer DEFAULT 0 NOT NULL,
     rubidics integer DEFAULT 10 NOT NULL,
-    pitycounter smallint DEFAULT 0 NOT NULL,
     adventure bigint,
     destination character varying(20),
     gravitas integer DEFAULT 0 NOT NULL,
     pve_limit smallint DEFAULT 25 NOT NULL,
+    daily_streak smallint DEFAULT 0,
+    last_daily bigint DEFAULT 0,
     CONSTRAINT check_positive CHECK ((gravitas >= 0))
 );
 
@@ -233,31 +233,27 @@ ALTER SEQUENCE public.accessories_accessory_id_seq OWNED BY public.accessories.a
 
 CREATE TABLE public.acolyte_list (
     uid smallint NOT NULL,
-    name character varying(20) NOT NULL,
+    name character varying(32) NOT NULL,
     attack smallint NOT NULL,
-    scale real NOT NULL,
     crit smallint NOT NULL,
     hp smallint NOT NULL,
-    rarity smallint NOT NULL,
     effect text,
-    material character varying(20),
     story text,
     image text,
-    CONSTRAINT acolyte_list_attack_check CHECK ((attack >= 0)),
-    CONSTRAINT acolyte_list_crit_check CHECK ((crit >= 0)),
-    CONSTRAINT acolyte_list_hp_check CHECK ((hp >= 0)),
-    CONSTRAINT acolyte_list_rarity_check CHECK (((rarity > 0) AND (rarity <= 5))),
-    CONSTRAINT acolyte_list_scale_check CHECK ((scale >= (0)::double precision))
+    effect_num smallint[],
+    CONSTRAINT acolyte_list_temp_attack_check CHECK ((attack >= 0)),
+    CONSTRAINT acolyte_list_temp_crit_check CHECK ((crit >= 0)),
+    CONSTRAINT acolyte_list_temp_hp_check CHECK ((hp >= 0))
 );
 
 
 ALTER TABLE public.acolyte_list OWNER TO ayeshadev;
 
 --
--- Name: acolyte_list_uid_seq; Type: SEQUENCE; Schema: public; Owner: ayeshadev
+-- Name: acolyte_list_temp_uid_seq; Type: SEQUENCE; Schema: public; Owner: ayeshadev
 --
 
-CREATE SEQUENCE public.acolyte_list_uid_seq
+CREATE SEQUENCE public.acolyte_list_temp_uid_seq
     AS smallint
     START WITH 1
     INCREMENT BY 1
@@ -266,13 +262,13 @@ CREATE SEQUENCE public.acolyte_list_uid_seq
     CACHE 1;
 
 
-ALTER TABLE public.acolyte_list_uid_seq OWNER TO ayeshadev;
+ALTER TABLE public.acolyte_list_temp_uid_seq OWNER TO ayeshadev;
 
 --
--- Name: acolyte_list_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: ayeshadev
+-- Name: acolyte_list_temp_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: ayeshadev
 --
 
-ALTER SEQUENCE public.acolyte_list_uid_seq OWNED BY public.acolyte_list.uid;
+ALTER SEQUENCE public.acolyte_list_temp_uid_seq OWNED BY public.acolyte_list.uid;
 
 
 --
@@ -758,7 +754,7 @@ ALTER TABLE ONLY public.accessories ALTER COLUMN accessory_id SET DEFAULT nextva
 -- Name: acolyte_list uid; Type: DEFAULT; Schema: public; Owner: ayeshadev
 --
 
-ALTER TABLE ONLY public.acolyte_list ALTER COLUMN uid SET DEFAULT nextval('public.acolyte_list_uid_seq'::regclass);
+ALTER TABLE ONLY public.acolyte_list ALTER COLUMN uid SET DEFAULT nextval('public.acolyte_list_temp_uid_seq'::regclass);
 
 
 --
@@ -955,19 +951,19 @@ ALTER TABLE ONLY public.accessories
 
 
 --
--- Name: acolyte_list acolyte_list_name_key; Type: CONSTRAINT; Schema: public; Owner: ayeshadev
+-- Name: acolyte_list acolyte_list_temp_name_key; Type: CONSTRAINT; Schema: public; Owner: ayeshadev
 --
 
 ALTER TABLE ONLY public.acolyte_list
-    ADD CONSTRAINT acolyte_list_name_key UNIQUE (name);
+    ADD CONSTRAINT acolyte_list_temp_name_key UNIQUE (name);
 
 
 --
--- Name: acolyte_list acolyte_list_pkey; Type: CONSTRAINT; Schema: public; Owner: ayeshadev
+-- Name: acolyte_list acolyte_list_temp_pkey; Type: CONSTRAINT; Schema: public; Owner: ayeshadev
 --
 
 ALTER TABLE ONLY public.acolyte_list
-    ADD CONSTRAINT acolyte_list_pkey PRIMARY KEY (uid);
+    ADD CONSTRAINT acolyte_list_temp_pkey PRIMARY KEY (uid);
 
 
 --
