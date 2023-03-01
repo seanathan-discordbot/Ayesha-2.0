@@ -4,6 +4,7 @@ import asyncpg
 import time
 
 from datetime import datetime, timedelta
+from typing import Optional
 
 from Utilities import Checks, ItemObject, Vars, AssociationObject
 from Utilities.ItemObject import Weapon
@@ -129,11 +130,14 @@ class Player:
 
         # Radishes changes expedition time
         on_expedition = self.destination == "EXPEDITION"
-        radishes_equipped = "Radishes" in (a.name 
-            for a in (self.acolyte1, self.acolyte2))
-        if on_expedition and radishes_equipped:
-            time_bonus = int((time.time() - self.adventure) / 10)
-            self.adventure -= time_bonus # Effectively increases length
+        if on_expedition:
+            try:
+                radishes = self.get_acolyte("Radishes")
+                time_bonus = int((time.time() - self.adventure) * \
+                                 radishes.get_effect_modifier(0) * .01)
+                self.adventure -= time_bonus # Effectively increases length
+            except AttributeError:
+                pass
 
     def get_level(self, get_next = False) -> int:
         """Returns the player's level.
@@ -820,6 +824,17 @@ class Player:
         if "Sophytes" in acolytes:
             base += 5
         return base
+
+    def get_acolyte(self, name : str) -> Optional[EmptyAcolyte]:
+        """Returns the equipped acolyte with the name given. If no acolyte
+        with the name is equipped, `None` is returned
+        """
+        if self.acolyte1.name == name:
+            return self.acolyte1
+        elif self.acolyte2.name == name:
+            return self.acolyte2
+        else:
+            return None
 
 
 async def get_player_by_id(conn : asyncpg.Connection, user_id : int) -> Player:

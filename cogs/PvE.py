@@ -253,14 +253,22 @@ class PvE(commands.Cog):
             # ON GAME END event technically
             gold_bonus_sources = []
             xp_bonus_sources = []
-            acolytes = [a.name for a in (player.acolyte1, player.acolyte2)]
-            if "Sean" in acolytes:
-                bonus = xp // 5
+            try:
+                sean = player.get_acolyte("Sean")
+                bonus = xp * (sean.get_effect_modifier(0) * .01)
                 xp += bonus
                 xp_bonus_sources.append((bonus, "Sean"))
-            if "Spartacus" in acolytes:
-                gold += 200
-                gold_bonus_sources.append((200, "Spartacus"))
+            except AttributeError:
+                pass
+
+            try:
+                spartacus = player.get_acolyte("Spartacus")
+                bonus = spartacus.get_effect_modifier(0)
+                gold += bonus
+                gold_bonus_sources.append((bonus, "Spartacus"))
+            except AttributeError:
+                pass
+
             if player.accessory.prefix == "Lucky":
                 mult = Vars.ACCESSORY_BONUS["Lucky"][player.accessory.type]
                 bonus = int(xp * (mult / 100.0))
