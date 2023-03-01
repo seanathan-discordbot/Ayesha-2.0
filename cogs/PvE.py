@@ -255,7 +255,7 @@ class PvE(commands.Cog):
             xp_bonus_sources = []
             try:
                 sean = player.get_acolyte("Sean")
-                bonus = xp * (sean.get_effect_modifier(0) * .01)
+                bonus = int(xp * (sean.get_effect_modifier(0) * .01))
                 xp += bonus
                 xp_bonus_sources.append((bonus, "Sean"))
             except AttributeError:
