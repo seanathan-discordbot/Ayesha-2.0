@@ -37,7 +37,6 @@ init_cogs = [
     "cogs.Acolytes",
     "cogs.Help",
     "cogs.Minigames",
-    "cogs.Casino",
     "cogs.Reminders",
     "cogs.Vote"
 ]
