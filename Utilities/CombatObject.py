@@ -422,8 +422,8 @@ class CombatInstance:
         # ON_DAMAGE : Any time the agent deals damage
         try:
             paterius = agent.get_acolyte("Paterius")
-            agent.damage = agent.damage * (1 + paterius.get_effect_modifier(0)) \
-                + 15
+            agent.damage = agent.damage * \
+                (1 + paterius.get_effect_modifier(0) * .01) + 15
         except AttributeError:
             pass
 
