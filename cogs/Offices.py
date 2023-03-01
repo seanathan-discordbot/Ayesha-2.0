@@ -62,12 +62,10 @@ class Offices(commands.Cog):
                         VALUES ((SELECT user_id FROM gold_leader), 'Comptroller')
                         RETURNING officeholder;
                         """
-                print("Fetching...")
                 new_mayor_id = await conn.fetchval(psql1)
                 new_comp_id = await conn.fetchval(psql2)
                 new_mayor = await self.bot.fetch_user(new_mayor_id)
                 new_comp = await self.bot.fetch_user(new_comp_id)
-                print(new_mayor_id, new_comp_id)
 
                 await self.bot.announcement_channel.send(
                     f"Congratulations to our new mayor {new_mayor.mention} and "
