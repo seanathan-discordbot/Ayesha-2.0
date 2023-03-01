@@ -4,9 +4,8 @@ from discord import Option, OptionChoice
 from discord.ext import commands
 
 import asyncpg
-import random
 
-from Utilities import Checks, Vars, PlayerObject, AcolyteObject, ItemObject
+from Utilities import Checks, Vars, PlayerObject, ItemObject
 from Utilities.Finances import Transaction
 from Utilities.AyeshaBot import Ayesha
 
@@ -53,138 +52,9 @@ class Gacha(commands.Cog):
     # EVENTS
     @commands.Cog.listener()
     async def on_ready(self):
-        # Get a list of all acolytes sorted by rarity
-        psql = """
-                SELECT name
-                FROM acolyte_list
-                WHERE rarity = $1; 
-                """
-        async with self.bot.db.acquire() as conn:
-            self.rarities = {
-                rarity : [
-                    record['name'] for record in await conn.fetch(psql, rarity)]
-                for rarity in range(1, 6)}
-
         print("Gacha is ready.")
 
-    # INVISIBLE
-    async def roll_acolyte(self, conn : asyncpg.Connection, 
-            player : PlayerObject.Player, 
-            rarity : int) -> discord.Embed:
-        """Creates a random acolyte of the specified rarity.
-        Returns a tuple containing an informational string (for Dropdown Menu)
-        and an embed listing the acolyte's information.
-        """
-        acolyte_name = random.choice(self.rarities[rarity])
-        acolyte = await AcolyteObject.create_acolyte(
-            conn, player.disc_id, acolyte_name)
-
-        embed=discord.Embed(
-            title=(
-                f"{acolyte.acolyte_name} ({acolyte.gen_dict['Rarity']}⭐) has "
-                f"entered the tavern!"),
-            color=Vars.ABLUE)
-        if acolyte.gen_dict['Image'] is not None:
-            embed.set_thumbnail(url=acolyte.gen_dict['Image'])
-        embed.add_field(name="Attack",
-            value=f"{acolyte.gen_dict['Attack']} + {acolyte.gen_dict['Scale']}")
-        embed.add_field(name="Crit", value = acolyte.gen_dict['Crit'])
-        embed.add_field(name="HP", value=acolyte.gen_dict['HP'])
-        embed.add_field(name="Effect",
-            value=(
-                f"{acolyte.gen_dict['Effect']}\n {acolyte.acolyte_name} uses `"
-                f"{acolyte.gen_dict['Mat']}` to level up."))
-        return (f"{rarity}⭐ Acolyte: {acolyte_name}", embed)
-
     # COMMANDS
-    @commands.slash_command()
-    @commands.check(Checks.is_player)
-    async def summon(self, ctx, 
-            pulls : Option(int,
-                description="Do up to 10 pull at once!",
-                required=False,
-                min_value=1,
-                max_value=10,
-                default=1)):
-        """Spend 1 rubidics to get a random acolyte or weapon."""
-        async with self.bot.db.acquire() as conn:
-            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
-            if player.rubidics < pulls:
-                raise Checks.NotEnoughResources("rubidics", 
-                    pulls, player.rubidics)
-
-            # This essentially calculates the results (type and rarity)
-            r_types = random.choices(
-                population=["weapon", "acolyte"],
-                weights=[75, 25],
-                k=pulls)
-            r_rarities = random.choices(
-                population=range(1,6),
-                weights=[1, 60, 35, 3, 1],
-                k=pulls)
-
-            # Simulate the pulls by creating new objects
-            # embed_list = []
-            result_list = [] 
-            # In order to show summons in a dropdown menu instead of a paginator
-            # we need another way to create the labels for the dropdown choices
-            # necessitating the use of a list of tuples that contain both this
-            # descriptive name and the embed that will be shown.
-            # A dictionary may be clearer for future (TODO), otherwise note the
-            # placement of the string at index 0 and the embed at index 1
-            # result_list[SUMMON NUMBER][0 IF STR ELSE 1]
-            for i in range(pulls):
-                if player.pity_counter >= 79:
-                    # Give 5 star acolyte
-                    result_list.append(await self.roll_acolyte(conn, player, 5))
-                    player.pity_counter = 0
-                    continue
-
-                # Create a random new weapon or acolyte
-                # Write an embed for this and add it to the list
-                if r_types[i] == "acolyte":
-                    result_list.append(await self.roll_acolyte(
-                        conn, player, r_rarities[i]))
-
-                else:
-                    weapon = await ItemObject.create_weapon(
-                        conn=conn,
-                        user_id=player.disc_id,
-                        rarity=self.int_rar_to_str[r_rarities[i]])
-
-                    embed=discord.Embed(
-                        title=f"You received {weapon.name} ({weapon.rarity})",
-                        color=Vars.ABLUE)
-                    embed.add_field(name="Type", value=weapon.type)
-                    embed.add_field(name="Attack", value=weapon.attack)
-                    embed.add_field(name="Crit", value=weapon.crit)
-                    result_list.append(
-                        (f"{weapon.rarity} {weapon.type}: {weapon.name}", 
-                        embed))
-
-                if r_rarities[i] == 5:
-                    player.pity_counter = 0
-                else:
-                    player.pity_counter += 1 # Temp change, not stored in db
-
-            # Summons done, tell player their remaining balance in footer
-            for result in result_list:
-                result[1].set_footer(text=(
-                    f"You have {player.rubidics-pulls} rubidics. You will "
-                    f"receive a 5-star acolyte in {80-player.pity_counter} "
-                    f"summons."))
-
-            # Update player's rubidics and pity counter
-            await player.give_rubidics(conn, pulls*-1)
-            await player.set_pity_counter(conn, player.pity_counter)
-
-            # Paginate embeds if pulls > 1 and print them
-            if len(result_list) > 1:
-                view = discord.ui.View()
-                view.add_item(SummonDropdown(result_list, player.disc_id))
-                await ctx.respond(embed=result_list[0][1], view=view)
-            else:
-                await ctx.respond(embed=result_list[0][1])
 
     @commands.slash_command()
     @commands.check(Checks.is_player)

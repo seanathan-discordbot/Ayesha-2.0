@@ -5,6 +5,7 @@ from discord.ext import commands
 from Utilities import  Checks, config, PlayerObject
 
 import asyncio
+import random
 import time
 
 import aiohttp
@@ -97,9 +98,15 @@ class Vote(commands.Cog):
                 # TODO: Change recent_voters to db table when playerbase is big
                 self.client.recent_voters[user_id] = int(time.time() + 1800)
                 p = await PlayerObject.get_player_by_id(conn, user_id)
-                await p.give_rubidics(conn, 1)
+                if random.randint(1, 150) == 1:
+                    await p.give_rubidics(conn, 1)
+                    r = True
+                else:
+                    r = False
+                await p.give_gold(conn, 7500)
                 await player.send(
-                    "Thank you for supporting me! You received a rubidic.\n"
+                    "Thank you for supporting me! You received `7500` gold.\n"
+                    f"{'You also received a rubidic!' if r else ''}"
                     "For the next 30 minutes, you will also receive a 20% gold "
                     "and xp boost from PvE.")
             except Checks.PlayerHasNoChar:

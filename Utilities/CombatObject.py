@@ -1,9 +1,10 @@
 import discord
 
 import random
+from typing import Optional
 
 from Utilities import PlayerObject, Vars
-from Utilities.AcolyteObject import Acolyte
+from Utilities.AcolyteObject import EmptyAcolyte, InfoAcolyte, OwnedAcolyte
 from Utilities.AssociationObject import Association
 from Utilities.ItemObject import Accessory, Weapon, Armor
 
@@ -24,7 +25,8 @@ class Belligerent:
             weapon : Weapon = Weapon(), helmet : Armor = Armor(),
             bodypiece : Armor = Armor(), boots : Armor = Armor(),
             accessory : Accessory = Accessory(),
-            acolyte1 : Acolyte = Acolyte(), acolyte2 : Acolyte = Acolyte(),
+            acolyte1 : EmptyAcolyte = EmptyAcolyte(), 
+            acolyte2 : EmptyAcolyte = EmptyAcolyte(),
             assc : Association = Association()):
         """
         Parameters
@@ -53,9 +55,9 @@ class Belligerent:
             The armor object that the person has equipped in Boots slot
         accessory : Optional[ItemObject.Accessory]
             The accessory object that the person has equipped
-        acolyte1 : Optional[AcolyteObject.Acolyte]
+        acolyte1 : Optional[EmptyAcolyte]
             The acolyte object that the person has equipped in slot 1
-        acolyte2 : Optional[AcolyteObject.Acolyte]
+        acolyte2 : Optional[EmptyAcolyte]
             The acolyte object that the person has equipped in slot 2
         assc : Optional[AssociationObject.Association]
             The association that the person is in
@@ -114,10 +116,13 @@ class Belligerent:
         assc = player.assc
 
         # ON_PLAYER_LOAD event lol
-        if "Arsaces" in (acolyte1.acolyte_name, acolyte2.acolyte_name):
-            attack += crit * 2
-            hp += crit * 5
+        try:
+            arsaces = player.get_acolyte("Arsaces")
+            attack += crit * arsaces.get_effect_modifier(0)
+            hp += crit * arsaces.get_effect_modifier(1)
             crit = 0
+        except AttributeError:
+            pass
 
         return cls(
             name, occ, attack, crit, hp, defense, disc_id, weapon, helmet,
@@ -169,6 +174,17 @@ class Belligerent:
             defense = 70
 
         return cls(name, "Boss", attack, crit, hp, defense)
+
+    def get_acolyte(self, name : str) -> Optional[EmptyAcolyte]:
+        """Returns the equipped acolyte with the name given. If no acolyte
+        with the name is equipped, `None` is returned
+        """
+        if self.acolyte1.name == name:
+            return self.acolyte1
+        elif self.acolyte2.name == name:
+            return self.acolyte2
+        else:
+            return None
 
 
 class ActionChoice(discord.ui.View):
@@ -377,11 +393,17 @@ class CombatInstance:
         agent.crit_hit = True
 
         # Applicable acolytes: Aulus, Ayesha
-        acolytes = [a.acolyte_name for a in (agent.acolyte1, agent.acolyte2)]
-        if "Aulus" in acolytes:
-            agent.attack += 50
-        if "Ayesha" in acolytes:
-            agent.heal += agent.attack / 5
+        try:
+            aulus = agent.get_acolyte("Aulus")
+            agent.attack += aulus.get_effect_modifier(0)
+        except AttributeError:
+            pass
+
+        try:
+            ayesha = agent.get_acolyte("Ayesha")
+            agent.heal += agent.attack * .01 * ayesha.get_effect_modifier(0)
+        except AttributeError:
+            pass
 
         # Accessory Effects
         if object.accessory.prefix == "Shiny": # reduce crit dmg
@@ -397,10 +419,13 @@ class CombatInstance:
 
     # Below events will all be part of on_damage
     def run_events(self, agent : Belligerent, object : Belligerent):
-        acolytes = [a.acolyte_name for a in (agent.acolyte1, agent.acolyte2)]
         # ON_DAMAGE : Any time the agent deals damage
-        if "Paterius" in acolytes:
-            agent.damage += 15
+        try:
+            paterius = agent.get_acolyte("Paterius")
+            agent.damage = agent.damage * \
+                (1 + paterius.get_effect_modifier(0) * .01) + 15
+        except AttributeError:
+            pass
 
         if self.turn == 1 and agent.type == "Hunter":
             # Hunters get first hit bonus
@@ -410,8 +435,12 @@ class CombatInstance:
 
 
         # ON_BLOCK : Agent blocks
-        if "Demi" in acolytes and object.last_move == "Attack":
-            agent.damage += agent.defense * 2
+        if object.last_move == "Attack":
+            try:
+                demi = agent.get_acolyte("Demi")
+                agent.damage += agent.defense * demi.get_effect_modifier(0) * .01
+            except AttributeError:
+                pass
 
 
         # ON_PARRY : Agent parries
@@ -425,8 +454,11 @@ class CombatInstance:
             else:
                 agent.heal += agent.max_hp / 10
 
-            if "Nyleptha" in acolytes:
-                object.damage *= 0.75
+            try:
+                nyleptha = agent.get_acolyte("Nyleptha")
+                object.damage *= 1 - nyleptha.get_effect_modifier(0) * .01
+            except AttributeError:
+                pass
 
         # ON_BIDE : Agents bides
         if agent.last_move == "Bide":
@@ -445,23 +477,41 @@ class CombatInstance:
             agent.damage += object.damage * mult # Thorned reflects damage
 
         # ON_COMBAT_END : After everything has been calculated
-        if self.turn == 3 and "Onion" in acolytes:
-            agent.crit *= 2
-        if "Ajar" in acolytes:
-            agent.attack += 20
-            agent.current_hp -= 50
-        if "Lauren" in acolytes and object.damage < 100:
-            agent.attack *= 1.08
-        if "Thorp" in acolytes:
-            choice = random.randint(1,4)
-            if choice == 1:
-                agent.attack *= 1.02
-            elif choice == 2:
-                agent.crit *= 1.05
-            elif choice == 3:
-                agent.current_hp *= 1.01
-            else:
-                agent.defense *= 1.05
+        try:
+            onion = agent.get_acolyte("Onion")
+            if self.turn == onion.get_effect_modifier(0):
+                agent.crit *= 2
+        except AttributeError:
+            pass
+
+        try:
+            ajar = agent.get_acolyte("Ajar")
+            agent.attack += ajar.get_effect_modifier(1)
+            agent.current_hp -= ajar.get_effect_modifier(2)
+        except AttributeError:
+            pass
+
+        try:
+            lauren = agent.get_acolyte("Lauren")
+            if object.damage < lauren.get_effect_modifier(1):
+                agent.attack *= 1 + (lauren.get_effect_modifier(0) * .01)
+        except AttributeError:
+            pass
+
+        try:
+            thorp = agent.get_acolyte("Thorp")
+            modifier = 1 + (thorp.get_effect_modifier(0) * .01)
+            match random.randint(1, 4):
+                case 1:
+                    agent.attack *= modifier
+                case 2:
+                    agent.crit *= modifier
+                case 3:
+                    agent.current_hp *= modifier
+                case 4:
+                    agent.defense *= modifier
+        except AttributeError:
+            pass
 
         return agent, object
 

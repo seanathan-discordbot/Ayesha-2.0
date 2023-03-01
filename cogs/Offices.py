@@ -26,7 +26,7 @@ class Offices(commands.Cog):
                 mayor = await PlayerObject.get_player_by_id(
                     conn, mayor_rec['officeholder'])
                 tax_info = await Finances.get_tax_info(conn)
-                payout = int(tax_info['Collected'] / 33)
+                payout = int((tax_info['Collected'] or 0) / 33)
                 await comptroller.give_gold(conn, payout)
                 await mayor.give_gold(conn, payout)
 

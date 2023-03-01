@@ -7,7 +7,7 @@ from discord.ext.commands import BucketType, cooldown
 import random
 import time
 
-from Utilities import AcolyteObject, AssociationObject, Checks, PlayerObject, ItemObject, Vars
+from Utilities import AssociationObject, Checks, PlayerObject, ItemObject, Vars
 from Utilities.Analytics import stringify_gains
 from Utilities.AyeshaBot import Ayesha
 from Utilities.ConfirmationMenu import LockedConfirmationMenu
@@ -23,18 +23,6 @@ class Travel(commands.Cog):
     # EVENTS
     @commands.Cog.listener()
     async def on_ready(self):
-        # Get a list of all acolytes sorted by rarity - same code as in Gacha
-        psql = """
-                SELECT name
-                FROM acolyte_list
-                WHERE rarity = $1; 
-                """
-        async with self.bot.db.acquire() as conn:
-            self.rarities = {
-                rarity : [
-                    record['name'] for record in await conn.fetch(psql, rarity)]
-                for rarity in range(1, 6)}
-
         print("Travel is ready.")
 
     # AUXILIARY FUNCTIONS
@@ -184,8 +172,7 @@ class Travel(commands.Cog):
                 if rewards['weapon'] >= random.randint(1,100):
                     new_weapon = await ItemObject.create_weapon(
                         conn=conn,
-                        user_id=player.disc_id,
-                        rarity="Common")
+                        user_id=player.disc_id)
                 else:
                     new_weapon = ItemObject.Weapon()
 
@@ -200,9 +187,8 @@ class Travel(commands.Cog):
                     message += (
                         f"You also found a weapon: \n"
                         f"`{new_weapon.weapon_id}`: {new_weapon.name}, "
-                        f"a {new_weapon.rarity} {new_weapon.type} with "
-                        f"`{new_weapon.attack}` ATK and `{new_weapon.crit}` "
-                        f"CRIT.")
+                        f"a {new_weapon.type} with `{new_weapon.attack}` ATK "
+                        f" and `{new_weapon.crit}` CRIT.")
                 # Sending this first so level-up messages come after
                 await ctx.respond(message) 
                 await player.give_gold(conn, gold)
@@ -318,18 +304,6 @@ class Travel(commands.Cog):
                         resource = "cacao"
 
                 e_message += f"You gained `{mats}` {resource}.\n"
-                # Traveler 50% chance to get acolyte on long expeditions
-                right_occ = player.occupation == "Traveler"
-                a = hours >= 72 and random.randint(1, 2) == 1
-                b = hours >= 144 and random.randint(1, 2) == 1
-                if right_occ and (a or b):
-                    rarity = random.choices(range(1,6), (1, 60, 35, 3, 1))[0]
-                    name = random.choice(self.rarities[rarity])
-                    acolyte = await AcolyteObject.create_acolyte(
-                        conn, player.disc_id, name)
-                    e_message += (
-                        f"During your expedition you befriended a new acolyte: "
-                        f"{acolyte.acolyte_name} ({rarity}⭐)")
                 await player.give_resource(conn, resource, mats)
                 await player.give_gravitas(conn, gravitas)
                 await player.set_adventure(conn, None, None)
@@ -591,7 +565,7 @@ class Travel(commands.Cog):
                 min_value=1,
                 max_value=15,
                 default=1)):
-        """Upgrade a weapon's ATK stat. Costs 8\*ATK iron and 35\*ATK gold."""
+        """Upgrade a weapon's ATK stat. Costs 10\*ATK iron and 40\*ATK gold."""
         async with self.bot.db.acquire() as conn:
             player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
             if player.location not in ("Aramithea", "Riverburn", "Thenuille"):
@@ -604,28 +578,16 @@ class Travel(commands.Cog):
             
             # Is item eligible for an upgrade?
             weapon = await ItemObject.get_weapon_by_id(conn, weapon_id)
-            if weapon.rarity == "Common" and weapon.attack + iter > 50:
+            if weapon.attack + iter > 160:
                 return await ctx.respond(
-                    "Common weapons can only have a maximum ATK of `50`.")
-            elif weapon.rarity == "Uncommon" and weapon.attack + iter > 75:
-                return await ctx.respond(
-                    "Uncommon weapons can only have a maximum ATK of `75`.")
-            elif weapon.rarity == "Rare" and weapon.attack + iter > 100:
-                return await ctx.respond(
-                    "Rare weapons can only have a maximum ATK of `100`.")
-            elif weapon.rarity == "Epic" and weapon.attack + iter > 125:
-                return await ctx.respond(
-                    "Epic weapons can only have a maximum ATK of `125`.")
-            elif weapon.rarity == "Legendary" and weapon.attack + iter > 160:
-                return await ctx.respond(
-                    "Legendary weapons can only be upgraded to `160` ATK. "
+                    "Weapons can only be upgraded to `160` ATK. "
                     "Use the `/merge` command to progress further.")
 
             # Calculate the costs of such an operation
             iron_cost, gold_cost = 0, 0
             for i in range(iter):
-                iron_cost += 8 * (weapon.attack + i)
-                gold_cost += 35 * (weapon.attack + i)
+                iron_cost += 10 * (weapon.attack + i)
+                gold_cost += 40 * (weapon.attack + i)
             verb = "time" if iter == 1 else "times"
 
             purchase = await Transaction.calc_cost(conn, player, gold_cost)

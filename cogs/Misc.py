@@ -42,18 +42,6 @@ class Misc(commands.Cog):
 
     def __init__(self, bot : Ayesha):
         self.bot = bot
-        self.daily_scheduler = schedule.Scheduler()
-
-        def clear_dailies():
-            self.bot.daily_claimers.clear()
-
-        async def update_dailies():
-            self.daily_scheduler.every().day.at("00:00").do(clear_dailies)
-            while True:
-                self.daily_scheduler.run_pending()
-                await asyncio.sleep(self.daily_scheduler.idle_seconds)
-
-        asyncio.ensure_future(update_dailies())
 
     # EVENTS
     @commands.Cog.listener()
@@ -89,43 +77,139 @@ class Misc(commands.Cog):
             f"\n{'-'*len(max(ranks, key=len))}\n"
             f"{author_rank} | {names[-1]} | {author_val}```")
 
+    def calc_daily_rewards(self, player : PlayerObject.Player):
+        # Separate possible rewards into different tiers
+        if player.daily_streak < 3:
+            tier = 5
+        elif player.daily_streak < 7:
+            tier = 4
+        elif player.daily_streak < 14:
+            tier = 3
+        elif player.daily_streak < 30:
+            tier = 2
+        else:
+            tier = 1
+
+        # Calculate tier rewards
+        match tier:
+            case 5:
+                gold = player.daily_streak * 80
+                iron = 0
+                gravitas = 0
+                rubidics = 0
+            case 4:
+                gold = player.daily_streak * 100
+                iron = player.daily_streak * 40
+                gravitas = 0
+                rubidics = 0
+            case 3:
+                gold = player.daily_streak * 130
+                iron = player.daily_streak * 45
+                gravitas = 1
+                rubidics = 0
+            case 2:
+                gold = player.daily_streak * 150
+                iron = player.daily_streak * 55
+                gravitas = 3
+                rubidics = 0
+            case 1:
+                gold = player.daily_streak * 180
+                iron = player.daily_streak * 70
+                gravitas = 5
+                rubidics = 1 if random.randint(1, 100) == 1 else 0
+        rubidics = 1 if player.daily_streak % 30 == 0 else rubidics
+
+        return { 
+            "Tier" : tier,
+            "Gold" : gold,
+            "Iron" : iron,
+            "Gravitas" : gravitas,
+            "Rubidics" : rubidics
+        }
+
+
     # COMMANDS
     @commands.slash_command()
     @commands.check(Checks.is_player)
-    async def daily(self, ctx):
-        """Get 2 rubidics daily. Resets everyday at 12 a.m. EST."""
-        if ctx.author.id not in self.bot.daily_claimers:
-            self.bot.daily_claimers[ctx.author.id] = 0
-            async with self.bot.db.acquire() as conn:
-                player = await PlayerObject.get_player_by_id(
-                    conn, ctx.author.id)
-                await player.give_rubidics(conn, 2)
-            title = "You claimed 2 Rubidics from your daily!"
-        else:
-            title = "You already claimed your daily today."
+    async def daily(self, ctx : discord.ApplicationContext):
+        """Get a daily bonus! Resets everyday at 12 a.m. GMT."""
+        refresh_str = lambda x : f"You can claim your daily again in `{x}`."
 
-        left_to_refresh = time.gmtime(self.daily_scheduler.idle_seconds)
-        embed = discord.Embed(
-            title=title,
-            description=(
-                f"You can claim your daily again in "
-                f"`{time.strftime('%H:%M:%S', left_to_refresh)}`."),
-            color=Vars.ABLUE
-        )
+        async with self.bot.db.acquire() as conn:
+            player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
+
+            try:
+                refresh_time = await player.collect_daily(conn)
+            except Checks.AlreadyClaimedDaily as e:
+                title = "You already claimed your daily today."
+                e_message = ""
+                refresh_msg = refresh_str(e.time_to_midnight)
+            else:
+                title = "You claimed your daily bonus!"
+                refresh_msg = refresh_str(refresh_time)
+
+                # Calculate and distribute rewards
+                rewards = self.calc_daily_rewards(player)
+                gold_bonus, iron_bonus, gravitas_bonus = [], [], []
+                e_message = "From your bonus, you received:\n"
+
+                if player.assc.type == "Guild":
+                    bonus = player.assc.get_level() * 30
+                    rewards["Gold"] += bonus
+                    gold_bonus.append((bonus, "Guild")) 
+                await player.give_gold(conn, rewards["Gold"])
+                e_message += Analytics.stringify_gains("gold", 
+                        rewards["Gold"], gold_bonus) + "\n"
+
+                if rewards["Iron"] > 0:
+                    if player.assc.type == "Brotherhood":
+                        bonus = player.assc.get_level() * 20
+                        rewards["Iron"] += bonus
+                        iron_bonus.append((bonus, "Brotherhood"))
+                    await player.give_resource(conn, "iron", rewards["Iron"])
+                    e_message += Analytics.stringify_gains("iron", 
+                            rewards["Iron"], iron_bonus) + "\n"
+
+                if rewards["Gravitas"] > 0:
+                    if player.assc.type == "College":
+                        bonus = int(player.assc.get_level() / 2)
+                        rewards["Gravitas"] += bonus
+                        gravitas_bonus.append((bonus, "College"))
+                    await player.give_gravitas(conn, rewards["Gravitas"])
+                    e_message += Analytics.stringify_gains("gravitas", 
+                            rewards["Gravitas"], gravitas_bonus) + "\n"
+                
+                if rewards["Rubidics"] > 0:
+                    e_message += Analytics.stringify_gains("rubidic",
+                        rewards["Rubidics"], [])
+                    await player.give_rubidics(conn, rewards["Rubidics"])
+
+        # Create and send embed
+        embed = discord.Embed(title=title, description=e_message, 
+            color=Vars.ABLUE)
         embed.add_field(
-            name="Vote for the bot on top.gg to receive an additional rubidic!",
+            name=refresh_msg,
             value=(
-                "[**CLICK HERE**](https://top.gg/bot/767234703161294858) "
-                "to vote for the bot for rubidics!\n\n"
+                f"You have claimed your `/daily` for `{player.daily_streak}` "
+                f"{'days' if player.daily_streak > 1 else 'day'} in a row. "
+                "Maintain a longer streak to receive even larger rewards in "
+                "the future!"),
+            inline=False)
+        embed.add_field(
+            name="Vote for the bot on top.gg to receive a short boost!",
+            value=(
+                "[**CLICK HERE**](https://top.gg/bot/767234703161294858/vote) "
+                "to vote for the bot for EXTRA REWARDS!\n\n"
                 "Any questions? Join the "
-                "[**support server**](https://discord.gg/FRTTARhN44)!"))
+                "[**support server**](https://discord.gg/FRTTARhN44)!"),
+            inline=False)
         embed.set_thumbnail(url="https://i.imgur.com/LPxc3zI.jpeg")
 
         await ctx.respond(embed=embed)
 
     @commands.slash_command()
     @commands.check(Checks.is_player)
-    async def cooldowns(self, ctx):
+    async def cooldowns(self, ctx : discord.ApplicationContext):
         """View any of your active cooldowns."""
         # Iterate through commands to get cooldowns
         cooldowns = [] # Player's list of cooldowns
@@ -175,16 +259,13 @@ class Misc(commands.Cog):
                 f"Your adventure is completed and you can safely `/arrive` "
                 f"at **{player.destination}**.")
 
-        # Check if player has claiemd daily today
-        if ctx.author.id in self.bot.daily_claimers:
-            to_reset = time.gmtime(self.daily_scheduler.idle_seconds)
-            daily = (
-                f"You can claim your daily again in "
-                f"`{time.strftime('%H:%M:%S', to_reset)}`.")
+        # Check if player has claimed daily today
+        if not player.eligible_to_claim_daily():
+            to_reset = PlayerObject.Player.get_time_to_midnight()
+            daily = f"You can claim your daily again in `{to_reset}`."
         else:
             daily = (
-                "You can claim your free daily 2 rubidics with the `/daily` "
-                "command.")
+                "You can claim your daily rewards with the `/daily` command.")
 
         # Create an embed
         embed = discord.Embed(
@@ -244,8 +325,7 @@ class Misc(commands.Cog):
             name="Economy Stats",
             value=(
                 f"**Gold:** {econ_info['g']}\n"
-                f"**Rubidics:** {econ_info['r']}\n"
-                f"**Average Pity:** {round(econ_info['p'] / 80 * 100, 2)}%"))
+                f"**Rubidics:** {econ_info['r']}\n"))
         information.add_field(
             name="Gameplay Stats",
             value=(

@@ -60,8 +60,7 @@ class Profile(commands.Cog):
                 value=(
                     f"Gold: `{profile.gold}` (`{gold_rank}`)\n"
                     f"Gravitas: `{profile.gravitas}` (`{gravitas_rank}`)\n"
-                    f"Rubidics: `{profile.rubidics}` ("
-                    f"`{80-profile.pity_counter}` to pity)"),
+                    f"Rubidics: `{profile.rubidics}`"),
                 inline=True)
             page1.add_field(name="Lore",
                 value=(
@@ -94,9 +93,8 @@ class Profile(commands.Cog):
             page2.add_field(name=f"Equips",
                 value=(
                     f"{profile.equipped_item.type}: {profile.equipped_item.name} "
-                    f"({profile.equipped_item.rarity}, `"
-                    f"{profile.equipped_item.attack}` ATK, `"
-                    f"{profile.equipped_item.crit}` CRIT)"
+                    f"(`{profile.equipped_item.attack}` ATK, "
+                    f"`{profile.equipped_item.crit}` CRIT)"
                     f"\n"
                     f"{profile.helmet.name} (`{profile.helmet.defense}` DEF)"
                     f"\n"
@@ -109,16 +107,10 @@ class Profile(commands.Cog):
                 ),
                 inline=False)
             page2.add_field(name="Acolyte",
-                value=(
-                    f"{profile.acolyte1.acolyte_name} (`"
-                    f"{profile.acolyte1.gen_dict['Rarity']}⭐`)"
-                ),
+                value=f"({profile.acolyte1.stars}) {profile.acolyte1.name}",
                 inline=True)
             page2.add_field(name="Acolyte",
-                value=(
-                    f"{profile.acolyte2.acolyte_name} (`"
-                    f"{profile.acolyte2.gen_dict['Rarity']}⭐`)"
-                ),
+                value=f"({profile.acolyte2.stars}) {profile.acolyte2.name}",
                 inline=True)
 
             page3 = discord.Embed(            

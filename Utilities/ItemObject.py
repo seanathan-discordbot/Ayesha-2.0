@@ -3,7 +3,6 @@ import discord
 import asyncpg
 import coolname
 
-import json
 import random
 
 from Utilities import Checks, Vars
@@ -32,8 +31,6 @@ class Weapon:
         The name of the weapon
     type : str
         The object's weapon type
-    rarity : str
-        The rarity of the weapon
     attack : int
         The attack stat of the weapon
     crit : int
@@ -53,7 +50,6 @@ class Weapon:
             self.owner_id = record['user_id']
             self.name = record['weapon_name']
             self.type = record['weapontype']
-            self.rarity = record['rarity']
             self.attack = record['attack']
             self.crit = record['crit']
         else:
@@ -62,7 +58,6 @@ class Weapon:
             self.owner_id = None
             self.name = "No Weapon"
             self.type = "No Type"
-            self.rarity = "Common"
             self.attack = 0
             self.crit = 0
 
@@ -291,8 +286,7 @@ async def get_weapon_by_id(conn : asyncpg.Connection, item_id : int) -> Weapon:
                 user_id,
                 attack,
                 crit,
-                weapon_name,
-                rarity
+                weapon_name
             FROM items
             WHERE item_id = $1;
             """
@@ -301,19 +295,24 @@ async def get_weapon_by_id(conn : asyncpg.Connection, item_id : int) -> Weapon:
 
     return Weapon(weapon_record)
 
-async def create_weapon(conn : asyncpg.Connection, user_id : int, rarity : str,
+async def create_weapon(conn : asyncpg.Connection, user_id : int,
         attack : int = None, crit : int = None, weapon_name : str = None, 
         weapon_type : str = None) -> Weapon:
     """Create a weapon with the specified information and returns it.
     Fields left blank will generate randomly
     """
     if attack is None:
-        attack = random.randint(Vars.RARITIES[rarity]['low_atk'], 
-                                Vars.RARITIES[rarity]['high_atk'])
+        attack = random.choices(
+            population=range(10,151), 
+            weights=[30]*21 + [35]*20 + [40]*20 + [35]*20 + [30]*20 + \
+                [20]*20 + [15]*8 + [10]*8 + [5]*4
+        )[0]
 
     if crit is None:
-        crit = random.randint(Vars.RARITIES[rarity]['low_crit'], 
-                              Vars.RARITIES[rarity]['high_crit'])
+        crit = random.choices(
+            population=range(0,21), 
+            weights=[7]*11 + [6, 5, 4, 3, 2, 2, 2, 1, 1, 1]
+        )[0]
 
     if weapon_type is None:
         weapon_type = random.choice(Vars.WEAPON_TYPES)
@@ -327,15 +326,15 @@ async def create_weapon(conn : asyncpg.Connection, user_id : int, rarity : str,
     psql = """
             WITH rows AS (
                 INSERT INTO items 
-                    (weapontype, user_id, attack, crit, weapon_name, rarity)
-                VALUES ($1, $2, $3, $4, $5, $6)
+                    (weapontype, user_id, attack, crit, weapon_name)
+                VALUES ($1, $2, $3, $4, $5)
                 RETURNING item_id
             )
             SELECT item_id FROM rows;
             """
     
     item_id = await conn.fetchval(psql, weapon_type, user_id, attack, crit, 
-        weapon_name, rarity)
+        weapon_name)
 
     return await get_weapon_by_id(conn, item_id)
 

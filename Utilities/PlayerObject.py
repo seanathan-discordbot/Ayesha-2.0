@@ -3,9 +3,12 @@ import discord
 import asyncpg
 import time
 
-from Utilities import Checks, ItemObject, Vars, AcolyteObject, AssociationObject
+from datetime import datetime, timedelta
+from typing import Optional
+
+from Utilities import Checks, ItemObject, Vars, AssociationObject
 from Utilities.ItemObject import Weapon
-from Utilities.AcolyteObject import Acolyte
+from Utilities.AcolyteObject import EmptyAcolyte, InfoAcolyte, OwnedAcolyte
 from Utilities.AssociationObject import Association
 
 
@@ -27,9 +30,9 @@ class Player:
         The player's level
     equipped_item : ItemObject.Weapon
         The weapon object of the item equipped by the player
-    acolyte1 : AcolyteObject.Acolyte
+    acolyte1 : EmptyAcolyte
         The acolyte object of the acolyte equipped by the player in Slot 1
-    acolyte2 : AcolyteObject.Acolyte
+    acolyte2 : EmptyAcolyte
         The acolyte object of the acolyte equipped by the player in Slot 2
     assc : AssociationObject.Association
         The association object of the association this player is in
@@ -51,9 +54,6 @@ class Player:
         The total amount of PvE battles the player has participated in
     rubidics : int
         The player's wealth in rubidics (gacha currency)
-    pity_counter : int
-        The amount of gacha pulls the player has done since their last 
-        legendary weapon or 5-star acolyte
     adventure : int
         The endtime (time.time()) of the player's adventure
     destination : str
@@ -64,6 +64,9 @@ class Player:
         A dictionary containing the player's resources
     daily_streak : int
         The amount of days in a row the player has used the `daily` command
+    last_daily : int
+        The time (time.time()) in seconds since the last time this player has
+        claimed their daily with `/daily`
     """
     def __init__(self, record : asyncpg.Record):
         """
@@ -95,12 +98,13 @@ class Player:
         self.boss_wins = record['bosswins']
         self.boss_fights = record['bossfights']
         self.rubidics = record['rubidics']
-        self.pity_counter = record['pitycounter']
         self.adventure = record['adventure']
         self.destination = record['destination']
         self.gravitas = record['gravitas']
         self.resources = None
         self.pve_limit = record['pve_limit']
+        self.daily_streak = record['daily_streak']
+        self.last_daily = record['last_daily']
 
     async def _load_equips(self, conn : asyncpg.Connection):
         """Converts object variables from their IDs into the proper objects.
@@ -113,20 +117,27 @@ class Player:
         self.boots = await ItemObject.get_armor_by_id(conn, self.boots)
         self.accessory = await ItemObject.get_accessory_by_id(
             conn, self.accessory)
-        self.acolyte1 = await AcolyteObject.get_acolyte_by_id(
-            conn, self.acolyte1)
-        self.acolyte2 = await AcolyteObject.get_acolyte_by_id(
-            conn, self.acolyte2)
+        try:
+            self.acolyte1 = await OwnedAcolyte.from_id(conn, self.acolyte1)
+        except Checks.EmptyObject:
+            self.acolyte1 = EmptyAcolyte()
+        try:
+            self.acolyte2 = await OwnedAcolyte.from_id(conn, self.acolyte2)
+        except Checks.EmptyObject:
+            self.acolyte2 = EmptyAcolyte()
         self.assc = await AssociationObject.get_assc_by_id(conn, self.assc)
         self.resources = dict(await self.get_backpack(conn))
 
         # Radishes changes expedition time
         on_expedition = self.destination == "EXPEDITION"
-        radishes_equipped = "Radishes" in (a.acolyte_name 
-            for a in (self.acolyte1, self.acolyte2))
-        if on_expedition and radishes_equipped:
-            time_bonus = int((time.time() - self.adventure) / 10)
-            self.adventure -= time_bonus # Effectively increases length
+        if on_expedition:
+            try:
+                radishes = self.get_acolyte("Radishes")
+                time_bonus = int((time.time() - self.adventure) * \
+                                 radishes.get_effect_modifier(0) * .01)
+                self.adventure -= time_bonus # Effectively increases length
+            except AttributeError:
+                pass
 
     def get_level(self, get_next = False) -> int:
         """Returns the player's level.
@@ -192,9 +203,9 @@ class Player:
         # if self.level > old_level: # Level up
         gold, rubidics = 0, 0
         if self.level > old_level:
-            for new_level in range(old_level+1, self.level+1):
-                gold += new_level * 500 # Handle multiple lvl-ups
-                rubidics += int(new_level / 30) + 1
+            # 500gold/level - Follows the sum of integers formula n(n+1)/2
+            gold = (self.level*(self.level+1) - old_level*(old_level+1)) * 250
+            rubidics = int(self.level/10) - int(old_level/10)
 
             await self.give_gold(conn, gold)
             await self.give_rubidics(conn, rubidics)
@@ -207,14 +218,6 @@ class Player:
                 value = f"**Gold:** {gold}\n**Rubidics:** {rubidics}")
 
             await ctx.respond(embed=embed)
-
-        # Check xp for the equipped acolytes
-        a_xp = int(xp / 10)
-        if self.acolyte1.acolyte_name is not None:
-            await self.acolyte1.check_xp_increase(conn, ctx, a_xp)
-
-        if self.acolyte2.acolyte_name is not None:
-            await self.acolyte2.check_xp_increase(conn, ctx, a_xp)
 
     async def set_char_name(self, conn : asyncpg.Connection, name : str):
         """Sets the player's character name. Limit 32 characters."""
@@ -377,22 +380,20 @@ class Player:
         if not await self.is_acolyte_owner(conn, acolyte_id):
             raise Checks.NotAcolyteOwner
 
-        a = acolyte_id == self.acolyte1.acolyte_id
-        b = acolyte_id == self.acolyte2.acolyte_id
+        a = acolyte_id == self.acolyte1.id
+        b = acolyte_id == self.acolyte2.id
         if a or b:
             raise Checks.InvalidAcolyteEquip
 
         if slot == 1:
-            self.acolyte1 = await AcolyteObject.get_acolyte_by_id(
-                conn, acolyte_id)
+            self.acolyte1 = await OwnedAcolyte.from_id(conn, acolyte_id)
             psql = """
                     UPDATE players
                     SET acolyte1 = $1
                     WHERE user_id = $2;
                     """
         elif slot == 2:
-            self.acolyte2 = await AcolyteObject.get_acolyte_by_id(
-                conn, acolyte_id)
+            self.acolyte2 = await OwnedAcolyte.from_id(conn, acolyte_id)
             psql = """
                     UPDATE players
                     SET acolyte2 = $1
@@ -406,11 +407,11 @@ class Player:
         slot must be an integer 1 or 2.
         """
         if slot == 1:
-            self.acolyte1 = Acolyte()
+            self.acolyte1 = EmptyAcolyte()
             psql = "UPDATE players SET acolyte1 = NULL WHERE user_id = $1;"
             await conn.execute(psql, self.disc_id)
         elif slot == 2:
-            self.acolyte2 = Acolyte()
+            self.acolyte2 = EmptyAcolyte()
             psql = "UPDATE players SET acolyte2 = NULL WHERE user_id = $1;"
             await conn.execute(psql, self.disc_id)
         else:
@@ -564,16 +565,16 @@ class Player:
                 """
         return await conn.fetchrow(psql, self.disc_id)
 
-    async def set_pity_counter(self, conn : asyncpg.Connection, counter : int):
-        """Sets the player's pitycounter."""
-        self.pity_counter = counter
+    # async def set_pity_counter(self, conn : asyncpg.Connection, counter : int):
+    #     """Sets the player's pitycounter."""
+    #     self.pity_counter = counter
 
-        psql = """
-                UPDATE players
-                SET pitycounter = $1
-                WHERE user_id = $2;
-                """
-        await conn.execute(psql, counter, self.disc_id)
+    #     psql = """
+    #             UPDATE players
+    #             SET pitycounter = $1
+    #             WHERE user_id = $2;
+    #             """
+    #     await conn.execute(psql, counter, self.disc_id)
 
     async def set_occupation(self, conn : asyncpg.Connection, occupation : str):
         """Sets the player's occupation."""
@@ -688,6 +689,67 @@ class Player:
                 """
         await conn.execute(psql, self.disc_id)
 
+    def eligible_to_claim_daily(self) -> bool:
+        """Return true if player can collect their daily."""
+        datenow = datetime.now()
+        midnight_today = datenow.replace(
+            hour=0, minute=0, second=0, microsecond=0)
+        last_date_claimed = datetime.fromtimestamp(self.last_daily)
+        return last_date_claimed < midnight_today
+    
+    @staticmethod
+    def get_time_to_midnight() -> timedelta:
+        """Return a timedelta describing the time until midnight tomorrow."""
+        datenow = datetime.now()
+        midnight_tomorrow = (datenow + timedelta(1)).replace(
+            hour=0, minute=0, second=0)
+        return midnight_tomorrow - datenow
+
+    async def collect_daily(self, conn : asyncpg.Connection) -> timedelta:
+        """Gives the player daily rewards and increments their counter.
+
+        Parameters
+        ----------
+        conn : asyncpg.Connection
+            a connection to the bot database
+
+        Returns
+        -------
+        timedelta
+            the time to midnight tomorrow
+
+        Raises
+        ------
+        Checks.AlreadyClaimedDaily
+            if the player has already collected their daily on the current date
+        """        
+        datenow = datetime.now()
+        time_to_midnight = self.get_time_to_midnight()
+
+        # Check if daily can be claimed or if the streak should be reset
+        midnight_yesterday = (datenow - timedelta(days=1)).replace(
+            hour=0, minute=0, second=0, microsecond=0)
+        last_date_claimed = datetime.fromtimestamp(self.last_daily)
+        # Here's a timeline explaining the actions being done:
+        # <------------------|------------------|------------------>
+        #   before yesterday |     yesterday    |    today
+        #  elif: reset streak| proceed normally | if: already claimed, stop fcn
+        if not self.eligible_to_claim_daily():
+            raise Checks.AlreadyClaimedDaily(time_to_midnight)
+        elif last_date_claimed < midnight_yesterday:
+            self.daily_streak = 0
+
+        # Log the daily
+        self.daily_streak += 1
+        psql = """
+                UPDATE players
+                SET daily_streak = $1,
+                    last_daily = $2
+                WHERE user_id = $3;
+                """
+        await conn.execute(psql, self.daily_streak, time.time(), self.disc_id)
+        return time_to_midnight
+
     def get_attack(self) -> int:
         """Returns the player's attack stat, calculated from all other sources.
         The value returned by this method is 'the final say' on the stat.
@@ -758,10 +820,21 @@ class Player:
             base += self.assc.get_level()
         if self.accessory.prefix == "Strong":
             base += Vars.ACCESSORY_BONUS["Strong"][self.accessory.type]
-        acolytes = (self.acolyte1.acolyte_name, self.acolyte2.acolyte_name)
+        acolytes = (self.acolyte1.name, self.acolyte2.name)
         if "Sophytes" in acolytes:
             base += 5
         return base
+
+    def get_acolyte(self, name : str) -> Optional[EmptyAcolyte]:
+        """Returns the equipped acolyte with the name given. If no acolyte
+        with the name is equipped, `None` is returned
+        """
+        if self.acolyte1.name == name:
+            return self.acolyte1
+        elif self.acolyte2.name == name:
+            return self.acolyte2
+        else:
+            return None
 
 
 async def get_player_by_id(conn : asyncpg.Connection, user_id : int) -> Player:
@@ -786,11 +859,12 @@ async def get_player_by_id(conn : asyncpg.Connection, user_id : int) -> Player:
                 players.bosswins,
                 players.bossfights,
                 players.rubidics,
-                players.pitycounter,
                 players.adventure,
                 players.destination,
                 players.gravitas,
                 players.pve_limit,
+                players.daily_streak,
+                players.last_daily,
                 equips.helmet,
                 equips.bodypiece,
                 equips.boots,
@@ -824,7 +898,7 @@ async def create_character(conn : asyncpg.Connection, user_id : int,
     await conn.execute(psql4, user_id)
 
     await ItemObject.create_weapon(
-        conn, user_id, "Common", attack=20, crit=0, weapon_name="Wooden Spear", 
+        conn, user_id, attack=20, crit=0, weapon_name="Wooden Spear", 
         weapon_type="Spear")
 
     return await get_player_by_id(conn, user_id)

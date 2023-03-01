@@ -72,7 +72,10 @@ class Raid(commands.Cog):
             self.raid_info['HP'] = 99999 # in case of concurrency issues
             async with self.bot.db.acquire() as conn:
                 weapon = await ItemObject.create_weapon(
-                    conn, ctx.author.id, "Legendary")
+                    conn=conn,
+                    user_id=ctx.author.id,
+                    attack=random.randint(120, 150),
+                    crit=random.randint(15, 20))
                 await self.raid_info['Message'].reply((
                     f"**{ctx.author.name}#{ctx.author.discriminator}** dealt "
                     f"the finishing blow to {self.raid_info['Enemy']}. As the "

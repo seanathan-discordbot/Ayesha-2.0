@@ -123,7 +123,7 @@ class Transaction:
         sale_bonuses = []
         if player.occupation == "Merchant":
             sale_bonus += .5
-            sale_bonuses.append((subtotal // 2), "Merchant")
+            sale_bonuses.append((int(subtotal / 2), "Merchant"))
         if player.assc.type == "Guild":
             guild_bonus = .5 + (.1 * player.assc.get_level())
             sale_bonus += guild_bonus

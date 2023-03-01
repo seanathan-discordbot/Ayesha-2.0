@@ -1,8 +1,14 @@
+from __future__ import annotations
+
 import discord
 
 from discord.ext import commands
 
 from Utilities.config import ADMINS
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from datetime import timedelta
 
 class HasChar(commands.CheckFailure):
     def __init__(self, user, *args, **kwargs):
@@ -90,8 +96,15 @@ class InvalidResource(Exception):
 class NotAcolyteOwner(Exception):
     pass
 
+class AcolyteNotOwned(Exception):
+    pass
+
 class InvalidAcolyteEquip(Exception):
     pass
+
+class AcolyteDoesNotExist(Exception):
+    def __init__(self, name : str):
+        self.name = name
 
 class InvalidAssociationID(Exception):
     pass
@@ -147,6 +160,39 @@ class NonexistentPlayer(Exception):
 
 class NotAdmin(Exception):
     pass
+
+class DuplicateAcolyte(Exception):
+    """Raised when there is an attempt to add an acolyte to a player who already owns said acolyte
+    
+    Attributes
+    ----------
+    original_id : int
+        the ID of the acolyte that already exists, in lieu of making a new one
+    """
+    def __init__(self, original_id : int):
+        """
+        Parameters
+        ----------
+        original_id : int 
+            the ID of the acolyte that already exists and was found when 
+            checking to see if a duplicate was going to be made
+        """
+        self.original_id = original_id
+
+class AlreadyClaimedDaily(Exception):
+    """Raised when there is an attempt to claim a daily twice in one day.
+    A "day" is the time period between 00:00 and 23:59, so players can claim
+    their daily twice in a 24 hour period, although they must be on separate
+    dates.
+
+    Attributes
+    ----------
+    time_to_midnight : timedelta
+        the time from the current time to midnight tomorrow
+    """
+    def __init__(self, time_to_midnight : timedelta):
+        self.time_to_midnight = time_to_midnight
+
 
 # --- NOW FOR THE ACTUAL CHECKS :) ---
 

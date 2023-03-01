@@ -73,8 +73,7 @@ class Items(commands.Cog):
         value = (
             f"**Attack:** {record['attack']}, **Crit:** "
             f"{record['crit']}, **Type:** "
-            f"{record['weapontype']}, **Rarity:** "
-            f"{record['rarity']}")
+            f"{record['weapontype']}")
         return {"name" : name, "value" : value, "inline" : False}
 
     def armor_field_values(self, record) -> dict:
@@ -103,9 +102,6 @@ class Items(commands.Cog):
                     OptionChoice(name="Crit", value="crit"),
                     OptionChoice(name="ID", value="item_id")],
                 required=False),
-            weapon_rarity : Option(str, description="Get only a specific rarity",
-                choices=[OptionChoice(name=r) for r in Vars.RARITIES.keys()],
-                required=False),
             weapon_type : Option(str, description="Get only a specific weapontype",
                 choices=[OptionChoice(name=t) for t in Vars.WEAPON_TYPES],
                 required=False),
@@ -125,8 +121,7 @@ class Items(commands.Cog):
         await ctx.defer()
         # Get the query for inventory based on input
         weapons_query = f"""
-            SELECT item_id, weapontype, user_id, attack, crit, weapon_name, 
-                rarity, 
+            SELECT item_id, weapontype, user_id, attack, crit, weapon_name,
                 (
                     item_id = (
                         SELECT equipped_item 
@@ -137,8 +132,6 @@ class Items(commands.Cog):
                 AS equipped
             FROM items
             WHERE user_id = $1
-                {f"AND rarity = '{weapon_rarity}'"
-                    if weapon_rarity is not None else ""}
                 {f"AND weapontype = '{weapon_type}'"
                     if weapon_type is not None else ""}
             ORDER BY equipped DESC, {weapon_order} DESC;
@@ -339,12 +332,18 @@ class Items(commands.Cog):
             item_id : Option(int, 
                 description="The ID of the item you want to sell",
                 required=False),
-            rarity : Option(str,
-                description="The rarity of the items you want to sell",
-                choices=[OptionChoice(name=r) for r in Vars.RARITIES.keys()],
-                required=False)
+            attack : Option(int,
+                description="Sell all weapons with an ATK stat below this one",
+                required=False,
+                min_value=10
+            ),
+            crit : Option(int,
+                description="Sell all weapons with a CRIT stat below this one",
+                required=False,
+                min_value=0
+            )
             ):
-        """Sell an item (pass ID), or sell multiple items of some rarity."""
+        """Sell an item (pass ID), or sell multiple items below a threshold."""
         async with self.bot.db.acquire() as conn:
             player = await PlayerObject.get_player_by_id(conn, ctx.author.id)
 
@@ -404,8 +403,7 @@ class Items(commands.Cog):
                 item = await ItemObject.get_weapon_by_id(conn, item_id)
 
                 # Make the sale
-                gold = random.randint(a=Vars.RARITIES[item.rarity]['low_gold'], 
-                    b=Vars.RARITIES[item.rarity]['high_gold'])
+                gold = random.randint(100, 1200)
                 sale = await Transaction.create_sale(conn, player, gold)
                 print_tax = await sale.log_transaction(conn, "sale")
                 await item.destroy(conn)
@@ -415,37 +413,37 @@ class Items(commands.Cog):
                     f"You sold your `{item_id}`: {item.name} and made "
                     f"{gold_gain_str}.\n{print_tax}"))
 
-            elif rarity is not None: 
-                psql = """
+            elif attack is not None or crit is not None:
+                psql = f"""
                         WITH deleted AS (
                             DELETE FROM items
                             WHERE user_id = $1 AND item_id NOT IN ($2)
-                                AND rarity = $3
+                                {f"AND attack < {attack}"
+                                    if attack is not None else ""}
+                                {f"AND crit < {crit}"
+                                    if crit is not None else ""}
                             RETURNING item_id
                         )
                         SELECT COUNT(*)
                         FROM deleted;
                         """
-                # This is an enormous optimization from the old version :)
                 amount_sold = await conn.fetchval(psql, player.disc_id, 
-                    player.equipped_item.weapon_id, rarity)
+                    player.equipped_item.weapon_id)
 
                 if amount_sold == 0:
                     return await ctx.respond(
-                        "You have no items of this rarity to sell!")
+                        "You have no items of this quality to sell!")
 
-                subtotal = random.randint(a=Vars.RARITIES[rarity]['low_gold'], 
-                    b=Vars.RARITIES[rarity]['high_gold'])
-                subtotal *= amount_sold
+                subtotal = random.randint(a=100*amount_sold, b=1200*amount_sold)
                 sale = await Transaction.create_sale(conn, player, subtotal)
                 print_tax = await sale.log_transaction(conn, "sale")
                 gold_gain_str = stringify_gains(
                     "gold", sale.subtotal, sale.bonus_list)
                 await ctx.respond((
-                    f"You sold all {amount_sold} of your {rarity.lower()} "
-                    f"items and made {gold_gain_str}.\n{print_tax}"))
+                    f"You sold all {amount_sold} of your weapons of this "
+                    f"quality and made {gold_gain_str}.\n{print_tax}"))
 
-            else: # Then they passed nothing bruh
+            else: # Then they passed nothing
                 await ctx.respond("You didn't pass anything to sell.")
 
     @commands.slash_command()
@@ -493,9 +491,8 @@ class Items(commands.Cog):
             # Load item and offer message
             if sale_type == "Weapon":
                 message += f"the weapon:\n"
-                message += f"`{item.weapon_id}`: {item.name}, a {item.rarity} "
-                message += f"{item.type} with `{item.attack}` ATK and "
-                message += f"`{item.crit}` CRIT.\n"
+                message += f"`{item.weapon_id}`: {item.name}, a {item.type} "
+                message += f"with `{item.attack}` ATK and `{item.crit}` CRIT.\n"
             else:
                 message += (
                     f"this armor:\n"

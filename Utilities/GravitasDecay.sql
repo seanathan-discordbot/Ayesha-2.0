@@ -87,22 +87,25 @@ WHERE assc IN (SELECT assc FROM colleges);
 
 
 /*
-ACOLYTE BONUS
-    AJAR, DUCHESS 2
+ACOLYTE BONUS: AJAR, DUCHESS
 */
 WITH ajar_users AS (
     WITH acolyte1 AS (
-        SELECT players.user_id
+        SELECT players.user_id, acolyte_list.effect_num[1][acolytes.copies]
         FROM players
         INNER JOIN acolytes
             ON players.acolyte1 = acolytes.acolyte_id
+        INNER JOIN acolyte_list
+            ON acolytes.acolyte_name = acolyte_list.name
         WHERE acolytes.acolyte_name = 'Ajar'
     ),
     acolyte2 AS (
-        SELECT players.user_id
+        SELECT players.user_id, acolyte_list.effect_num[1][acolytes.copies]
         FROM players
         INNER JOIN acolytes
             ON players.acolyte2 = acolytes.acolyte_id
+        INNER JOIN acolyte_list
+            ON acolytes.acolyte_name = acolyte_list.name
         WHERE acolytes.acolyte_name = 'Ajar'
     )
     SELECT * FROM acolyte1
@@ -110,22 +113,27 @@ WITH ajar_users AS (
     SELECT * FROM acolyte2
 )
 UPDATE players
-SET gravitas = gravitas + 2
-WHERE user_id IN (SELECT user_id FROM ajar_users);
+SET gravitas = gravitas + ajar_users.effect_num
+FROM ajar_users
+WHERE players.user_id = ajar_users.user_id;
 
 WITH duchess_users AS (
     WITH acolyte1 AS (
-        SELECT players.user_id
+        SELECT players.user_id, acolyte_list.effect_num[1][acolytes.copies]
         FROM players
         INNER JOIN acolytes
             ON players.acolyte1 = acolytes.acolyte_id
+        INNER JOIN acolyte_list
+            ON acolytes.acolyte_name = acolyte_list.name
         WHERE acolytes.acolyte_name = 'Duchess'
     ),
     acolyte2 AS (
-        SELECT players.user_id
+        SELECT players.user_id, acolyte_list.effect_num[1][acolytes.copies]
         FROM players
         INNER JOIN acolytes
             ON players.acolyte2 = acolytes.acolyte_id
+        INNER JOIN acolyte_list
+            ON acolytes.acolyte_name = acolyte_list.name
         WHERE acolytes.acolyte_name = 'Duchess'
     )
     SELECT * FROM acolyte1
@@ -133,5 +141,6 @@ WITH duchess_users AS (
     SELECT * FROM acolyte2
 )
 UPDATE players
-SET gravitas = gravitas + 2
-WHERE user_id IN (SELECT user_id FROM duchess_users);
+SET gravitas = gravitas + duchess_users.effect_num
+FROM duchess_users
+WHERE players.user_id = duchess_users.user_id;
