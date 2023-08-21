@@ -333,7 +333,7 @@ class WordChain:
             for player in self.players:
                 psql = """
                         INSERT INTO scrabble_wins (player, score, player_name)
-                        VALUES ($1, $2);
+                        VALUES ($1, $2, $3);
                         """
                 await self.conn.execute(psql, player.id, self.points[player], 
                     player.name)
