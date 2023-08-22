@@ -18,21 +18,20 @@ class Vote_Handler:
     def __init__(self, bot : discord.Client):
         self.bot = bot
         self.session = aiohttp.ClientSession()
+        self.app: web.Application = None
+        self.site: web.TCPSite = None
 
         async def webserver():
             self.app = web.Application(loop = self.bot.loop)
-            self.app.router.add_get('/', self.get_handler)
             self.app.router.add_post('/vote', self.post_handler)
             runner = web.AppRunner(self.app)
             await runner.setup()
-            self.site = web.TCPSite(runner, '0.0.0.0', 8081)
+            self.site = web.TCPSite(runner, '0.0.0.0', 8080)
             await self.bot.wait_until_ready()
             await self.site.start()
 
         asyncio.ensure_future(webserver())
 
-        # self.bot.vote_wbhook = Webhook.from_url(Links.Pipedream_Webhook,
-        #     adapter = AsyncWebhookAdapter(self.session))
         self.bot.vote_wbhook = Webhook.from_url(
             url=config.PWBHK, session=self.session)
 
@@ -57,12 +56,8 @@ class Vote_Handler:
 
             await asyncio.sleep(1800)
 
-    async def get_handler(self, request):
-        return web.Response(text='Idk what I\'m doing\n-Aramythia')
-
-    async def post_handler(self, request):
+    async def post_handler(self, request: web.Request):
         auth = request.headers.get('Authorization')
-        print(auth)
         if f"dbl_{config.WBHKS}" != auth:
             return
         
@@ -90,7 +85,7 @@ class Vote(commands.Cog):
 
     @commands.Cog.listener()
     async def on_vote(self, data):
-        user_id = int(data['id'])
+        user_id = int(data['user'])
         player = await self.client.fetch_user(user_id)
 
         async with self.client.db.acquire() as conn:
@@ -114,23 +109,8 @@ class Vote(commands.Cog):
                     "Thank you for voting for the bot! Create a character with "
                     "`/start` to receive rewards the next time you vote!"))
 
-    @commands.Cog.listener() #If you have an alternative DM me at Aramythia#9006
-    async def on_message(self, message):
-        if message.channel.id != config.VOTE_CHANNEL:
-            return
-
-        # if message.author.id != self.client.vote_wbhook.id:
-        #     return
-
-        player = await self.client.fetch_user(int(message.content[5:23]))
-
-        data = {'id' : player.id}
-        self.client.dispatch('vote', data)
-
     def cog_unload(self):
         self.update_stats.cancel()
 
 def setup(client):
-    # client.dbl = dbl.DBLClient(client, config.TOPGG_TOKEN, autopost=True)
-
     client.add_cog(Vote(client))
