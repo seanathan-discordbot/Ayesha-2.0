@@ -8,10 +8,10 @@ import asyncio
 import random
 import time
 
-from Utilities import Checks, CombatObject, ItemObject, PlayerObject, Vars, CombatEngine, Belligerent
+from Utilities import Checks, ItemObject, PlayerObject, Vars
 from Utilities.Analytics import stringify_gains
-from Utilities.CombatObject import CombatInstance
 from Utilities.AyeshaBot import Ayesha
+from Utilities.Combat import Action, Belligerent, CombatEngine, Effects
 
 
 class pve2(commands.Cog):
@@ -83,4 +83,3 @@ class pve2(commands.Cog):
         
 def setup(bot: Ayesha):
     bot.add_cog(pve2(bot))
-    
