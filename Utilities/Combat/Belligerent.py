@@ -1,18 +1,17 @@
 from __future__ import annotations
-import discord
 
 from abc import ABC, abstractmethod
-from enum import Enum
 import random
 
 from typing import List, Optional, TYPE_CHECKING
 if TYPE_CHECKING:
     from asyncpg import Connection
 
-from Utilities import PlayerObject, Vars
-from Utilities.AcolyteObject import EmptyAcolyte, InfoAcolyte, OwnedAcolyte
-from Utilities.AssociationObject import Association
-from Utilities.ItemObject import Accessory, Weapon, Armor
+    from Utilities import PlayerObject, Vars
+    from Utilities.AcolyteObject import EmptyAcolyte
+    from Utilities.AssociationObject import Association
+    from Utilities.ItemObject import Accessory, Weapon, Armor
+    from Utilities.Combat.Effects import BaseStatus
 
 
 class Belligerent(ABC):
@@ -174,42 +173,3 @@ class CombatPlayer(Belligerent):
             return self.acolyte2
         else:
             return None
-
-
-class BaseStatus:
-    def __init__(self, target: Belligerent, duration: int):
-        self.target = target
-        self.counter = duration
-
-    def on_application(self):
-        pass
-
-    def on_turn(self):
-        self.counter -= 1
-
-    def on_remove(self):
-        pass
-
-class Slow(BaseStatus):
-    def __init__(self, amount: int, **kwargs):
-        self.amount = amount
-        super().__init__(**kwargs)
-
-    def on_application(self):
-        self.target.speed -= self.amount
-        return super().on_application()
-    
-    def on_remove(self):
-        self.target.speed += self.amount
-        return super().on_remove()
-    
-
-if __name__ == "__main__":
-    x = Belligerent(16)
-    y = Belligerent(34)
-
-    # for _ in range(5):
-    #     print(set_next_actor(x, y), x.cooldown, y.cooldown)
-
-    status = Slow(5, target=x, duration=2)
-    print(status.__dict__)

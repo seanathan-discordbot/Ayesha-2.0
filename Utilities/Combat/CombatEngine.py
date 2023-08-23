@@ -1,22 +1,12 @@
 import discord
 
-from enum import Enum
 import random
 from typing import Optional
 
 from Utilities import PlayerObject, Vars
 
-from Belligerent import Belligerent
-from CombatObject import ActionChoice, InvalidMove, ACTION_COMBOS
-from Utilities.Belligerent import Belligerent
-
-
-class Action(Enum):
-    ATTACK = 1
-    BLOCK = 2
-    PARRY = 3
-    HEAL = 4
-    BIDE = 5
+from Utilities.CombatObject import ActionChoice, InvalidMove, ACTION_COMBOS
+from Utilities.Combat.Belligerent import Belligerent
 
 
 class CombatTurn:
@@ -106,34 +96,3 @@ class CombatEngine:
         if self:
             raise Exception
         return self.victor
-
-
-class BaseStatus:
-    def __init__(self, target: Belligerent, duration: int):
-        self.target = target
-        self.counter = duration
-
-    def on_application(self):
-        pass
-
-    def on_turn(self):
-        self.counter -= 1
-
-    def on_remove(self):
-        pass
-
-class Slow(BaseStatus):
-    def __init__(self, amount: int, **kwargs):
-        self.amount = amount
-        super().__init__(**kwargs)
-
-    def on_application(self):
-        self.target.speed -= self.amount
-        return super().on_application()
-    
-    def on_remove(self):
-        self.target.speed += self.amount
-        return super().on_remove()
-
-class Bleed(BaseStatus):
-    pass
