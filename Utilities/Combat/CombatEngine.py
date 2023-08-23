@@ -6,6 +6,8 @@ from typing import Optional
 from Utilities import PlayerObject, Vars
 
 from Utilities.CombatObject import ActionChoice, InvalidMove, ACTION_COMBOS
+
+from Utilities.Combat.Action import Action
 from Utilities.Combat.Belligerent import Belligerent
 
 
