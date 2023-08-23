@@ -28,7 +28,7 @@ class Ayesha(commands.AutoShardedBot):
         # Load the bot cogs
         for cog in self.init_cogs:
             try:
-                self.load_extension(cog)
+                self.load_extension(cog, store=False)
                 print(f"Loaded cog {cog}.")
             except:
                 print(f"Failed to load cog {cog}.")
