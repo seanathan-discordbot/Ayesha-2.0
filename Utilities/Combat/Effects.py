@@ -7,7 +7,21 @@ if TYPE_CHECKING:
 class BaseStatus(ABC):
     def __init__(self, target: Belligerent, duration: int):
         self.target = target
-        self.counter = duration
+        self._counter = duration
+
+    @property
+    def counter(self):
+        return self._counter
+    
+    @counter.setter
+    def counter(self, value):
+        self._counter = value
+        if self._counter <= 0:
+            self.remove()
+
+    def remove(self):
+        self.on_remove()
+        self.target.status.remove(self)  # Might be effective removal?
 
     @abstractmethod
     def on_application(self):
