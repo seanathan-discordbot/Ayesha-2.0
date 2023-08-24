@@ -64,7 +64,7 @@ class pve2(commands.Cog):
             view = None
             if actor.is_player:
                 # Update information display
-                view = Action.ActionView()
+                view = Action.ActionView(ctx.author.id)
                 await interaction.edit_original_message(
                     content=content,
                     view=view
@@ -78,10 +78,10 @@ class pve2(commands.Cog):
             else:
                 await interaction.edit_original_message(
                     content=content,
-                    view=view
+                    view=None
                 )
                 action = Action.Action.ATTACK
-                await asyncio.sleep(3)  # Let player process boss action
+                await asyncio.sleep(3)  # If boss turn, let player read results
 
             # Process turn and generate responses
             results = engine.process_turn(action)
@@ -94,8 +94,8 @@ class pve2(commands.Cog):
             fmt = "loss\n" # Loss condiitons
 
         # Create and send result embed
-        fmt += " | ".join(str(x) for x in [player, boss, engine])
-        await interaction.edit_original_message(content=fmt)
+        fmt += " | ".join(str(x) for x in [player, boss, results])
+        await interaction.edit_original_message(content=fmt, view=None)
 
         
 def setup(bot: Ayesha):
