@@ -1,7 +1,7 @@
 import discord
 
 import random
-from typing import Optional
+from typing import Tuple, Optional
 
 from Utilities import PlayerObject, Vars
 
@@ -38,6 +38,18 @@ class CombatEngine:
     def __bool__(self):
         """Return True if combat is still in progress and victor attr is None"""
         return self.victor is None
+
+
+    @classmethod
+    def initialize(cls, 
+            player1: Belligerent, 
+            player2: Belligerent, 
+            turn_limit: int = 50
+    ) -> Tuple["CombatEngine", CombatTurn]:
+        """Create a new Engine and carry out a dummy turn 1, returning both"""
+        engine = cls(player1, player2, turn_limit)
+        result = CombatTurn()
+        return engine, result
 
 
     def process_turn(self, action: Action) -> CombatTurn:
