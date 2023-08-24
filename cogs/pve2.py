@@ -57,27 +57,44 @@ class pve2(commands.Cog):
         boss = Belligerent.Boss(level)
 
         # Main Game Loop
-        engine = CombatEngine.CombatEngine(player, boss)
-        # while engine:
-        #     break
-        #     # Update information display
+        engine, results = CombatEngine.CombatEngine.initialize(player, boss)
+        while engine:
+            actor = engine.actor
+            content = f"{player}, {boss}, {results}"
+            view = None
+            if actor.is_player:
+                # Update information display
+                view = Action.ActionView()
+                await interaction.edit_original_message(
+                    content=content,
+                    view=view
+                )
 
-        #     # Get player action
+                await view.wait()
+                if not view.choice:
+                    return await ctx.respond(
+                        f"You fled the battle as you ran out of time to move.")
+                action = view.choice
+            else:
+                await interaction.edit_original_message(
+                    content=content,
+                    view=view
+                )
+                action = Action.Action.ATTACK
+                await asyncio.sleep(3)  # Let player process boss action
 
-        #     # Get boss action
-
-        #     # Process turn and generate responses
-        #     # results = engine.process_turn()
+            # Process turn and generate responses
+            results = engine.process_turn(action)
 
         # Process Game End; `results` will hold last turn info
         victor = engine.get_victor()
         if isinstance(victor, Belligerent.CombatPlayer):
-            pass # Victory conditions
+            fmt = "win\n" # Victory conditions
         else:
-            pass # Loss condiitons
+            fmt = "loss\n" # Loss condiitons
 
         # Create and send result embed
-        fmt = " | ".join(str(x) for x in [player, boss, engine])
+        fmt += " | ".join(str(x) for x in [player, boss, engine])
         await interaction.edit_original_message(content=fmt)
 
         
