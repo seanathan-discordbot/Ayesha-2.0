@@ -26,6 +26,7 @@ class Belligerent(ABC):
         ):
         # Useful Information
         self.name = name
+        self.is_player = False
 
         # Combat Stats
         self.attack = attack
@@ -144,6 +145,7 @@ class CombatPlayer(Belligerent):
             pass
 
         super().__init__(player.char_name, attack, crit, hp, defense, speed) 
+        self.is_player = True
 
         # Initialize objs
         self.weapon = player.equipped_item
