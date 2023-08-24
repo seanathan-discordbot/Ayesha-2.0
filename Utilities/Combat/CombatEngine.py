@@ -12,9 +12,13 @@ from Utilities.Combat.Action import Action
 from Utilities.Combat.Belligerent import Belligerent
 
 class Modifier:
-    def __init__(self, magnitude: int = 0, multiplier: float = 1.0) -> None:
+    def __init__(self, magnitude: int = 0, multiplier: float = 0) -> None:
         self.magnitude = magnitude
         self.multiplier = multiplier
+        self.final = 0
+    
+    def apply(self):
+        self.final = int(self.magnitude * self.multiplier)
 
 
 class CombatTurn:
@@ -22,21 +26,55 @@ class CombatTurn:
             self, 
             actor: Belligerent, 
             target: Belligerent, 
-            action: Action, turn: int
+            action: Action, 
+            turn: int
     ):
+        if action not in Action:
+            raise InvalidMove
+
         self.actor = actor
         self.target = target
+        self.action = action
         self.turn = turn
 
         self.attacks: Dict[str, Modifier] = defaultdict(Modifier)  # Apply all sources of possible attacks e.g. attack action, acolyte effects, etc
         self.heals: Dict[str, Modifier] = defaultdict(Modifier)
         self.damages: Dict[str, Modifier] = defaultdict(Modifier)  # Apply all sources of possible damage at turn start e.g. poison
 
+        self.attack_total = 0
+        self.heal_total = 0
+        self.damage_total = 0
+
+    def __str__(self) -> str:
+        return (
+            f"```"
+            f"{self.action} {self.turn}"
+            f"{self.attacks} {self.heals} {self.damages}"
+            f"{self.attack_total} {self.heal_total} {self.damage_total}"
+            f"```"
+        )
+    
+    def __repr__(self) -> str:
+        return self.__str__()
+
     def apply(self):  # When all things are calculated, run something like this to get stat changes
-        damage_taken = 0
-        for source in self.damages:
-            damage_taken += source.magnitude
-        self._damage_taken = damage_taken
+        total = 0
+        for modifier in self.attacks.values():
+            modifier.apply()
+            total += modifier.final
+        self.attack_total = total
+
+        total = 0
+        for modifier in self.heals.values():
+            modifier.apply()
+            total += modifier.final
+        self.heal_total = total
+
+        total = 0
+        for modifier in self.damages.values():
+            modifier.apply()
+            total += modifier.final
+        self.damage_total = total
 
 
 class CombatEngine:
@@ -72,7 +110,7 @@ class CombatEngine:
     ) -> Tuple["CombatEngine", CombatTurn]:
         """Create a new Engine and carry out a dummy turn 1, returning both"""
         engine = cls(player1, player2, turn_limit)
-        result = CombatTurn()
+        result = CombatTurn(player1, player2, Action.DEFAULT, 0)
         return engine, result
 
 
@@ -88,47 +126,56 @@ class CombatEngine:
             status.on_turn(result)
 
         # Create raw damage count
-        if action not in Action:
-            raise InvalidMove
-
-        # match action:
-        #     case Action.ATTACK:
-        #         damage = random.randint(
-        #             self.actor.attack * 0.75, self.actor.attack * 1.25
-        #         )
-        #         damage_multiplier += 1
-        #     case Action.BLOCK:
-        #         pass  # Replace with BRACE - add DEF boost status effect
-        #     case Action.PARRY:
-        #         pass  # Idk maybe make a special attack
-        #     case Action.HEAL:
-        #         heal = self.actor.max_hp * .2
-        #         heal_multiplier += 1
-        #     case Action.BIDE:
-        #         self.actor.attack *= 1.05
+        match action:
+            case Action.ATTACK:
+                atk_dmg = random.randint(
+                    self.actor.attack * 3 // 4, self.actor.attack * 5 // 4
+                )
+                result.attacks["Attack"].magnitude += atk_dmg
+                result.attacks["Attack"].multiplier += 1
+            case Action.BLOCK:
+                pass  # Replace with BRACE - add DEF boost status effect
+            case Action.PARRY:
+                pass  # Idk maybe make a special attack
+            case Action.HEAL:
+                heal = self.actor.max_hp * .2
+                result.heals["Heal"].magnitude += heal
+                result.heals["Heal"].multiplier += 1
+            case Action.BIDE:
+                actor.attack *= 1.05
 
         # Determine critical strikes
+        crit_cond = action in (Action.ATTACK, Action.BLOCK, Action.PARRY)
+        if crit_cond and random.randint(1, 100) <= actor.crit:
+            pass  # TODO: add on_crit()
 
         # Calculate damage multiplier based off action combinations
 
         # Unique interactions with attack choices
 
         # Calculate final damage
+        result.apply()
 
         # Apply all stat changes
+        actor.current_hp += result.heal_total - result.damage_total
+        target.current_hp -= result.attack_total
 
         # Check victory conditions
+        if target.current_hp <= 0:
+            self.victor = actor
+        if actor.current_hp <= 0:
+            self.victor = target
 
         # Create resulting object
         self.set_next_actor()
-        return CombatTurn
+        return result
     
 
     def set_next_actor(self):
         while min(self.player1, self.player2).cooldown > 0:
             self.player1.cooldown -= self.player1.speed
             self.player2.cooldown -= self.player2.speed
-        self.actor, self.target, *other = sorted(self.player1, self.player2)
+        self.actor, self.target = sorted([self.player1, self.player2])
         self.actor.cooldown = 1000
 
 
