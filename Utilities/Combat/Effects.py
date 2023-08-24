@@ -1,7 +1,11 @@
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
+
+from Utilities.Combat.Belligerent import Belligerent
+from Utilities.Combat.CombatEngine import CombatTurn
 if TYPE_CHECKING:
     from Utilities.Combat.Belligerent import Belligerent
+    from Utilities.Combat.CombatEngine import CombatTurn, Modifier, DamageSource
 
 
 class BaseStatus(ABC):
@@ -28,7 +32,7 @@ class BaseStatus(ABC):
         pass
 
     @abstractmethod
-    def on_turn(self):
+    def on_turn(self, data: CombatTurn):
         pass
 
     @abstractmethod
@@ -39,12 +43,31 @@ class BaseStatus(ABC):
 class Slow(BaseStatus):
     def __init__(self, amount: int, **kwargs):
         self.amount = amount
-        super().__init__(**kwargs)
+        super.__init__(**kwargs)
 
     def on_application(self):
         self.target.speed -= self.amount
+
+    def on_turn(self, data: CombatTurn):
         self.counter -= 1
     
     def on_remove(self):
         self.target.speed += self.amount
-        return super().on_remove()
+    
+
+class Poison(BaseStatus):
+    def __init__(self, amount: float, **kwargs):
+        self.amount = amount
+        super().__init__(**kwargs)
+
+    def on_application(self):
+        return
+    
+    def on_turn(self, data: CombatTurn):
+        damage = data.target.current_hp * self.amount
+        data.damages.append(DamageSource("Poison", damage, 1))
+
+    def on_remove(self):
+        return
+
+
