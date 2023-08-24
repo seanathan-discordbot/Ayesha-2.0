@@ -32,7 +32,7 @@ class BaseStatus(ABC):
         pass
 
     @abstractmethod
-    def on_turn(self, data: CombatTurn):
+    def on_turn(self, data: CombatTurn):  # TODO: should all methods take the data?
         pass
 
     @abstractmethod
@@ -65,7 +65,7 @@ class Poison(BaseStatus):
     
     def on_turn(self, data: CombatTurn):
         damage = data.target.current_hp * self.amount
-        data.damages.append(DamageSource("Poison", damage, 1))
+        data.damages["Poison"].magnitude += damage
 
     def on_remove(self):
         return

@@ -1,7 +1,8 @@
 import discord
 
 import random
-from typing import List, Tuple, Optional
+from collections import defaultdict
+from typing import List, Tuple, Dict, Optional
 
 from Utilities import PlayerObject, Vars
 
@@ -11,15 +12,10 @@ from Utilities.Combat.Action import Action
 from Utilities.Combat.Belligerent import Belligerent
 
 class Modifier:
-    def __init__(self, source, magnitude, multiplier) -> None:
-        self.source = source
+    def __init__(self, magnitude: int = 0, multiplier: float = 1.0) -> None:
         self.magnitude = magnitude
         self.multiplier = multiplier
 
-class DamageSource(Modifier):
-    def __init__(self, source, magnitude, multiplier) -> None:
-        super().__init__(source, magnitude, multiplier)
-    # TODO: Get proper data structure that can compress sources of the same type
 
 class CombatTurn:
     def __init__(
@@ -32,9 +28,9 @@ class CombatTurn:
         self.target = target
         self.turn = turn
 
-        self.attacks = []  # Apply all sources of possible attacks e.g. attack action, acolyte effects, etc
-        self.heals = []
-        self.damages: List[DamageSource] = []  # Apply all sources of possible damage at turn start e.g. poison
+        self.attacks: Dict[str, Modifier] = defaultdict(Modifier)  # Apply all sources of possible attacks e.g. attack action, acolyte effects, etc
+        self.heals: Dict[str, Modifier] = defaultdict(Modifier)
+        self.damages: Dict[str, Modifier] = defaultdict(Modifier)  # Apply all sources of possible damage at turn start e.g. poison
 
     def apply(self):  # When all things are calculated, run something like this to get stat changes
         damage_taken = 0
