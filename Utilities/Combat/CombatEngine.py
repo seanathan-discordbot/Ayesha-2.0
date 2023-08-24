@@ -146,7 +146,7 @@ class CombatEngine:
 
         # Determine critical strikes
         crit_cond = action in (Action.ATTACK, Action.BLOCK, Action.PARRY)
-        if crit_cond and random.randint(1, 100) <= actor.crit:
+        if crit_cond and random.randint(1, 100) <= actor.crit_rate:
             pass  # TODO: add on_crit()
 
         # Calculate damage multiplier based off action combinations

@@ -18,10 +18,12 @@ class Belligerent(ABC):
     def __init__(self, 
             name: str, 
             attack: int, 
-            crit: int, 
+            crit_rate: int, 
+            crit_damage: int,
             hp: int,
             defense: int, 
-            speed: int
+            speed: int,
+            armor_pen: int
         ):
         # Useful Information
         self.name = name
@@ -29,12 +31,14 @@ class Belligerent(ABC):
 
         # Combat Stats
         self.attack = attack
-        self.crit = crit
+        self.crit_rate = crit_rate
+        self.crit_damage = crit_damage
         self.max_hp = hp
         self.current_hp = hp
         self.defense = defense
         self.speed = speed
         self.cooldown = 1000
+        self.armor_pen = armor_pen
         self.status: List[BaseStatus] = []
 
         # Related Objects - initialized in subclass
@@ -77,38 +81,41 @@ class Boss(Belligerent):
             name = random.choice(NAMES)
 
         speed = 25
+        crit_damage = 50
+        armor_pen = 0
         if difficulty == 1:
             attack = 1
-            crit = 0
+            crit_rate = 0
             hp = 50
             defense = 10
         elif difficulty < 16:
             attack = difficulty * 7
-            crit = int(difficulty * 1.2) + 5
+            crit_rate = int(difficulty * 1.2) + 5
             hp = difficulty * 67
             defense = int(difficulty * 1.2)
         elif difficulty < 25:
             attack = difficulty * 10
-            crit = int(difficulty * 1.5) + 5
+            crit_rate = int(difficulty * 1.5) + 5
             hp = difficulty * 75
             defense = int(difficulty * 1.3)
         elif difficulty < 40:
             attack = difficulty * 20
-            crit = 65
+            crit_rate = 65
             hp = difficulty * 125
             defense = 40
         elif difficulty < 50:
             attack = difficulty * 25
-            crit = 75
+            crit_rate = 75
             hp = difficulty * 140
             defense = 55
         else:
             attack = difficulty * 28
-            crit = 78
+            crit_rate = 78
             hp = difficulty * 150
             defense = 70
 
-        super().__init__(name, attack, crit, hp, defense, speed)
+        super().__init__(
+            name, attack, crit_rate, crit_damage, hp, defense, speed, armor_pen)
 
         # Initialize objs
         self.weapon = Weapon()
@@ -129,21 +136,23 @@ class CombatPlayer(Belligerent):
         self.player = player
 
         attack = player.get_attack()
-        crit = player.get_crit()
+        crit_rate = player.get_crit()
+        crit_damage = 50
         hp = player.get_hp()
         defense = player.get_defense()
         speed = 25
+        armor_pen = 0
 
         # ON_PLAYER_LOAD event lol
         try:
             arsaces = player.get_acolyte("Arsaces")
-            attack += crit * arsaces.get_effect_modifier(0)
-            hp += crit * arsaces.get_effect_modifier(1)
-            crit = 0
+            attack += crit_rate * arsaces.get_effect_modifier(0)
+            hp += crit_rate * arsaces.get_effect_modifier(1)
+            crit_rate = 0
         except AttributeError:
             pass
 
-        super().__init__(player.char_name, attack, crit, hp, defense, speed) 
+        super().__init__(player.char_name, attack, crit_rate, crit_damage, hp, defense, speed, armor_pen) 
         self.is_player = True
 
         # Initialize objs
