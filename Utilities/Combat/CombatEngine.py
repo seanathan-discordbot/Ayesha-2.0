@@ -8,6 +8,7 @@ from Utilities import PlayerObject, Vars
 
 from Utilities.CombatObject import ActionChoice, InvalidMove, ACTION_COMBOS
 
+from Utilities.Combat import Effects
 from Utilities.Combat.Action import Action
 from Utilities.Combat.Belligerent import Belligerent
 
@@ -169,7 +170,9 @@ class CombatEngine:
                 result.heals["Heal"].magnitude += heal
                 result.heals["Heal"].multiplier += 1
             case Action.BIDE:
-                actor.attack *= 1.05
+                bide = Effects.Bide(actor)
+                actor.status.append(bide)
+                bide.on_application()
 
         # Determine critical strikes
         crit_cond = action in (Action.ATTACK, Action.BLOCK, Action.PARRY)

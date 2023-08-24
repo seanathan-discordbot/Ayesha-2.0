@@ -1,11 +1,11 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from Utilities.Combat.Belligerent import Belligerent
-from Utilities.Combat.CombatEngine import CombatTurn
 if TYPE_CHECKING:
     from Utilities.Combat.Belligerent import Belligerent
-    from Utilities.Combat.CombatEngine import CombatTurn, Modifier, DamageSource
+    from Utilities.Combat.CombatEngine import CombatTurn
 
 
 class BaseStatus(ABC):
@@ -39,6 +39,20 @@ class BaseStatus(ABC):
     def on_remove(self):
         pass
 
+
+class Bide(BaseStatus):
+    def __init__(self, target):
+        super().__init__(target, 2)  # Bide always lasts 2 turns
+        self.attack_boost = int(target.attack * 1.5)
+
+    def on_application(self):
+        self.target.attack += self.attack_boost
+    
+    def on_turn(self, data: CombatTurn):
+        self.counter -= 1
+    
+    def on_remove(self):
+        self.target.attack -= self.attack_boost
 
 class Slow(BaseStatus):
     def __init__(self, amount: int, **kwargs):
