@@ -6,13 +6,12 @@ import random
 from typing import List, Optional, TYPE_CHECKING
 if TYPE_CHECKING:
     from asyncpg import Connection
-
-    from Utilities import PlayerObject, Vars
-    from Utilities.AcolyteObject import EmptyAcolyte
-    from Utilities.AssociationObject import Association
-    from Utilities.ItemObject import Accessory, Weapon, Armor
     from Utilities.Combat.Effects import BaseStatus
 
+from Utilities import PlayerObject, Vars
+from Utilities.AcolyteObject import EmptyAcolyte
+from Utilities.AssociationObject import Association
+from Utilities.ItemObject import Accessory, Weapon, Armor
 
 class Belligerent(ABC):
     @abstractmethod
