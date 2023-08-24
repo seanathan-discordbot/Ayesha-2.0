@@ -7,6 +7,7 @@ from discord.ui.item import Item
 
 
 class Action(Enum):
+    DEFAULT = 0
     ATTACK = 1
     BLOCK = 2
     PARRY = 3
