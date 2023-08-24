@@ -5,13 +5,10 @@ from discord.ext import commands
 from discord.ext.commands import BucketType, cooldown
 
 import asyncio
-import random
-import time
 
-from Utilities import Checks, ItemObject, PlayerObject, Vars
-from Utilities.Analytics import stringify_gains
+from Utilities import Checks, Vars
 from Utilities.AyeshaBot import Ayesha
-from Utilities.Combat import Action, Belligerent, CombatEngine, Effects
+from Utilities.Combat import Action, Belligerent, CombatEngine
 
 
 class pve2(commands.Cog):
@@ -80,13 +77,13 @@ class pve2(commands.Cog):
             embed.add_field(name="Speed", value=player.speed)
             embed.add_field(name="DEF Pen", value=player.armor_pen)
             embed.add_field(
-                name=f"Enemy HP: `{boss.current_hp}`   [ENEMY STATUS EFFECTS]",
+                name=f"Enemy HP: `{boss.current_hp}`   {boss.status}",
                 value=(
                     f"🗡️ Attack, \N{SHIELD} Block, \N{CROSSED SWORDS} "
                     f"Parry, \u2764 Heal, \u23F1 Bide"),
                 inline=False)
             embed.add_field(
-                name=f"Turn {results.turn}   [YOUR STATUS EFFECTS]", 
+                name=f"Turn {results.turn}   {player.status}", 
                 value=results.description,
                 inline=False)
 
