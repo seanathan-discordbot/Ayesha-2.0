@@ -60,13 +60,42 @@ class pve2(commands.Cog):
         engine, results = CombatEngine.CombatEngine.initialize(player, boss)
         while engine:
             actor = engine.actor
-            content = f"{player}, {boss}, {results}"
             view = None
+            
+            embed = discord.Embed(
+                title=f"{player.name} vs. {boss.name} (Level {level})",
+                color=Vars.ABLUE
+            )
+            embed.set_thumbnail(url="https://i.imgur.com/d7srIjy.png")
+            embed.add_field(name="Attack", value=player.attack)
+            embed.add_field(
+                name="Crit Rate/Damage", 
+                value=f"{player.crit_rate}%/+{player.crit_damage}%"
+            )
+            embed.add_field(
+                name="HP",
+                value=f"{player.current_hp}/{player.max_hp}"
+            )
+            embed.add_field(name="Defense", value=f"{player.defense}%")
+            embed.add_field(name="Speed", value=player.speed)
+            embed.add_field(name="DEF Pen", value=player.armor_pen)
+            embed.add_field(
+                name=f"Enemy HP: `{boss.current_hp}`   [ENEMY STATUS EFFECTS]",
+                value=(
+                    f"🗡️ Attack, \N{SHIELD} Block, \N{CROSSED SWORDS} "
+                    f"Parry, \u2764 Heal, \u23F1 Bide"),
+                inline=False)
+            embed.add_field(
+                name=f"Turn {results.turn}   [YOUR STATUS EFFECTS]", 
+                value=results.description,
+                inline=False)
+
             if actor.is_player:
                 # Update information display
                 view = Action.ActionView(ctx.author.id)
                 await interaction.edit_original_message(
-                    content=content,
+                    content=None,
+                    embed=embed,
                     view=view
                 )
 
@@ -77,7 +106,8 @@ class pve2(commands.Cog):
                 action = view.choice
             else:
                 await interaction.edit_original_message(
-                    content=content,
+                    content=None,
+                    embed=embed,
                     view=None
                 )
                 action = Action.Action.ATTACK

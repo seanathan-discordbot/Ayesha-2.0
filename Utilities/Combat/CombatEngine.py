@@ -56,6 +56,33 @@ class CombatTurn:
     
     def __repr__(self) -> str:
         return self.__str__()
+    
+    @property
+    def description(self):
+        def action2sentence(action: Action):
+            match action:
+                case Action.ATTACK:
+                    return f"for {self.attack_total} damage"
+                case Action.BLOCK:
+                    return f"for {self.attack_total} damage"
+                case Action.PARRY:
+                    return f"for {self.attack_total} damage"
+                case Action.HEAL:
+                    return f"for {self.heal_total} HP"
+                case Action.BIDE:
+                    return "bided their time to boost their attack"
+                
+        def breakdown(coll: Dict[str, Modifier]):
+            return str(sorted(coll, key=lambda k: coll[k].final, reverse=True))
+
+        desc = f"{self.actor.name} {self.action} {action2sentence(self.action)}."
+        if self.attack_total:
+            desc += "\n" + breakdown(self.attacks)
+        if self.heal_total:
+            desc += "\n" + breakdown(self.heals)
+        if self.damage_total:
+            desc += "\n" + breakdown(self.damages)
+        return desc
 
     def apply(self):  # When all things are calculated, run something like this to get stat changes
         total = 0
