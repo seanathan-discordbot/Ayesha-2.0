@@ -5,6 +5,7 @@ from discord.ext import commands
 from discord.ext.commands import BucketType, cooldown
 
 import asyncio
+from typing import Iterable
 
 from Utilities import Checks, Vars
 from Utilities.AyeshaBot import Ayesha
@@ -21,6 +22,9 @@ class pve2(commands.Cog):
     async def on_ready(self):
         print("PvE2 is ready.")
 
+    # AUXILIARY FUNCTIONS
+    def list2str(self, arr: Iterable):
+        return " ".join(str(x) for x in arr)
 
     # COMMANDS
     @commands.slash_command()
@@ -77,13 +81,13 @@ class pve2(commands.Cog):
             embed.add_field(name="Speed", value=player.speed)
             embed.add_field(name="DEF Pen", value=player.armor_pen)
             embed.add_field(
-                name=f"Enemy HP: `{boss.current_hp}`   {boss.status}",
+                name=f"Enemy HP: `{boss.current_hp}`   {self.list2str(boss.status)}",
                 value=(
                     f"🗡️ Attack, \N{SHIELD} Block, \N{CROSSED SWORDS} "
                     f"Parry, \u2764 Heal, \u23F1 Bide"),
                 inline=False)
             embed.add_field(
-                name=f"Turn {results.turn}   {player.status}", 
+                name=f"Turn {results.turn}   {self.list2str(player.status)}", 
                 value=results.description,
                 inline=False)
 

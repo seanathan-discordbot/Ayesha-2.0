@@ -17,10 +17,15 @@ class BaseStatus(ABC):
         self._counter = duration
 
     def __str__(self) -> str:
-        return f"{self.counter}"
+        return f"{self._ICON}{self.counter}"
     
     def __repr__(self) -> str:
         return self.__str__()
+
+    @property
+    @abstractmethod
+    def _ICON(self):
+        return "X"
 
     @property
     def counter(self):
@@ -54,8 +59,9 @@ class Brace(BaseStatus):
         super().__init__(target, 2)  # Brace always lasts 2 turns
         self.defense_boost = 25
 
-    def __str__(self) -> str:
-        return "BRACE[" + super().__str__() + "]"
+    @property
+    def _ICON(self):
+        return "\N{SHIELD}"
 
     def on_application(self):
         self.target.defense += self.defense_boost
@@ -72,6 +78,10 @@ class Bide(BaseStatus):
         super().__init__(target, 2)  # Bide always lasts 2 turns
         self.attack_boost = int(target.base_attack * 1.1)
 
+    @property
+    def _ICON(self):
+        return "\u23F1"
+
     def on_application(self):
         self.target.attack += self.attack_boost
     
@@ -87,6 +97,10 @@ class Slow(BaseStatus):
         self.amount = amount
         super.__init__(**kwargs)
 
+    @property
+    def _ICON(self):
+        raise NotImplementedError
+
     def on_application(self):
         self.target.speed -= self.amount
 
@@ -101,6 +115,10 @@ class Poison(BaseStatus):
     def __init__(self, amount: float, **kwargs):
         self.amount = amount
         super().__init__(**kwargs)
+
+    @property
+    def _ICON(self):
+        raise NotImplementedError
 
     def on_application(self):
         return
