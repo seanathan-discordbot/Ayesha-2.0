@@ -79,9 +79,12 @@ class Profile(commands.Cog):
             page2.add_field(name="General",
                 value=(
                     f"Attack: `{profile.get_attack()}`\n"
-                    f"Crit Chance: `{profile.get_crit_rate()}%`\n"
+                    f"Crit Rate/Damage: `{profile.get_crit_rate()}%`/"
+                    f"`{profile.get_crit_damage()}%`\n"
                     f"Hit Points: `{profile.get_hp()}`\n"
-                    f"Defense: `{profile.get_defense()}%`"),
+                    f"Defense: `{profile.get_defense()}%`\n"
+                    f"Speed: `{profile.get_speed()}`\n"
+                    f"Armor Pen: `{profile.get_armor_pen()}%`"),
                 inline=True)
             page2.add_field(name="Reputation",
                 value=(
@@ -90,7 +93,7 @@ class Profile(commands.Cog):
                     f"(`{pvelvl_rank}`)\n"
                     f"Pvp Wins: `{profile.pvp_wins}` (`{pvp_rank}`)\n"),
                 inline=True)
-            page2.add_field(name=f"Equips",
+            page2.add_field(name=f"Equipment",
                 value=(
                     f"{profile.equipped_item.type}: {profile.equipped_item.name} "
                     f"(`{profile.equipped_item.attack}` ATK, "

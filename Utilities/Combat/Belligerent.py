@@ -137,11 +137,11 @@ class CombatPlayer(Belligerent):
 
         attack = player.get_attack()
         crit_rate = player.get_crit_rate()
-        crit_damage = 50
+        crit_damage = player.get_crit_damage()
         hp = player.get_hp()
         defense = player.get_defense()
-        speed = 25
-        armor_pen = 0
+        speed = player.get_speed()
+        armor_pen = player.get_armor_pen()
 
         # ON_PLAYER_LOAD event lol
         try:
