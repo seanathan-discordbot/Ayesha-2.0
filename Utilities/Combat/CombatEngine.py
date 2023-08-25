@@ -75,7 +75,11 @@ class CombatTurn:
                     return "bided their time to boost their attack"
                 
         def breakdown(coll: Dict[str, Modifier]):
-            return str(sorted(coll, key=lambda k: coll[k].final, reverse=True))
+            keys = sorted(coll, key=lambda k: coll[k].final, reverse=True)
+            sources = [
+                f"{k} ({coll[k].magnitude}\*{coll[k].multiplier})" for k in keys
+            ]
+            return ", ".join(sources)
         
         if self.action == Action.DEFAULT:
             return f"Battle begins between **{self.actor.name}** and **{self.target.name}**."
