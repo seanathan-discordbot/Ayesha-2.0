@@ -54,10 +54,6 @@ class CombatEngine:
         target = self.target
         result = CombatTurn(actor, target, action, self.turn)
 
-        # Process status effects
-        for status in self.actor.status:
-            status.on_turn(result)
-
         # Create raw damage count
         match action:
             case Action.ATTACK:
@@ -86,6 +82,10 @@ class CombatEngine:
 
         # Unique interactions with attack choices
         # self.run_events()
+
+        # Process status effects
+        for status in self.actor.status:
+            status.on_turn(result)
 
         # Calculate final damage
         result.apply()
