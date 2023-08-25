@@ -779,14 +779,25 @@ class Player:
         """
         crit = 5
         crit += self.equipped_item.crit
-        crit += self.acolyte1.get_crit_rate()
-        crit += self.acolyte2.get_crit_rate()
+        crit += self.acolyte1.get_crit()
+        crit += self.acolyte2.get_crit()
         crit += Vars.ORIGINS[self.origin]['crit_bonus']
         crit += Vars.OCCUPATIONS[self.occupation]['crit_bonus']
         if self.accessory.prefix == "Flexible":
             crit += Vars.ACCESSORY_BONUS["Flexible"][self.accessory.type]
         # TODO implement comptroller bonus
 
+        return crit
+    
+    def get_crit_damage(self) -> int:
+        """Returns the player's crit damage stat, calculated from all sources.
+        The value returned by this method is 'the final say' on the stat.
+        """
+        crit = 50
+        if self.occupation == "Engineer":
+            crit += 25
+        if self.assc.type == "College":
+            crit += 5 * self.assc.get_level()
         return crit
 
     def get_hp(self) -> int:
@@ -824,6 +835,20 @@ class Player:
         if "Sophytes" in acolytes:
             base += 5
         return base
+    
+    def get_speed(self) -> int:
+        """Returns the player's speed stat, calculated from all sources.
+        The value returned by this method is 'the final say' on the stat.
+        """
+        speed = 25
+        return speed
+    
+    def get_armor_pen(self) -> int:
+        """Returns the player's armor pen stat, calculated from all sources.
+        The value returned by this method is 'the final say' on the stat.
+        """
+        armor_pen = 0
+        return armor_pen
 
     def get_acolyte(self, name : str) -> Optional[EmptyAcolyte]:
         """Returns the equipped acolyte with the name given. If no acolyte
