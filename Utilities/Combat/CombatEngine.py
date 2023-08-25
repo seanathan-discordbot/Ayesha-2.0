@@ -63,7 +63,9 @@ class CombatEngine:
                 result.attacks["Attack"].magnitude += atk_dmg
                 result.attacks["Attack"].multiplier += 1
             case Action.BLOCK:
-                pass  # Replace with BRACE - add DEF boost status effect
+                brace = Effects.Brace(actor)
+                actor.status.append(brace)
+                brace.on_application()
             case Action.PARRY:
                 pass  # Idk maybe make a special attack
             case Action.HEAL:
@@ -76,7 +78,7 @@ class CombatEngine:
                 bide.on_application()
 
         # Determine critical strikes
-        crit_cond = action in (Action.ATTACK, Action.BLOCK, Action.PARRY)
+        crit_cond = action in (Action.ATTACK, Action.PARRY)
         if crit_cond and random.randint(1, 100) <= actor.crit_rate:
             self.on_critical_hit(result)
 

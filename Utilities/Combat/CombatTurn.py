@@ -54,7 +54,7 @@ class CombatTurn:
                 case Action.ATTACK:
                     return f"for {self.attack_total} damage"
                 case Action.BLOCK:
-                    return f"for {self.attack_total} damage"
+                    return f"braced for an attack, boosting their defense"
                 case Action.PARRY:
                     return f"for {self.attack_total} damage"
                 case Action.HEAL:
