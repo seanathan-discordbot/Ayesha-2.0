@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import random
 
-from typing import List, Optional, TYPE_CHECKING
+from typing import Set, Optional, TYPE_CHECKING
 if TYPE_CHECKING:
     from asyncpg import Connection
     from Utilities.Combat.Effects import BaseStatus
@@ -42,7 +42,7 @@ class Belligerent(ABC):
         self.speed = speed
         self.cooldown = 1000
         self.armor_pen = armor_pen
-        self.status: List[BaseStatus] = []
+        self.status: Set[BaseStatus] = set()
 
         # Related Objects - initialized in subclass
         self.weapon: Weapon

@@ -16,6 +16,12 @@ class BaseStatus(ABC):
         self.target = target
         self._counter = duration
 
+    def __str__(self) -> str:
+        return f"{self.counter}"
+    
+    def __repr__(self) -> str:
+        return self.__str__()
+
     @property
     def counter(self):
         return self._counter
@@ -47,6 +53,9 @@ class Brace(BaseStatus):
     def __init__(self, target: Belligerent):
         super().__init__(target, 2)  # Brace always lasts 2 turns
         self.defense_boost = 25
+
+    def __str__(self) -> str:
+        return "BRACE[" + super().__str__() + "]"
 
     def on_application(self):
         self.target.defense += self.defense_boost

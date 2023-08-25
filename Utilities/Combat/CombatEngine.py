@@ -64,7 +64,7 @@ class CombatEngine:
                 result.attacks["Attack"].multiplier += 1
             case Action.BLOCK:
                 brace = Effects.Brace(actor)
-                actor.status.append(brace)
+                actor.status.add(brace)
                 brace.on_application()
             case Action.PARRY:
                 pass  # Idk maybe make a special attack
@@ -74,7 +74,7 @@ class CombatEngine:
                 result.heals["Heal"].multiplier += 1
             case Action.BIDE:
                 bide = Effects.Bide(actor)
-                actor.status.append(bide)
+                actor.status.add(bide)
                 bide.on_application()
 
         # Determine critical strikes
@@ -83,7 +83,7 @@ class CombatEngine:
             self.on_critical_hit(result)
 
         # Process status effects
-        for status in self.actor.status:
+        for status in list(self.actor.status):  # Make copy as original might get modified
             status.on_turn(result)
 
         # Unique interactions with attack choices
