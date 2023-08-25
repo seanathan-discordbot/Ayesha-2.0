@@ -8,11 +8,11 @@ from discord.ui.item import Item
 
 class Action(Enum):
     DEFAULT = 0
-    ATTACK = 1
-    BLOCK = 2
-    PARRY = 3
-    HEAL = 4
-    BIDE = 5
+    ATTACK = "🗡️"
+    BLOCK = "\N{SHIELD}"
+    PARRY = "\N{CROSSED SWORDS}"
+    HEAL = "\u2764"
+    BIDE = "\u23F1"
 
 
 class ActionView(discord.ui.View):

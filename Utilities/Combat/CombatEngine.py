@@ -75,8 +75,11 @@ class CombatTurn:
                 
         def breakdown(coll: Dict[str, Modifier]):
             return str(sorted(coll, key=lambda k: coll[k].final, reverse=True))
+        
+        if self.action == Action.DEFAULT:
+            return f"Battle begins between **{self.actor.name}** and **{self.target.name}**."
 
-        desc = f"{self.actor.name} {self.action} {action2sentence(self.action)}."
+        desc = f"**{self.actor.name}** {self.action.value} {action2sentence(self.action)}."
         if self.attack_total:
             desc += "\n" + breakdown(self.attacks)
         if self.heal_total:
