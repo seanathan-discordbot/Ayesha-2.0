@@ -17,6 +17,7 @@ class Belligerent(ABC):
     @abstractmethod
     def __init__(self, 
             name: str, 
+            occupation: str,
             attack: int, 
             crit_rate: int, 
             crit_damage: int,
@@ -27,6 +28,7 @@ class Belligerent(ABC):
         ):
         # Useful Information
         self.name = name
+        self.occupation = occupation
         self.is_player = False
 
         # Combat Stats
@@ -81,6 +83,7 @@ class Boss(Belligerent):
             )
             name = random.choice(NAMES)
 
+        occupation = "Boss"
         speed = 25
         crit_damage = 50
         armor_pen = 0
@@ -116,7 +119,8 @@ class Boss(Belligerent):
             defense = 70
 
         super().__init__(
-            name, attack, crit_rate, crit_damage, hp, defense, speed, armor_pen)
+            name, occupation, attack, crit_rate, crit_damage, hp, defense, 
+            speed, armor_pen)
 
         # Initialize objs
         self.weapon = Weapon()
@@ -135,7 +139,8 @@ class Boss(Belligerent):
 class CombatPlayer(Belligerent):
     def __init__(self, player: PlayerObject.Player):
         self.player = player
-
+        
+        occupation = player.occupation
         attack = player.get_attack()
         crit_rate = player.get_crit_rate()
         crit_damage = player.get_crit_damage()
@@ -153,7 +158,7 @@ class CombatPlayer(Belligerent):
         except AttributeError:
             pass
 
-        super().__init__(player.char_name, attack, crit_rate, crit_damage, hp, defense, speed, armor_pen) 
+        super().__init__(player.char_name, occupation, attack, crit_rate, crit_damage, hp, defense, speed, armor_pen) 
         self.is_player = True
 
         # Initialize objs
