@@ -79,7 +79,7 @@ class Profile(commands.Cog):
             page2.add_field(name="General",
                 value=(
                     f"Attack: `{profile.get_attack()}`\n"
-                    f"Crit Chance: `{profile.get_crit()}%`\n"
+                    f"Crit Chance: `{profile.get_crit_rate()}%`\n"
                     f"Hit Points: `{profile.get_hp()}`\n"
                     f"Defense: `{profile.get_defense()}%`"),
                 inline=True)

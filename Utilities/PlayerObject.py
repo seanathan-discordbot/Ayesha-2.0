@@ -773,14 +773,14 @@ class Player:
 
         return attack
 
-    def get_crit(self) -> int:
+    def get_crit_rate(self) -> int:
         """Returns the player's crit stat, calculated from all other sources.
         The value returned by this method is 'the final say' on the stat.
         """
         crit = 5
         crit += self.equipped_item.crit
-        crit += self.acolyte1.get_crit()
-        crit += self.acolyte2.get_crit()
+        crit += self.acolyte1.get_crit_rate()
+        crit += self.acolyte2.get_crit_rate()
         crit += Vars.ORIGINS[self.origin]['crit_bonus']
         crit += Vars.OCCUPATIONS[self.occupation]['crit_bonus']
         if self.accessory.prefix == "Flexible":

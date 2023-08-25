@@ -102,7 +102,7 @@ class Belligerent:
         occ = player.occupation
         # Combat Stats
         attack = player.get_attack()
-        crit = player.get_crit()
+        crit = player.get_crit_rate()
         hp = player.get_hp()
         defense = player.get_defense()
         # Related objects

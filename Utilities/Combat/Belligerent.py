@@ -136,7 +136,7 @@ class CombatPlayer(Belligerent):
         self.player = player
 
         attack = player.get_attack()
-        crit_rate = player.get_crit()
+        crit_rate = player.get_crit_rate()
         crit_damage = 50
         hp = player.get_hp()
         defense = player.get_defense()
