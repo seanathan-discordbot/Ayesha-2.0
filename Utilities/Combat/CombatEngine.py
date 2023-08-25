@@ -42,6 +42,7 @@ class CombatTurn:
         self.heals: Dict[str, Modifier] = defaultdict(Modifier)
         self.damages: Dict[str, Modifier] = defaultdict(Modifier)  # Apply all sources of possible damage at turn start e.g. poison
 
+        self.is_crit = False
         self.attack_total = 0
         self.heal_total = 0
         self.damage_total = 0
@@ -79,7 +80,10 @@ class CombatTurn:
         if self.action == Action.DEFAULT:
             return f"Battle begins between **{self.actor.name}** and **{self.target.name}**."
 
-        desc = f"**{self.actor.name}** {self.action.value} {action2sentence(self.action)}."
+        desc = (
+            f"**{self.actor.name}** {'critically' if self.is_crit else ''} "
+            f"{self.action.value} {action2sentence(self.action)}."
+        )
         if self.attack_total:
             desc += "\n" + breakdown(self.attacks)
         if self.heal_total:
@@ -180,7 +184,7 @@ class CombatEngine:
         # Determine critical strikes
         crit_cond = action in (Action.ATTACK, Action.BLOCK, Action.PARRY)
         if crit_cond and random.randint(1, 100) <= actor.crit_rate:
-            pass  # TODO: add on_crit()
+            self.on_critical_hit(result)
 
         # Calculate damage multiplier based off action combinations
 
@@ -216,3 +220,31 @@ class CombatEngine:
         if self:
             raise Exception
         return self.victor
+    
+    def on_critical_hit(self, data: CombatTurn):
+        # Base damage boost from crit
+        data.is_crit = True
+        multiplier = self.actor.crit_damage / 100.0
+
+        # Applicable acolytes: Aulus, Ayesha
+        try:
+            aulus = data.actor.get_acolyte("Aulus")
+            data.actor.attack += aulus.get_effect_modifier(0)
+        except AttributeError:
+            pass
+
+        try:
+            ayesha = data.actor.get_acolyte("Ayesha")
+            heal = self.actor.attack * .01 * ayesha.get_effect_modifier(0)
+            data.heals["Ayesha"].magnitude += heal
+            data.heals["Ayesha"].multiplier += 1
+        except AttributeError:
+            pass
+
+        # Accessory Effects
+        if data.target.accessory.prefix == "Shiny":  # Reduces crit dmg
+            r = Vars.ACCESSORY_BONUS["Shiny"][self.target.accessory.type] / 100
+            multiplier *= 1 - r
+
+        # Apply crit bonuses
+        data.attacks["Attack"].multiplier += multiplier
