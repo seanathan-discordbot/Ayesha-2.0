@@ -41,9 +41,9 @@ class BaseStatus(ABC):
 
 
 class Bide(BaseStatus):
-    def __init__(self, target):
+    def __init__(self, target: Belligerent):
         super().__init__(target, 2)  # Bide always lasts 2 turns
-        self.attack_boost = int(target.attack * 1.5)
+        self.attack_boost = int(target.base_attack * 1.1)
 
     def on_application(self):
         self.target.attack += self.attack_boost

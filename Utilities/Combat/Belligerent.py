@@ -30,6 +30,7 @@ class Belligerent(ABC):
         self.is_player = False
 
         # Combat Stats
+        self.base_attack = attack
         self.attack = attack
         self.crit_rate = crit_rate
         self.crit_damage = crit_damage
