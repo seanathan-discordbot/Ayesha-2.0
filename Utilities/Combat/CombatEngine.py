@@ -82,12 +82,12 @@ class CombatEngine:
         if crit_cond and random.randint(1, 100) <= actor.crit_rate:
             self.on_critical_hit(result)
 
-        # Unique interactions with attack choices
-        # self.run_events()
-
         # Process status effects
         for status in self.actor.status:
             status.on_turn(result)
+
+        # Unique interactions with attack choices
+        self.run_events(result)
 
         # Calculate final damage
         result.apply()
@@ -147,3 +147,103 @@ class CombatEngine:
 
         # Apply crit bonuses
         data.attacks["Attack"].multiplier += multiplier
+
+    def run_events(self, data: CombatTurn):
+        # ON_DAMAGE : Apply to all damage types
+        if data.attacks:
+            try:
+                paterius = data.actor.get_acolyte("Paterius")
+                buff = paterius.get_effect_modifier(0) * .01
+                for attack in data.attacks:
+                    data.attacks[attack].multiplier += buff
+                data.attacks["Paterius"].magnitude = 15
+                data.attacks["Paterius"].multiplier = 1
+            except AttributeError:
+                pass
+
+        # ON_ATTACK : Agent attacks
+        if data.turn <= 3 and data.actor.occupation == "Hunter":
+            data.attacks["Attack"].multiplier += 1
+
+        # ON_BLOCK : Agent blocks
+        if data.action == Action.BLOCK:
+            try:
+                demi = data.actor.get_acolyte("Demi")
+                damage = data.actor.defense * demi.get_effect_modifier(0) * .01
+                data.attacks["Demi"].magnitude = damage
+                data.attacks["Demi"].multiplier = 1
+            except AttributeError:
+                pass 
+
+        # ON_PARRY : Agent parries
+
+        # ON_HEAL : Agent heals
+        if data.action == Action.HEAL:
+            if data.actor.occupation == "Butcher":
+                for heal in data.heals:
+                    data.heals[heal].multiplier += 1
+            
+            try:
+                nyleptha = data.actor.get_acolyte("Nyleptha")
+                reduction = nyleptha.get_effect_modifier(0) * .01
+                for damage in data.damages:
+                    data.damages[damage].multiplier -= reduction
+            except AttributeError:
+                pass
+                
+        # ON_BIDE : Agent bides
+        
+        # GENERAL DAMAGE CALC
+        if data.target.occupation == "Leatherworker":
+            for damage in data.attacks:
+                data.attacks[damage].multiplier -= .15
+        
+        if data.target.accessory.prefix == "Thorned":
+            data.apply()  # TODO: The fact that I have to do this may justify protecting the damage sums with a setter
+            d = Vars.ACCESSORY_BONUS["Thorned"][data.target.accessory.type] / 100
+            data.damages["Armor"].magnitude += d
+            data.damages["Armor"].multiplier |= 1  # Set to 1 if 0, else keep
+
+        # ON_COMBAT_END : After everything else has been calculated
+        try:
+            onion = data.actor.get_acolyte("Onion")
+            if self.turn == onion.get_effect_modifier(0):
+                data.actor.crit_rate *= 2
+        except AttributeError:
+            pass
+
+        try:
+            ajar = data.actor.get_acolyte("Ajar")
+            data.actor += ajar.get_effect_modifier(0)
+            data.damages["Ajar"].magnitude = ajar.get_effect_modifier(1)
+            data.damages["Ajar"].multiplier = 1
+        except AttributeError:
+            pass
+
+        try:
+            # Lauren: If you take less than x dmg in a turn, increase ATK
+            data.apply()
+            lauren = data.target.get_acolyte("Lauren")
+            if data.attack_total < lauren.get_effect_modifier(1):
+                data.target.attack *= 1 + (lauren.get_effect_modifier(0) * .01)
+        except AttributeError:
+            pass
+
+        try:
+            thorp = data.actor.get_acolyte("Thorp")
+            modifier = 100 + thorp.get_effect_modifier(0)
+            match random.randint(1, 6):
+                case 1:
+                    data.actor.attack = (data.actor.attack * modifier) // 100
+                case 2:
+                    data.actor.crit_rate = (data.actor.crit_rate * modifier) // 100
+                case 3:
+                    data.actor.current_hp = (data.actor.current_hp * modifier) // 100
+                case 4:
+                    data.actor.defense = (data.actor.defense * modifier) // 100
+                case 5:
+                    data.actor.crit_damage = (data.actor.crit_damage * modifier) // 100
+                case 6:
+                    data.actor.speed = (data.actor.speed * modifier) // 100
+        except AttributeError:
+            pass
