@@ -276,7 +276,7 @@ OCCUPATIONS = {
         'Name' : 'Hunter',
         'Desc' : 'The wild is your domain; no game is unconquerable.',
         'Passive' : 'Gain double gold and resources from `hunt`.',
-        'Command' : 'Gain a first turn damage bonus on PvE/PvP',
+        'Command' : 'Gain a damage bonus when attacking within the first 3 turns in combat.',
         'atk_bonus' : 0,
         'crit_bonus' : 0,
         'hp_bonus' : 0,
