@@ -101,19 +101,23 @@ class CombatTurn:
         for modifier in self.attacks.values():
             modifier.apply()
             total += modifier.final
-        self.attack_total = total
+        defense = self.target.defense * (100 - self.actor.armor_pen) / 100
+        total *= (100 - defense) / 100
+        self.attack_total = int(total)
 
         total = 0
         for modifier in self.heals.values():
             modifier.apply()
             total += modifier.final
-        self.heal_total = total
+        self.heal_total = int(total)
 
         total = 0
         for modifier in self.damages.values():
             modifier.apply()
             total += modifier.final
-        self.damage_total = total
+        defense = self.actor.defense * (100 - self.target.armor_pen) / 100
+        total *= (100 - defense) / 100
+        self.damage_total = int(total)
 
 
 class CombatEngine:
@@ -190,9 +194,8 @@ class CombatEngine:
         if crit_cond and random.randint(1, 100) <= actor.crit_rate:
             self.on_critical_hit(result)
 
-        # Calculate damage multiplier based off action combinations
-
         # Unique interactions with attack choices
+        # self.run_events()
 
         # Calculate final damage
         result.apply()
