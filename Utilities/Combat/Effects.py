@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from Utilities.Combat.Belligerent import Belligerent
-    from Utilities.Combat.CombatEngine import CombatTurn
+    from Utilities.Combat.CombatTurn import CombatTurn
 
 
 class BaseStatus(ABC):

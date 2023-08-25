@@ -3,8 +3,6 @@ import discord
 
 from enum import Enum
 
-from discord.ui.item import Item
-
 
 class Action(Enum):
     DEFAULT = 0
@@ -13,6 +11,10 @@ class Action(Enum):
     PARRY = "\N{CROSSED SWORDS}"
     HEAL = "\u2764"
     BIDE = "\u23F1"
+
+
+class InvalidAction(Exception):
+    pass
 
 
 class ActionView(discord.ui.View):
