@@ -296,14 +296,14 @@ class pve2(commands.Cog):
             embed.add_field(
                 name="After the battle you salvaged some armor.",
                 value=(
-                    f"`{armor_type.id}`: **{armor_type.name}**, with {armor_type.defense} "
+                    f"`{armor.id}`: **{armor.name}**, with {armor.defense} "
                     f" defense!"),
                 inline=False)
         if accessory is not None:
             embed.add_field(
                 name="You also retrieved a beautiful accessory!",
                 value=(
-                    f"`{accessory_type.id}`: **{accessory_type.name}**"),
+                    f"`{accessory.id}`: **{accessory.name}**"),
                 inline=False)
 
         await interaction.edit_original_message(embed=embed, view=None)
