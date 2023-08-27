@@ -106,6 +106,43 @@ class CombatEngine:
         self.set_next_actor()
         return result
     
+    def recommend_action(self, actor: Belligerent, data: CombatTurn, k: int = 1) -> List[Action]:
+        """Selects an action based on the previous turn's data."""
+        if actor not in (data.actor, data.target):
+            return ValueError("Actor must be one of `data.actor`, `data.target`.")
+        
+        # Algorithm: Randomly select from the actions with different weights
+        # Weights determined as function of HP percentages of both combatants
+        # Functions are completely made up!!!
+        x = actor.current_hp / actor.max_hp * 100
+        target = data.target if actor == data.actor else data.actor
+        y = target.current_hp / target.max_hp * 100
+
+        weights = {}
+        # Attack: Scale with high HP and low enemy HP
+        weights[Action.ATTACK] = max(30, x * y / 100)  # [30, 100]
+
+        # Block: Scale with low HP and high enemy HP
+        weights[Action.BLOCK] = max(30, 100 - (75*x)**(1/2))  # [30, 100]
+
+        # Parry: Scale with high enemy DEF
+        weights[Action.PARRY] = 4 * (target.defense)**(1/2)  # [0, 40]
+
+        # Heal: Scale with low HP
+        if x >= 80:  # Heal is 20% so don't waste an action here
+            weights[Action.HEAL] = 0
+        else:  # Chance peaks ~10% HP, lower it drops because its a lost cause
+            weights[Action.HEAL] = 100 / (abs(x-10)**(1/2) + 1)
+
+        # Bide: Scale with high HP and high enemy HP
+        weights[Action.BIDE] = (x * y / 100) / 3  # [0, 25]
+
+        return random.choices(
+            population=list(weights.keys()),
+            weights=list(weights.values()),
+            k=k
+        )
+
 
     def set_next_actor(self):
         while min(self.player1, self.player2).cooldown > 0:
