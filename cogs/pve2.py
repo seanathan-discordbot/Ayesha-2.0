@@ -112,9 +112,19 @@ class pve2(commands.Cog):
 
         # Main Game Loop
         engine, results = CombatEngine.CombatEngine.initialize(player, boss)
+        choices = engine.recommend_action(boss, results, 2)
         while engine:
             actor = engine.actor
             view = None
+
+            boss_predict = ""
+            choices = engine.recommend_action(boss, results, 2)
+            if actor == player:
+                # Player gets 50% chance to see the boss' next move
+                # Higher in practice as the generator can give same answer
+                fake_action = choices[random.randint(0, 1)].value
+                boss_predict = f"\n{boss.name} looks poised to {fake_action}"
+            desc = results.description + (boss_predict if actor.is_player else "")
             
             embed = discord.Embed(
                 title=f"{player.name} vs. {boss.name} (Level {level})",
@@ -141,7 +151,7 @@ class pve2(commands.Cog):
                 inline=False)
             embed.add_field(
                 name=f"Turn {results.turn}   {self.list2str(player.status)}", 
-                value=results.description,
+                value=desc,
                 inline=False)
 
             if actor.is_player:
@@ -164,7 +174,7 @@ class pve2(commands.Cog):
                     embed=embed,
                     view=None
                 )
-                action = Action.Action.ATTACK
+                action = choices[0]
                 await asyncio.sleep(3)  # If boss turn, let player read results
 
             # Process turn and generate responses
