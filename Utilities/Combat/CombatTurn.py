@@ -65,7 +65,8 @@ class CombatTurn:
         def breakdown(coll: Dict[str, Modifier]):
             keys = sorted(coll, key=lambda k: coll[k].final, reverse=True)
             sources = [
-                f"{k} ({coll[k].magnitude}\*{coll[k].multiplier})" for k in keys
+                f"{k} ({coll[k].magnitude}\*{coll[k].multiplier})"
+                for k in keys
             ]
             return ", ".join(sources)
         
@@ -77,11 +78,11 @@ class CombatTurn:
             f"{self.action.value} {action2sentence(self.action)}."
         )
         if self.attack_total:
-            desc += "\n" + breakdown(self.attacks)
+            desc += "\n**Attack Sources:** " + breakdown(self.attacks)
         if self.heal_total:
-            desc += "\n" + breakdown(self.heals)
+            desc += "\n**Heal Sources:** " + breakdown(self.heals)
         if self.damage_total:
-            desc += "\n" + breakdown(self.damages)
+            desc += "\n**Damage Sources:** " + breakdown(self.damages)
         return desc
 
     def apply(self):  # When all things are calculated, run something like this to get stat changes
