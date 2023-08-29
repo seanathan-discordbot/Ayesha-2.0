@@ -95,11 +95,11 @@ class Bide(BaseStatus):
 class Slow(BaseStatus):
     def __init__(self, amount: int, **kwargs):
         self.amount = amount
-        super.__init__(**kwargs)
+        super().__init__(**kwargs)
 
     @property
     def _ICON(self):
-        raise NotImplementedError
+        return "\N{TURTLE}"
 
     def on_application(self):
         self.target.speed -= self.amount
@@ -110,6 +110,25 @@ class Slow(BaseStatus):
     def on_remove(self):
         self.target.speed += self.amount
     
+
+class Break(BaseStatus):
+    def __init__(self, percentage: int, **kwargs):
+        super().__init__(**kwargs)
+        self.amount = int(self.target.defense * (percentage / 100))
+
+    @property
+    def _ICON(self):
+        return "\u26E8"
+    
+    def on_application(self):
+        self.target.defense -= self.amount
+
+    def on_turn(self, data: CombatTurn):
+        self.counter -= 1
+
+    def on_remove(self):
+        self.target.defense += self.amount
+
 
 class Poison(BaseStatus):
     def __init__(self, amount: float, **kwargs):

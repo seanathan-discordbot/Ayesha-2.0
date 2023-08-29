@@ -67,7 +67,19 @@ class CombatEngine:
                 actor.status.add(brace)
                 brace.on_application()
             case Action.PARRY:
-                pass  # Idk maybe make a special attack
+                atk_dmg = random.randint(
+                    actor.attack * 3 // 4, actor.attack * 5 // 4
+                )
+                result.attacks["Attack"].magnitude += atk_dmg
+                result.attacks["Attack"].multiplier += 1
+
+                def_break = Effects.Break(25, target=target, duration=2)
+                target.status.add(def_break)
+                def_break.on_application()
+
+                slow = Effects.Slow(10, target=actor, duration=2)
+                actor.status.add(slow)
+                slow.on_application()
             case Action.HEAL:
                 heal = self.actor.max_hp * .2
                 result.heals["Heal"].magnitude += heal
