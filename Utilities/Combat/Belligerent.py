@@ -158,6 +158,12 @@ class CombatPlayer(Belligerent):
         except AttributeError:
             pass
 
+        try:
+            cheez = player.get_acolyte("Cheez")
+            crit_damage += int(crit_rate * cheez.get_effect_modifier(0) / 100)
+        except AttributeError:
+            pass
+
         super().__init__(player.char_name, occupation, attack, crit_rate, crit_damage, hp, defense, speed, armor_pen) 
         self.is_player = True
 
