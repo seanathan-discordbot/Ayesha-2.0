@@ -214,17 +214,18 @@ class CombatEngine:
         if data.turn <= 3 and data.actor.occupation == "Hunter":
             data.attacks["Attack"].multiplier += 1
 
-        try:
-            alia = data.actor.get_acolyte("Alia")
-            buff = Effects.SpeedBoost(
-                alia.get_effect_modifier(0),
-                target=data.actor,
-                duration=2
-            )
-            data.actor.status.add(buff)
-            buff.on_application()
-        except AttributeError:
-            pass
+        if data.action == Action.ATTACK:
+            try:
+                alia = data.actor.get_acolyte("Alia")
+                buff = Effects.SpeedBoost(
+                    alia.get_effect_modifier(0),
+                    target=data.actor,
+                    duration=2
+                )
+                data.actor.status.add(buff)
+                buff.on_application()
+            except AttributeError:
+                pass
 
         # ON_BLOCK : Agent blocks
         if data.action == Action.BLOCK:
@@ -237,6 +238,19 @@ class CombatEngine:
                 pass 
 
         # ON_PARRY : Agent parries
+        if data.action == Action.PARRY:
+            if random.randint(1, 4) == 1:
+                try:
+                    rea = data.actor.get_acolyte("Rea")
+                    bleed = Effects.Bleed(
+                        rea.get_effect_modifier(0),
+                        target=data.target,
+                        duration=3
+                    )
+                    data.target.status.add(bleed)
+                    bleed.on_application()
+                except AttributeError:
+                    pass
 
         # ON_HEAL : Agent heals
         if data.action == Action.HEAL:

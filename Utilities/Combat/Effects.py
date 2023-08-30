@@ -131,6 +131,7 @@ class Break(BaseStatus):
 
 
 class Poison(BaseStatus):
+    """Status effect that deals a flat damage to the target each turn."""
     def __init__(self, amount: float, **kwargs):
         self.amount = amount
         super().__init__(**kwargs)
@@ -145,6 +146,29 @@ class Poison(BaseStatus):
     def on_turn(self, data: CombatTurn):
         damage = data.target.current_hp * self.amount
         data.damages["Poison"].magnitude += damage
+
+    def on_remove(self):
+        return
+
+
+class Bleed(BaseStatus):
+    """Deal damage to target based off percent current HP each turn."""
+    def __init__(self, percentage: int, **kwargs):
+        self.amount = percentage / 100
+        super().__init__(**kwargs)
+
+    @property
+    def _ICON(self):
+        return "🩸"
+    
+    def on_application(self):
+        return
+    
+    def on_turn(self, data: CombatTurn):
+        damage = int(data.target.current_hp * self.amount)
+        data.damages["Bleed"].magnitude += damage
+        data.damages["Bleed"].multiplier = 1
+        self.counter -= 1
 
     def on_remove(self):
         return
