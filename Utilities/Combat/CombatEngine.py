@@ -214,6 +214,18 @@ class CombatEngine:
         if data.turn <= 3 and data.actor.occupation == "Hunter":
             data.attacks["Attack"].multiplier += 1
 
+        try:
+            alia = data.actor.get_acolyte("Alia")
+            buff = Effects.SpeedBoost(
+                alia.get_effect_modifier(0),
+                target=data.actor,
+                duration=2
+            )
+            data.actor.status.add(buff)
+            buff.on_application()
+        except AttributeError:
+            pass
+
         # ON_BLOCK : Agent blocks
         if data.action == Action.BLOCK:
             try:

@@ -150,3 +150,20 @@ class Poison(BaseStatus):
         return
 
 
+class SpeedBoost(BaseStatus):
+    def __init__(self, amount: int, **kwargs):
+        self.amount = amount
+        super().__init__(**kwargs)
+
+    @property
+    def _ICON(self):
+        return "👟"
+    
+    def on_application(self):
+        self.target.speed += self.amount
+
+    def on_turn(self, data: CombatTurn):
+        self.counter -= 1
+
+    def on_remove(self):
+        self.target.speed -= self.amount
