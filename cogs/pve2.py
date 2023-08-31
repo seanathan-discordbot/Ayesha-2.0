@@ -167,7 +167,7 @@ class pve2(commands.Cog):
                     view=None
                 )
                 action = choices[0]
-                await asyncio.sleep(3)  # If boss turn, let player read results
+                await asyncio.sleep(2)  # If boss turn, let player read results
 
             # Process turn and generate responses
             results = engine.process_turn(action)
