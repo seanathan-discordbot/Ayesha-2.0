@@ -86,16 +86,8 @@ class pve2(commands.Cog):
     async def pve2(self, ctx: discord.ApplicationContext,
             level : Option(int,
                 description="The difficulty level of your opponent",
-                min_value=1),
-            auto : Option(str,
-                description=(
-                    "Play interactive with buttons or simulate an automatic "
-                    "battle for decreased rewards"),
-                choices = [
-                    OptionChoice("Play Interactively", "Y"),
-                    OptionChoice("Play Auto (Decreased Rewards)", "N")],
-                required = False,
-                default = "Y")):
+                min_value=1)
+        ):
         """Fight an enemy for gold, xp, and items!"""
         # Create Belligerents
         async with self.bot.db.acquire() as conn:
@@ -265,6 +257,7 @@ class pve2(commands.Cog):
                 gravitas = Vars.ACCESSORY_BONUS["Old"][player.accessory.type]
                 await player.player.give_gravitas(conn, gravitas)
             try: # 20% booster for 30 minutes after voting for bot
+                print(time.time(), self.bot.recent_voters)
                 if int(time.time()) < self.bot.recent_voters[player.player.disc_id]:
                     bonus = xp // 5
                     xp_bonus += bonus
@@ -280,41 +273,43 @@ class pve2(commands.Cog):
             await player.player.give_gold(conn, gold)
             await player.player.check_xp_increase(conn, ctx, xp)
             await player.player.log_pve(conn, victory)
+
+            # Create and send result embed
+            gold_gains_str = stringify_gains("gold", gold, gold_bonus_sources)
+            xp_gains_str = stringify_gains("xp", xp, xp_bonus_sources)
+            embed = discord.Embed(title=title, color=Vars.ABLUE)
+            embed.add_field(
+                name=header,
+                value=(
+                    f"You received {gold_gains_str} and {xp_gains_str} "
+                    f"from the battle."))
+            if weapon is not None:
+                embed.add_field(
+                    name="While fighting you found a weapon!",
+                    value=(
+                        f"`{weapon.weapon_id}`: **{weapon.name}**, a  "
+                        f"{weapon.type} with {weapon.attack} "
+                        f"ATK and {weapon.crit} crit."),
+                    inline=False)
+            if armor is not None:
+                embed.add_field(
+                    name="After the battle you salvaged some armor.",
+                    value=(
+                        f"`{armor.id}`: **{armor.name}**, with {armor.defense} "
+                        f" defense!"),
+                    inline=False)
+            if accessory is not None:
+                embed.add_field(
+                    name="You also retrieved a beautiful accessory!",
+                    value=(
+                        f"`{accessory.id}`: **{accessory.name}**"),
+                    inline=False)
+
             if level == player.player.pve_limit and victory:
                 await player.player.increment_pve_limit(conn)
                 embed.set_footer(
                     text=f"You have unlocked PvE level {player.player.pve_limit}.")
 
-        # Create and send result embed
-        gold_gains_str = stringify_gains("gold", gold, gold_bonus_sources)
-        xp_gains_str = stringify_gains("xp", xp, xp_bonus_sources)
-        embed = discord.Embed(title=title, color=Vars.ABLUE)
-        embed.add_field(
-            name=header,
-            value=(
-                f"You received {gold_gains_str} and {xp_gains_str} "
-                f"from the battle."))
-        if weapon is not None:
-            embed.add_field(
-                name="While fighting you found a weapon!",
-                value=(
-                    f"`{weapon.weapon_id}`: **{weapon.name}**, a  "
-                    f"{weapon.type} with {weapon.attack} "
-                    f"ATK and {weapon.crit} crit."),
-                inline=False)
-        if armor is not None:
-            embed.add_field(
-                name="After the battle you salvaged some armor.",
-                value=(
-                    f"`{armor.id}`: **{armor.name}**, with {armor.defense} "
-                    f" defense!"),
-                inline=False)
-        if accessory is not None:
-            embed.add_field(
-                name="You also retrieved a beautiful accessory!",
-                value=(
-                    f"`{accessory.id}`: **{accessory.name}**"),
-                inline=False)
 
         await interaction.edit_original_message(embed=embed, view=None)
 
