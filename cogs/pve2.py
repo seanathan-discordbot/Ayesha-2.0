@@ -32,8 +32,8 @@ class pve2(commands.Cog):
     def gold(self, level: int):
         return random.randint(level**2 + 20, level**2 + 80)
     
-    def xp(self, level: int, hp: int):
-        return int(2**(level/10) * (level+10)**2 * (hp / 750 + .2))
+    def xp(self, level: int, hp: int, max_hp: int):
+        return 5 * int(2**(level/10) * (level+10)**2 * (hp / max_hp + .33))
     
     def level2items(self, level: int) -> Tuple[str, str]:
         if level <= 0:
@@ -80,7 +80,7 @@ class pve2(commands.Cog):
         return armor, accessory
 
     # COMMANDS
-    @commands.slash_command(guild)
+    @commands.slash_command()
     @commands.check(Checks.is_player)
     @cooldown(1, 15, BucketType.user)
     async def pve2(self, ctx: discord.ApplicationContext,
@@ -180,7 +180,7 @@ class pve2(commands.Cog):
             if isinstance(victor, Belligerent.CombatPlayer):  # Victory condition
                 victory = True
                 gold = self.gold(level)
-                xp = self.xp(level, player.current_hp)
+                xp = self.xp(level, player.current_hp, player.max_hp)
 
                 armor_type, accessory_type = self.level2items(level)
                 if random.randint(1, 15) == 1:
