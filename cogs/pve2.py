@@ -80,7 +80,7 @@ class pve2(commands.Cog):
         return armor, accessory
 
     # COMMANDS
-    @commands.slash_command()
+    @commands.slash_command(guild)
     @commands.check(Checks.is_player)
     @cooldown(1, 15, BucketType.user)
     async def pve2(self, ctx: discord.ApplicationContext,
@@ -176,11 +176,11 @@ class pve2(commands.Cog):
         victor = engine.get_victor()
 
         async with self.bot.db.acquire() as conn:
+            armor = accessory = weapon = None
             if isinstance(victor, Belligerent.CombatPlayer):  # Victory condition
                 victory = True
                 gold = self.gold(level)
                 xp = self.xp(level, player.current_hp)
-                armor = accessory = weapon = None
 
                 armor_type, accessory_type = self.level2items(level)
                 if random.randint(1, 15) == 1:
@@ -257,7 +257,6 @@ class pve2(commands.Cog):
                 gravitas = Vars.ACCESSORY_BONUS["Old"][player.accessory.type]
                 await player.player.give_gravitas(conn, gravitas)
             try: # 20% booster for 30 minutes after voting for bot
-                print(time.time(), self.bot.recent_voters)
                 if int(time.time()) < self.bot.recent_voters[player.player.disc_id]:
                     bonus = xp // 5
                     xp_bonus += bonus
