@@ -37,7 +37,7 @@ class Belligerent(ABC):
         self.crit_rate = crit_rate
         self.crit_damage = crit_damage
         self.max_hp = hp
-        self.current_hp = hp
+        self._current_hp = hp
         self.defense = defense
         self.speed = speed
         self.cooldown = 1000
@@ -63,6 +63,14 @@ class Belligerent(ABC):
             raise TypeError
         return self.cooldown < other.cooldown
     
+    @property
+    def current_hp(self):
+        return self._current_hp
+    
+    @current_hp.setter
+    def current_hp(self, value: int):
+        self._current_hp = min(value, self.max_hp)
+
     def get_acolyte(self, name: str) -> Optional[EmptyAcolyte]:
         return None
 
