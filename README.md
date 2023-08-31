@@ -6,7 +6,7 @@ You can also join the [official support server here](https://discord.gg/FRTTARhN
 
 
 Ayesha is currently being rewritten using pycord after the discontinuation of discord.py.
-Ayesha runs on Python 3.9.12.
+Ayesha runs on Python 3.10.8.
 
 ## Features
 - Character customization with several jobs and backgrounds
