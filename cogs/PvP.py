@@ -56,8 +56,10 @@ class PvP(commands.Cog):
             embed.add_field(
                 name=p.name,
                 value=(
-                    f"ATK: `{p.attack}` | CRIT: `{p.crit_rate}%`\n"
-                    f"HP: `{p.current_hp}` | DEF: `{p.defense}%`"))
+                    f"ATK: `{p.attack}` | "
+                    f"CRIT: `{p.crit_rate}%/{p.crit_damage}`%\n"
+                    f"HP: `{p.current_hp}` | DEF: `{p.defense}%`\n"
+                    f"SPD: `{p.speed}` | PEN: `{p.armor_pen}`"))
         embed.add_field(
             name="Battle Log",
             value=data.description + (f'\n{message}' if message else message),
