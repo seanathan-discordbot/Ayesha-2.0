@@ -77,7 +77,7 @@ class PvP(commands.Cog):
                 f"You cannot challenge yourself.")
 
         # Ask for permission to perform PvP
-        view = ConfirmationMenu(user=opponent)
+        view = ConfirmationMenu(user=opponent, timeout=30.0)
         interaction = await ctx.respond(
             content=(
                 f"{opponent.mention}, {author.mention} is challenging you "
@@ -153,9 +153,9 @@ class PvP(commands.Cog):
             matches = []
             i = 0
             while i < len(players):
-                players[i]["Belligerent"] = Belligerent.load_player(players[i]["Player"])
+                players[i]["Belligerent"] = Belligerent.CombatPlayer(players[i]["Player"])
                 try:
-                    players[i+1]["Belligerent"] = Belligerent.load_player(players[i+1]["Player"])
+                    players[i+1]["Belligerent"] = Belligerent.CombatPlayer(players[i+1]["Player"])
                 except KeyError: #In case there are an odd amount of players
                     pass
                 finally:
@@ -174,26 +174,26 @@ class PvP(commands.Cog):
             Otherwise it will base the victor off the proportions of the attack.
             Return the winner and loser in that order."""
             # See if one side lands a critical hit
-            player1["Belligerent"].crit *= 2
-            player1["Belligerent"].crit -= player2["Belligerent"].defense
+            player1["Belligerent"].crit_rate *= 2
+            player1["Belligerent"].crit_rate -= player2["Belligerent"].defense
 
-            player2["Belligerent"].crit *= 2
-            player2["Belligerent"].crit -= player1["Belligerent"].defense
-            player2["Belligerent"].crit += player1["Belligerent"].crit
+            player2["Belligerent"].crit_rate *= 2
+            player2["Belligerent"].crit_rate -= player1["Belligerent"].defense
+            player2["Belligerent"].crit_rate += player1["Belligerent"].crit_rate
 
             random_crit = random.randint(0, 1000)
-            if random_crit < player1["Belligerent"].crit:
+            if random_crit < player1["Belligerent"].crit_rate:
                 return player1, player2
-            elif random_crit < player2["Belligerent"].crit:
+            elif random_crit < player2["Belligerent"].crit_rate:
                 return player2, player1
             
             # Weigh the sum of each player's stats
             p1 = player1["Belligerent"].attack * 4 \
-                + player1["Belligerent"].crit * 8 \
+                + player1["Belligerent"].crit_rate * 8 \
                 + player1["Belligerent"].defense * 9 \
                 + player1["Belligerent"].max_hp
             p2 = player2["Belligerent"].attack * 4 \
-                + player2["Belligerent"].crit * 8 \
+                + player2["Belligerent"].crit_rate * 8 \
                 + player2["Belligerent"].defense * 9 \
                 + player2["Belligerent"].max_hp
 
@@ -236,7 +236,7 @@ class PvP(commands.Cog):
             while len(players) < 2**n:
                 boss_level = random.randint(1, 14)
                 fake_player = {
-                    "Belligerent" : Belligerent.load_boss(boss_level)
+                    "Belligerent" : Belligerent.Boss(boss_level)
                 }
                 players.append(fake_player)
 
