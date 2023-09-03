@@ -7,9 +7,8 @@ from discord.ext.commands import BucketType, cooldown
 import asyncio
 import random
 
-from Utilities import Checks, CombatObject, PlayerObject, Vars
-# from Utilities.CombatObject import Belligerent, CombatInstance
-from Utilities.Combat import Belligerent, CombatEngine
+from Utilities import Checks, PlayerObject, Vars
+from Utilities.Combat import Belligerent, CombatEngine, CombatTurn
 from Utilities.ConfirmationMenu import ConfirmationMenu
 from Utilities.AyeshaBot import Ayesha
 
@@ -42,6 +41,29 @@ class PvP(commands.Cog):
         print("PvP is ready.")
 
     # AUXILIARY FUNCTIONS
+    def create_embed(self,
+            data: CombatTurn.CombatTurn,
+            player1: Belligerent.CombatPlayer,
+            player2: Belligerent.CombatPlayer,
+            message: str = ""
+    ) -> discord.Embed:
+        """Create the PvP UI given the combatants and recent turn data."""
+        # Update information display
+        embed = discord.Embed(
+            title = f"Battle: {player1.name} vs. {player2.name}",
+            color = Vars.ABLUE)
+        for p in (player1, player2):
+            embed.add_field(
+                name=p.name,
+                value=(
+                    f"ATK: `{p.attack}` | CRIT: `{p.crit_rate}%`\n"
+                    f"HP: `{p.current_hp}` | DEF: `{p.defense}%`"))
+        embed.add_field(
+            name="Battle Log",
+            value=data.description + (f'\n{message}' if message else message),
+            inline=False)
+        return embed
+
     async def run_pvp(self, 
             ctx: discord.ApplicationContext, 
             author : discord.Member, 
@@ -75,20 +97,7 @@ class PvP(commands.Cog):
         # interaction = await ctx.respond("Loading battle...")
         engine, results = CombatEngine.CombatEngine.initialize(player1, player2)
         while engine:
-            # Update information display
-            embed = discord.Embed(
-                title = f"Battle: {player1.name} vs. {player2.name}",
-                color = Vars.ABLUE)
-            for p in (player1, player2):
-                embed.add_field(
-                    name=p.name,
-                    value=(
-                        f"ATK: `{p.attack}` | CRIT: `{p.crit_rate}%`\n"
-                        f"HP: `{p.current_hp}` | DEF: `{p.defense}%`"))
-            embed.add_field(
-                name="Battle Log",
-                value=results.description,
-                inline=False)
+            embed = self.create_embed(results, player1, player2)
 
             await interaction.edit_original_message(
                 content=None, embed=embed, view=None)
@@ -107,12 +116,8 @@ class PvP(commands.Cog):
             await victor.player.log_pvp(conn, True)
             await loser.player.log_pvp(conn, False)
 
-        log = f"**{victor.name}** has proven their strength!"
-        embed.set_field_at(2, 
-            name="Battle Log",
-            value=results.description + "\n" + log,
-            inline=False
-        )
+        log = f"**{victor.name} has proven their strength!**"
+        embed = self.create_embed(results, player1, player2, log)
         await interaction.edit_original_message(embed=embed)
 
 
