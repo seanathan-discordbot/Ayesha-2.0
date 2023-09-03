@@ -57,7 +57,7 @@ class PvP(commands.Cog):
                 name=p.name,
                 value=(
                     f"ATK: `{p.attack}` | "
-                    f"CRIT: `{p.crit_rate}%/{p.crit_damage}`%\n"
+                    f"CRIT: `{p.crit_rate}%/{p.crit_damage}%`\n"
                     f"HP: `{p.current_hp}` | DEF: `{p.defense}%`\n"
                     f"SPD: `{p.speed}` | PEN: `{p.armor_pen}`"))
         embed.add_field(
