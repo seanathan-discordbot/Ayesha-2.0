@@ -13,7 +13,6 @@ import time
 
 from Utilities import AssociationObject, Checks, PlayerObject, Vars
 from Utilities.Analytics import stringify_gains
-# from Utilities.CombatObject import Belligerent, CombatInstance
 from Utilities.Combat import Belligerent, CombatEngine
 from Utilities.ConfirmationMenu import ConfirmationMenu
 from Utilities.Finances import Transaction
