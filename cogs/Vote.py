@@ -11,8 +11,6 @@ import time
 import aiohttp
 from aiohttp import web
 
-import dbl
-
 #WEBSOCKET        
 class Vote_Handler:
     def __init__(self, bot : discord.Client):
