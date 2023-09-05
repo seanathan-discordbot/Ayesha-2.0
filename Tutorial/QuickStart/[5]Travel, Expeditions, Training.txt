@@ -1,0 +1,7 @@
+Thank you for reading this far! The final core part of the bot is adventuring, the secondary source of gold and xp, but an integral part of levelling up your weapons. Note that on the first page of your profile is the 'Location' setting, and you're most likely in Aramithea, the capital city of Ayesha (use `/offices` or `/territories` to view the cool, original map™️ I made). You may have also discovered the 'Backpack', or the third page of `/profile` listing even more stuff you need to get. If you have grown attached to one of your acolytes, you can use the `/acolyte` command to get detailed information about a specific acolyte.
+
+`/travel` is the command in question. You can choose to travel to another location of the map, giving you a hint as to what resource you can collect there. Travelling takes some time, so once you select a place, set a reminder for when to come back. Once done, you can use `/arrive` to formally set your location to wherever you travelled to. 
+
+When not travelling, I suggest picking the 'Go on an Expedition' option, which will net you a lot more resources, gold, and xp over time (also end using `/arrive`).
+
+At your location, use the `/work` command and select the 'Forage' option, and you will receive a bunch of resources depending on where you are. Then use the `/train` command to spend these resources (and gold) to give your acolyte a flat 5000 xp.

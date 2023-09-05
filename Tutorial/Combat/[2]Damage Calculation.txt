@@ -1,0 +1,9 @@
+If you look at the code, in `Utilities/CombatObject.py`, under `ACTION_COMBOS`, you will find the dictionary that determines how damage is calculated. It covers every possible combination of attacks two players can perform. The first dictionary is the agent's action (the attacker), the second is the object's (the defender), meaning that your damage is based not only what you do, but also what your opponent does.
+
+Let's say you attack, and your opponent blocks. You look at the first dictionary for attack, then go to block, where you find the number `CombatObject.ACTION_COMBOS['Attack']['Block']`, or if you can read Python, `CombatObject.ACTION_COMBOS['Attack']['Block']`. Your flat damage is a random number, somewhere around your base ATK as found at the top of the PvE or PvP embed. This damage amount is then multiplied by the amount given by the dictionary. You attack, they block, you deal only a small percentage of that initial damage. Your opponent's damage is the converse, Block->Attack = CombatObject.ACTION_COMBOS['Block']['Attack'], and their own randomly calculated amount of damage is this amount.
+
+Then, these damage numbers are changed depending on your acolyte and accessory effects.
+
+DEF is a percentage of damage reduction and is applied to the calculated damage last.
+
+When the turn is registered and damage is actually applied, it occurs simultaneously from a gameplay perspective. But there are no ties, so what happens? In PvE, you win. In PvP, there are ties. In `/brotherhood attack`, the defender wins.

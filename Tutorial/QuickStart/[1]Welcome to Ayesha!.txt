@@ -1,0 +1,8 @@
+Welcome to Ayesha! Read the next few pages for a general overview of how to play the game.
+
+If you haven't already, use the `/start` command to create a character. The `/profile` command displays more-or-less everything important about yourself. Below is a quick run-down of what each page means:
+The 'Experience' tab shows your character's progress. Gain EXP to level up. Next to this tab is your 'Wealth', divided into three parts. **Gold** is the general currency of the game, used for everything from buying items to selling them.
+**Gravitas** is like a measure of reputation in the world. Gravitas is not as important early game and will be covered later.
+**Rubidics** are the gacha currency, and you will use them to get rare acolytes and weapons!
+
+The next command to use is `/lore`, which allows you to set your occupation and origin. These are just two classes you can set to give you small buffs and debuffs in certain aspects of the game. There are 10 occupations and 9 origins, each giving you a specific bonus based on how you want to play the game."
