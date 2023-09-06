@@ -221,10 +221,19 @@ class Help(commands.Cog):
                     return await ctx.respond("Oof")
                 
             paths = await aiofiles.os.listdir(path)
-            paths.sort()  # Files follow ordered naming convention
+            texts = {x[1]: x for x in paths if x.endswith(".txt")}
+            
+            try:
+                imgfile = paths.index("images.text")
+            except ValueError:
+                imgfile = None
+                images = {}
+            else:
+                async with aiofiles.open(path / paths[imgfile], mode='r') as f:
+                    images = {x[0]: x[3:] for x in await f.readlines()}
                 
             additions = []
-            for filepath in paths:
+            for index, filepath in sorted(texts.items()):
                 async with aiofiles.open(path / filepath, mode='r') as f:
                     text = await f.read()
                 title = filepath[3:-4]
@@ -237,7 +246,12 @@ class Help(commands.Cog):
                     color=Vars.ABLUE
                 )
                 embed.set_thumbnail(url=self.bot.user.avatar.url)
+
+                if index in images:
+                    embed.set_image(url=images[index])
+
                 additions.append(embed)
+
             embeds = additions + embeds
 
             paginator = pages.Paginator(pages=embeds, timeout=30)
