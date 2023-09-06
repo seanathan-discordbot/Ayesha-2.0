@@ -3,12 +3,10 @@ And now the **REAL** fun part! You have set up your character to the best of you
 I suggest you start off with `/pve` level 1 and progress as you beat each level, although you can technically shoot for level 25 right now (I dare you)! Once you beat level 25, you can progress onwards ad infinitum. Each level gets progressively harder, gives more gold and xp, and weapons, armor, and accessories of greater rarity and strength.
 
 When you start, you'll notice 5 buttons:
-🗡️: Attack - hit the enemy with all you've got!
-\N{SHIELD}: Block - a worthy counter to an attack, but 
-will leave you vulnerable to...
-\N{CROSSED SWORDS}: Parry - a defensive attack; you'll deal 
-less damage but also take less damage.
-\u2764: Heal - Regain 20% of your max HP
-\u23F1: Bide - Give yourself a 15% ATK boost
+🗡️: Attack - hit the enemy with a quick, basic attack!
+🛡️: Block - brace for an attack, increasing your DEF until your next turn, but this may lead your opponent to...
+⚔️: Parry - attack heavily, piercing your defense temporarily, but slowing them down
+❤️: Heal - Regain 20% of your max HP
+⏱️: Bide - Give yourself an ATK boost for your next turn
 
-Against each enemy, you'll need to develop a strategy using these five moves to counter their own strengths. Have fun with Ayesha!
+In PvE, you will see all your stats. Keep your HP above 0 while dropping the enemies to 0 using a combination of the actions listed above! In more advanced stages of play, you can refer to the image below to see what other features are included in PvE (or read the "Combat" tutorial).

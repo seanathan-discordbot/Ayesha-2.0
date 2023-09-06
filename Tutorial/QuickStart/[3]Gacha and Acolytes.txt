@@ -1,6 +1,0 @@
-Finally you can get to the fun parts! You have 10 rubidics right now, so use the `/summon` command to spend them. 
-For each summon, you will gain either a weapon or an acolyte. If you summoned multiple times at once, browse the dropdown menu to see each of your summons. Then check your `/inventory`, you likely got a better weapon and you should equip it!
-
-If you got an acolyte, the `/tavern` command will list them out to you. Equipping an acolyte is just like equipping a weapon: you take the ID (eg `215`), but this time use the `/recruit` command. Since you can have 2 acolytes in your party, you select 'Slot 1' or 'Slot 2', then select the 'instance_id' and put your acolyte's ID there.
-
-You may have noticed that 'instance_id' (and 'id' in `/inventory`) are optional. If you don't give an ID, that will *unequip* whatever you already have equipped.
