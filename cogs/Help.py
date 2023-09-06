@@ -215,33 +215,6 @@ class Help(commands.Cog):
                     path /= "Tutorial/QuickStart"
                 case "Combat":
                     path /= "Tutorial/Combat"
-
-                    rarity_embed = discord.Embed(
-                        title="PvE Loot Rarities and Materials",
-                        color=Vars.ABLUE)
-                    rarity_embed.add_field(
-                        name="Weapon Rarity",
-                        value=(
-                            f"Common: 1-8\nUncommon: 9-14\nRare: 15-24\nEpic: 25-49\n"
-                            f"Legendary: 50+"))
-                    rarity_embed.add_field(
-                        name="Armor Material",
-                        value=(
-                            f"Cloth: 1\nLeather: 2-4\nGambeson: 5-8\nBearskin: 9\n"
-                            f"Wolfskin: 13\n Bronze: [10, 12]U[14]\nCeramic Plate: "
-                            f"16-17\nChainmail: 18-20\nIron: 21-24\nSteel: 25-49\n"
-                            f"Mysterious: 40+\nDragonscale: 50+"),
-                        inline=False)
-                    rarity_embed.add_field(
-                        name="Armor Material",
-                        value=(
-                            f"Wood: 1\nGlass: 1-4\nCopper: 1-8\nJade: 2-9\nPearl: "
-                            f"[6, 9]U[13]\nAquamarine: 13\nSapphire: 13-24\nAmethyst: "
-                            f"15-20\nRuby:18-39\nGarnet: 21-49\nDiamond: 25-49\n"
-                            f"Emerald: 40+\nBlack Opal: 50+"),
-                        inline=False)
-                    embeds.append(rarity_embed)
-
                 case "Gravitas":
                     path /= "Tutorial/Gravitas"
                 case DEFAULT:
