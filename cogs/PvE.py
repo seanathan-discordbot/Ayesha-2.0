@@ -94,6 +94,7 @@ class PvE(commands.Cog):
             player = await Belligerent.CombatPlayer.from_id(conn, ctx.author.id)
 
         if level > player.player.pve_limit:
+            ctx.command.reset_cooldown(ctx)
             return await ctx.respond(
                 f"You cannot attempt this level yet! To challenge bosses past "
                 f"level 25, you will have to beat each level sequentially. You "
