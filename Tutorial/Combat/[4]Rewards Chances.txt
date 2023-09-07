@@ -1,7 +1,7 @@
 Did you ever see one of the higher levelled players get over 100,000 xp from beating a boss? Did you ever wonder why you got 10,000 xp from beating a boss one time, but only 2,000 when you beat them a second time? The calculation for xp is as follows:
-`f(x, y) = 2^(x/10) * (x+10)^2 * ((y + 750) + .02)`, where x = the level of the boss, and y = the *HP you have remaining* upon victory. So the stronger the boss, the more xp you gain on an *exponential* level, and wider the margin you win by, the more xp you gain. I beg you to appreciate the complex and equitable reward calculation Ayesha has in comparison to other games lol.
+`f(x, y) = 5 * 2^(x/10) * (x+10)^2 * (y + .33)`, where x = the level of the boss, and y = the *percent HP you have remaining* upon victory. So the stronger the boss, the more xp you gain on an *exponential* level, and wider the margin you win by, the more xp you gain. I beg you to appreciate the complex and equitable reward calculation Ayesha has in comparison to other games lol.
 
-Gold calculation is rather unimaginative though, although (history lesson!) it was based off the cosine function in Ayesha 1.0.
+Gold calculation is rather unimaginative though, although (history lesson!) it was based off the cosine function in Ayesha 1.0. Now its just a (cringe!) quadratic function.
 
 Upon victory, you also have a flat...
 10% chance to gain a weapon
