@@ -77,6 +77,7 @@ class Bide(BaseStatus):
     def __init__(self, target: Belligerent):
         super().__init__(target, 2)  # Bide always lasts 2 turns
         self.attack_boost = int(target.base_attack * 1.1)
+        self.speed_boost = 5
 
     @property
     def _ICON(self):
@@ -84,12 +85,14 @@ class Bide(BaseStatus):
 
     def on_application(self):
         self.target.attack += self.attack_boost
+        self.target.speed += self.speed_boost
     
     def on_turn(self, data: CombatTurn):
         self.counter -= 1
     
     def on_remove(self):
         self.target.attack -= self.attack_boost
+        self.target.speed -= self.target.speed
 
 
 class Slow(BaseStatus):
