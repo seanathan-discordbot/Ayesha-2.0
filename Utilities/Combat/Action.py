@@ -9,7 +9,7 @@ from Utilities.ConfirmationMenu import PlayerOnlyView
 class Action(Enum):
     DEFAULT = 0
     ATTACK = "🗡️"
-    BLOCK = "\N{SHIELD}"
+    BRACE = "\N{SHIELD}"
     THRUST = "\N{CROSSED SWORDS}"
     HEAL = "\u2764"
     BIDE = "\u23F1"
@@ -43,10 +43,10 @@ class ActionView(PlayerOnlyView):
         self.choice = Action.ATTACK
 
     @discord.ui.button(style=discord.ButtonStyle.grey, emoji="\N{SHIELD}")
-    async def block(self, button: discord.ui.Button, 
+    async def brace(self, button: discord.ui.Button, 
             interaction: discord.Interaction):
         await interaction.response.edit_message()
-        self.choice = Action.BLOCK
+        self.choice = Action.BRACE
 
     @discord.ui.button(style=discord.ButtonStyle.green, emoji="\N{CROSSED SWORDS}")
     async def thrust(self, button: discord.ui.Button, 

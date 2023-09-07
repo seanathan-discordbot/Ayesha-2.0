@@ -53,7 +53,7 @@ class CombatTurn:
             match action:
                 case Action.ATTACK:
                     return f"for {self.attack_total} damage"
-                case Action.BLOCK:
+                case Action.BRACE:
                     return f"braced for an attack, boosting their defense"
                 case Action.THRUST:
                     return f"for {self.attack_total} damage"

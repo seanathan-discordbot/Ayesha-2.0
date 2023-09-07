@@ -138,7 +138,7 @@ class PvE(commands.Cog):
             embed.add_field(
                 name=f"Enemy HP: `{boss.current_hp}`   {self.list2str(boss.status)}",
                 value=(
-                    f"🗡️ Attack, \N{SHIELD} Block, \N{CROSSED SWORDS} "
+                    f"🗡️ Attack, \N{SHIELD} Brace, \N{CROSSED SWORDS} "
                     f"Thrust, \u2764 Heal, \u23F1 Bide"),
                 inline=False)
             embed.add_field(

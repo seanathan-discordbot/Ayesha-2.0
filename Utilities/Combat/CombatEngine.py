@@ -71,7 +71,7 @@ class CombatEngine:
                     )
                     result.damages["Deflection"].magnitude = deflection
                     result.damages["Deflection"].multiplier = 1
-            case Action.BLOCK:
+            case Action.BRACE:
                 brace = Effects.Brace(actor)
                 actor.status.add(brace)
                 brace.on_application()
@@ -150,8 +150,8 @@ class CombatEngine:
         # Attack: Scale with high HP and low enemy HP
         weights[Action.ATTACK] = max(30, x * y / 100)  # [30, 100]
 
-        # Block: Scale with low HP and high enemy HP
-        weights[Action.BLOCK] = max(30, 100 - (75*x)**(1/2))  # [30, 100]
+        # Brace: Scale with low HP and high enemy HP
+        weights[Action.BRACE] = max(30, 100 - (75*x)**(1/2))  # [30, 100]
 
         # Thrust: Scale with high enemy DEF
         weights[Action.THRUST] = 4 * (target.defense)**(1/2)  # [0, 40]
@@ -243,8 +243,8 @@ class CombatEngine:
             except AttributeError:
                 pass
 
-        # ON_BLOCK : Agent blocks
-        if data.action == Action.BLOCK:
+        # ON_BRACE : Agent blocks
+        if data.action == Action.BRACE:
             try:
                 demi = data.actor.get_acolyte("Demi")
                 damage = data.actor.defense * demi.get_effect_modifier(0) * .01
