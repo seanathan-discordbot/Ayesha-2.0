@@ -111,7 +111,7 @@ class Associations(commands.Cog):
                 name=f"{player.char_name} [{player.guild_rank}]",
                 value=(
                     f"Level `{player.level}`, with `{player.get_attack()}` "
-                    f"ATK, `{player.get_crit()}` CRIT, `{player.get_hp()}` HP, "
+                    f"ATK, `{player.get_crit_rate()}` CRIT, `{player.get_hp()}` HP, "
                     f"`{player.get_defense()}` DEF"),
                 inline=False)
             iteration += 1
@@ -169,7 +169,7 @@ class Associations(commands.Cog):
                         value = (
                             f"Name: {champion.char_name}\n"
                             f"ATK/CRIT: `{champion.get_attack()}`/"
-                            f"`{champion.get_crit()}`%\n"
+                            f"`{champion.get_crit_rate()}`%\n"
                             f"HP/DEF: `{champion.get_hp()}`/"
                             f"`{champion.get_defense()}`%"))
                 except AttributeError:
