@@ -8,8 +8,8 @@ __Armor Penetration__
 The other new stat, armor pen will secretly reduce your opponent's DEF by the set amount when you deal damage to them. Normally, if a player throws a 60 damage attack at a player with 50 DEF, the attack will only do 30 damage. If the player has 10% armor pen, however, we can treat the target as having only 45 DEF, so the attack will instead deal 65 damage!
 
 __The Other Stats__
-Attack is the basic damage stat, and determines generally how much damage you deal when you attack or parry.
+Attack is the basic damage stat, and determines generally how much damage you deal when you attack or thrust.
 
-Crit is a combination of two stats: crit rate and crit damage. Since crit is often denoted by two percentages (`a%/b%`), crit rate is a and crit damage is b. With each attack or parry, you have a chance to deal a critical strike based on your crit rate. If you do crit, then your damage increase is dictated by your crit damage.
+Crit is a combination of two stats: crit rate and crit damage. Since crit is often denoted by two percentages (`a%/b%`), crit rate is a and crit damage is b. With each attack or thrust, you have a chance to deal a critical strike based on your crit rate. If you do crit, then your damage increase is dictated by your crit damage.
 
 DEF is a percentage of damage reduction and is applied to the calculated damage last.

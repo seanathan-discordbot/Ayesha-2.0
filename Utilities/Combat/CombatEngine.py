@@ -75,7 +75,7 @@ class CombatEngine:
                 brace = Effects.Brace(actor)
                 actor.status.add(brace)
                 brace.on_application()
-            case Action.PARRY:
+            case Action.THRUST:
                 atk_dmg = random.randint(
                     actor.attack * 3 // 4, actor.attack * 5 // 4
                 )
@@ -99,7 +99,7 @@ class CombatEngine:
                 bide.on_application()
 
         # Determine critical strikes
-        crit_cond = action in (Action.ATTACK, Action.PARRY)
+        crit_cond = action in (Action.ATTACK, Action.THRUST)
         if crit_cond and random.randint(1, 100) <= actor.crit_rate:
             self.on_critical_hit(result)
 
@@ -153,8 +153,8 @@ class CombatEngine:
         # Block: Scale with low HP and high enemy HP
         weights[Action.BLOCK] = max(30, 100 - (75*x)**(1/2))  # [30, 100]
 
-        # Parry: Scale with high enemy DEF
-        weights[Action.PARRY] = 4 * (target.defense)**(1/2)  # [0, 40]
+        # Thrust: Scale with high enemy DEF
+        weights[Action.THRUST] = 4 * (target.defense)**(1/2)  # [0, 40]
 
         # Heal: Scale with low HP
         if x >= 80:  # Heal is 20% so don't waste an action here
@@ -253,8 +253,8 @@ class CombatEngine:
             except AttributeError:
                 pass 
 
-        # ON_PARRY : Agent parries
-        if data.action == Action.PARRY:
+        # ON_THRUST : Agent parries
+        if data.action == Action.THRUST:
             if random.randint(1, 4) == 1:
                 try:
                     rea = data.actor.get_acolyte("Rea")

@@ -139,7 +139,7 @@ class PvE(commands.Cog):
                 name=f"Enemy HP: `{boss.current_hp}`   {self.list2str(boss.status)}",
                 value=(
                     f"🗡️ Attack, \N{SHIELD} Block, \N{CROSSED SWORDS} "
-                    f"Parry, \u2764 Heal, \u23F1 Bide"),
+                    f"Thrust, \u2764 Heal, \u23F1 Bide"),
                 inline=False)
             embed.add_field(
                 name=f"Turn {results.turn}   {self.list2str(player.status)}", 

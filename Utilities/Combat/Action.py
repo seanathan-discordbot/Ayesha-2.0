@@ -10,7 +10,7 @@ class Action(Enum):
     DEFAULT = 0
     ATTACK = "🗡️"
     BLOCK = "\N{SHIELD}"
-    PARRY = "\N{CROSSED SWORDS}"
+    THRUST = "\N{CROSSED SWORDS}"
     HEAL = "\u2764"
     BIDE = "\u23F1"
 
@@ -49,10 +49,10 @@ class ActionView(PlayerOnlyView):
         self.choice = Action.BLOCK
 
     @discord.ui.button(style=discord.ButtonStyle.green, emoji="\N{CROSSED SWORDS}")
-    async def parry(self, button: discord.ui.Button, 
+    async def thrust(self, button: discord.ui.Button, 
             interaction: discord.Interaction):
         await interaction.response.edit_message()
-        self.choice = Action.PARRY
+        self.choice = Action.THRUST
 
     @discord.ui.button(style=discord.ButtonStyle.red, emoji="\u2764")
     async def heal(self, button: discord.ui.Button, 

@@ -5,7 +5,7 @@ I suggest you start off with `/pve` level 1 and progress as you beat each level,
 When you start, you'll notice 5 buttons:
 🗡️: Attack - hit the enemy with a quick, basic attack!
 🛡️: Block - brace for an attack, increasing your DEF until your next turn, but this may lead your opponent to...
-⚔️: Parry - attack heavily, piercing your defense temporarily, but slowing them down
+⚔️: Thrust - attack heavily, piercing your defense temporarily, but slowing them down
 ❤️: Heal - Regain 20% of your max HP
 ⏱️: Bide - Give yourself an ATK boost for your next turn
 
