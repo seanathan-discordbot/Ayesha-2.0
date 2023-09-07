@@ -289,8 +289,8 @@ class CombatEngine:
 
         try:
             ajar = data.actor.get_acolyte("Ajar")
-            data.actor += ajar.get_effect_modifier(0)
-            data.damages["Ajar"].magnitude = ajar.get_effect_modifier(1)
+            data.actor.attack += ajar.get_effect_modifier(1)
+            data.damages["Ajar"].magnitude = ajar.get_effect_modifier(2)
             data.damages["Ajar"].multiplier = 1
         except AttributeError:
             pass
