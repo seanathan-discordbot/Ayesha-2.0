@@ -102,6 +102,13 @@ class CombatEngine:
         self.run_events(result)
 
         # Calculate final damage
+        if self.turn >= self.turn_limit:
+            result.damages["Decay"].magnitude = 100
+            mult = 1 + ((self.turn - self.turn_limit) / 10)**2
+            result.damages["Decay"].multiplier = mult
+            
+            for source in result.heals:
+                result.heals[source].multiplier /= 5
         result.apply()
 
         # Apply all stat changes
