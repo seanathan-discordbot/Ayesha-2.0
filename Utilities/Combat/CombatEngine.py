@@ -62,6 +62,15 @@ class CombatEngine:
                 )
                 result.attacks["Attack"].magnitude += atk_dmg
                 result.attacks["Attack"].multiplier += 1
+
+                # Punish attacking an enemy that blocks
+                if any(isinstance(x, Effects.Brace) for x in target.status):
+                    deflection = random.randint(
+                        self.target.attack * 3 // 16, 
+                        self.target.attack * 5 // 16
+                    )
+                    result.damages["Deflection"].magnitude = deflection
+                    result.damages["Deflection"].multiplier = 1
             case Action.BLOCK:
                 brace = Effects.Brace(actor)
                 actor.status.add(brace)
