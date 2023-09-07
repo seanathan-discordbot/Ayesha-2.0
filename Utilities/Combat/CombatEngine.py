@@ -11,6 +11,30 @@ from Utilities.Combat.CombatTurn import CombatTurn
 
 
 class CombatEngine:
+    """Class which provides abstract and unified access to a combat console.
+
+    Parameters
+    ----------
+    player1, player2 : Belligerent
+        the combatants of this specific combat instance
+    turn_limit : int
+        a soft limit of turns allowed in play, after which all characters 
+        take extra decay damage on their turn
+
+    Attributes
+    ----------
+    turn : int
+        the current turn of play
+    victor : Optional[Belligerent]
+        the winner of the combat instance, initially set to None
+    __bool__
+        True if combat is still in play (if victor is None)
+    actor : Belligerent
+        Either of player1 or player2 who has the current turn
+    target : Belligerent
+        Either of player1 or player2 that is not the actor, and is subject to
+        the actor's action this turn.
+    """
     def __init__(self, 
             player1: Belligerent, 
             player2: Belligerent,
@@ -48,7 +72,20 @@ class CombatEngine:
 
 
     def process_turn(self, action: Action) -> CombatTurn:
-        """Process a new turn"""
+        """Process the current turn with the given action. 
+        This will apply the next action to the target as if the current actor
+        had just played it. Returns an object describing the resulting effects.
+
+        Parameters
+        ----------
+        action : Action
+            the action that the current actor will perform
+
+        Returns
+        -------
+        CombatTurn
+            an object detailing the results of the turn and action
+        """
         self.turn += 1
         actor = self.actor
         target = self.target
@@ -101,14 +138,14 @@ class CombatEngine:
         # Determine critical strikes
         crit_cond = action in (Action.ATTACK, Action.THRUST)
         if crit_cond and random.randint(1, 100) <= actor.crit_rate:
-            self.on_critical_hit(result)
+            self._on_critical_hit(result)
 
         # Process status effects
         for status in list(self.actor.status):  # Make copy as original might get modified
             status.on_turn(result)
 
         # Unique interactions with attack choices
-        self.run_events(result)
+        self._run_events(result)
 
         # Calculate final damage
         if self.turn >= self.turn_limit:
@@ -134,8 +171,28 @@ class CombatEngine:
         self.set_next_actor()
         return result
     
-    def recommend_action(self, actor: Belligerent, data: CombatTurn, k: int = 1) -> List[Action]:
-        """Selects an action based on the previous turn's data."""
+    def recommend_action(self, 
+            actor: Belligerent, 
+            data: CombatTurn, 
+            k: int = 1
+    ) -> List[Action]:
+        """Selects an action based on a turn's data.
+
+        Parameters
+        ----------
+        actor : Belligerent
+            the combatant for which an action is being recommended
+        data : CombatTurn
+            ideally the last turn's results, which will be analyzed to recommend
+            an actioin
+        k : int, optional
+            the amount of actions to recommend, by default 1
+
+        Returns
+        -------
+        List[Action]
+            a non-unique, non-ordered list of actions to recommend
+        """
         if actor not in (data.actor, data.target):
             return ValueError("Actor must be one of `data.actor`, `data.target`.")
         
@@ -173,6 +230,7 @@ class CombatEngine:
 
 
     def set_next_actor(self):
+        """Calculate and set the next combatant to move based on speed values"""
         while min(self.player1, self.player2).cooldown > 0:
             self.player1.cooldown -= self.player1.speed
             self.player2.cooldown -= self.player2.speed
@@ -180,12 +238,14 @@ class CombatEngine:
         self.actor.cooldown = 1000
 
 
-    def get_victor(self) -> Belligerent:
+    def get_victor(self) -> Optional[Belligerent]:
+        """Return the combatant that won the battle, if it is over."""
         if self:
             raise Exception
         return self.victor
     
-    def on_critical_hit(self, data: CombatTurn):
+    def _on_critical_hit(self, data: CombatTurn):
+        """If an attack was a crit, adjust the result object to reflect it."""
         # Base damage boost from crit
         data.is_crit = True
         multiplier = self.actor.crit_damage / 100.0
@@ -213,7 +273,8 @@ class CombatEngine:
         # Apply crit bonuses
         data.attacks["Attack"].multiplier += multiplier
 
-    def run_events(self, data: CombatTurn):
+    def _run_events(self, data: CombatTurn):
+        """Apply extra effects (e.g. acolytes) to the turn results"""
         # ON_DAMAGE : Apply to all damage types
         if data.attacks:
             try:

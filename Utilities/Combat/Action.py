@@ -7,6 +7,7 @@ from Utilities.ConfirmationMenu import PlayerOnlyView
 
 
 class Action(Enum):
+    """The eligible action types for the CombatEngine."""
     DEFAULT = 0
     ATTACK = "🗡️"
     BRACE = "\N{SHIELD}"
@@ -16,6 +17,7 @@ class Action(Enum):
 
 
 class InvalidAction(Exception):
+    """Exception if an action not in Action is used."""
     pass
 
 

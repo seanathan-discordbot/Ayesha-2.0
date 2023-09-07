@@ -11,6 +11,42 @@ if TYPE_CHECKING:
     
 
 class CombatTurn:
+    """A summary of a turn's results from CombatEngine.
+
+    Parameters
+    ----------
+    actor, target : Belligerent
+        the participants of the combat turn
+    action : Action.Action
+        the action taken by the actor
+    turn : int
+        the current turn number
+
+    Attributes
+    ----------
+    attacks: defaultdict[str, Modifier]
+        a collection of sources that contributed to the damage dealt by the
+        actor to the target
+    heals: defaultdict[str, Modifier]
+        a list of sources that contributed to the actor's heals
+    damages: defaultdict[str, Modifier]
+        a list of sources that caused damage to the actor this turn
+    is_crit: bool
+        whether the action this turn was a critical hit
+    attack_total: int
+        the sum of attack damages (before DEF-application) from attacks
+    heal_total: int
+        the sum of healing from heals
+    damage_total: int
+        the sum of damage taken from damages
+    description: str
+        a quick summary of all other information encapsulated in this object
+
+    Raises
+    ------
+    Action.InvalidAction
+        if the action provided is not one of the `Action.Action`s
+    """
     def __init__(
             self, 
             actor: Belligerent, 
@@ -86,6 +122,9 @@ class CombatTurn:
         return desc
 
     def apply(self):  # When all things are calculated, run something like this to get stat changes
+        """Set the attack_total, heal_total, and damage_total based on all
+        sources in their respective collection.
+        """
         total = 0
         for modifier in self.attacks.values():
             modifier.apply()

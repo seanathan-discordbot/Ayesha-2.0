@@ -12,6 +12,13 @@ if TYPE_CHECKING:
 
 
 class BaseStatus(ABC):
+    """Base Status Effect class.
+    
+    Parameters
+    ----------
+    target : Belligerent
+        the belligerent this effect is being applied to
+    """
     def __init__(self, target: Belligerent, duration: int):
         self.target = target
         self._counter = duration
@@ -55,6 +62,7 @@ class BaseStatus(ABC):
 
 
 class Brace(BaseStatus):
+    """Status effect that raises DEF from Action.BRACE"""
     def __init__(self, target: Belligerent):
         super().__init__(target, 2)  # Brace always lasts 2 turns
         self.defense_boost = 25
@@ -74,6 +82,7 @@ class Brace(BaseStatus):
 
 
 class Bide(BaseStatus):
+    """Raise ATK and SPD from Action.BIDE"""
     def __init__(self, target: Belligerent):
         super().__init__(target, 2)  # Bide always lasts 2 turns
         self.attack_boost = int(target.base_attack * 1.1)
@@ -96,6 +105,13 @@ class Bide(BaseStatus):
 
 
 class Slow(BaseStatus):
+    """Lowers the speed stat for a temporary period
+
+    Parameters
+    ----------
+    amount: int
+        a flat amount to reduce speed for the duration of the status
+    """
     def __init__(self, amount: int, **kwargs):
         self.amount = amount
         super().__init__(**kwargs)
@@ -115,6 +131,7 @@ class Slow(BaseStatus):
     
 
 class Break(BaseStatus):
+    """Reduce DEF from Action.THRUST"""
     def __init__(self, percentage: int, **kwargs):
         super().__init__(**kwargs)
         self.amount = int(self.target.defense * (percentage / 100))
@@ -178,6 +195,7 @@ class Bleed(BaseStatus):
 
 
 class SpeedBoost(BaseStatus):
+    """Raise SPD by a flat amount for a temporary period"""
     def __init__(self, amount: int, **kwargs):
         self.amount = amount
         super().__init__(**kwargs)

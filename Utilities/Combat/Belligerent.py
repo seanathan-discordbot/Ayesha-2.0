@@ -14,6 +14,18 @@ from Utilities.AssociationObject import Association
 from Utilities.ItemObject import Accessory, Weapon, Armor
 
 class Belligerent(ABC):
+    """Base class for the Combat engine combatants.
+    
+    Attributes
+    ----------
+    self.is_player: bool
+        Whether the Belligerent is connected to a player
+    self.cooldown: int
+        An internal value that gets decremented until the Belligerent gets their
+        turn in combat, before being reset to 1000
+    self.status: Set[BaseStatus]
+        a collection of the status effects applied to the Belligerent
+    """
     @abstractmethod
     def __init__(self, 
             name: str, 
@@ -25,7 +37,7 @@ class Belligerent(ABC):
             defense: int, 
             speed: int,
             armor_pen: int
-        ):
+    ):
         # Useful Information
         self.name = name
         self.occupation = occupation
@@ -72,10 +84,23 @@ class Belligerent(ABC):
         self._current_hp = min(value, self.max_hp)
 
     def get_acolyte(self, name: str) -> Optional[EmptyAcolyte]:
+        """Return the acolyte queried if the Belligerent has them equipped."""
         return None
 
 
 class Boss(Belligerent):
+    """The Belligerent class specifically for NPC combatants.
+
+    Parameters
+    ----------
+    difficulty : int
+        the difficulty level of the boss
+
+    Attributes
+    ----------
+    difficulty : int
+        the difficulty level of the boss
+    """
     def __init__(self, difficulty: int):
         self.difficulty = difficulty
 
@@ -119,6 +144,18 @@ class Boss(Belligerent):
 
 
 class CombatPlayer(Belligerent):
+    """The Belligerent class specifically for player combatants.
+
+    Parameters
+    ----------
+    player : PlayerObject.Player
+        the player that this Belligerent is attached to.
+
+    Attributes
+    ----------
+    player : PlayerObject.Player
+        the underlying Player object for the Belligerent
+    """
     def __init__(self, player: PlayerObject.Player):
         self.player = player
         
