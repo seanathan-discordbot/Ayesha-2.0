@@ -3,6 +3,8 @@ import discord
 
 from enum import Enum
 
+from Utilities.ConfirmationMenu import PlayerOnlyView
+
 
 class Action(Enum):
     DEFAULT = 0
@@ -17,11 +19,10 @@ class InvalidAction(Exception):
     pass
 
 
-class ActionView(discord.ui.View):
-    def __init__(self, author_id: int):
-        self.author_id = author_id
+class ActionView(PlayerOnlyView):
+    def __init__(self, user: discord.Member):
         self._choice: Action = None
-        super().__init__(timeout=30)
+        super().__init__(user, timeout=30)
 
     @property
     def choice(self):

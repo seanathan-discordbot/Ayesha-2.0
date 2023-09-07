@@ -148,7 +148,7 @@ class PvE(commands.Cog):
 
             if actor.is_player:
                 # Update information display
-                view = Action.ActionView(ctx.author.id)
+                view = Action.ActionView(ctx.author)
                 await interaction.edit_original_message(
                     content=None,
                     embed=embed,
