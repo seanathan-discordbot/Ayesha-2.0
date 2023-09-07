@@ -38,24 +38,41 @@ class ActionView(PlayerOnlyView):
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🗡️")
     async def attack(self, button: discord.ui.Button, 
             interaction: discord.Interaction):
+        # Prevents "Interaction Failed" by sending dummy response to discord
+        await interaction.response.edit_message()
         self.choice = Action.ATTACK
 
     @discord.ui.button(style=discord.ButtonStyle.grey, emoji="\N{SHIELD}")
     async def block(self, button: discord.ui.Button, 
             interaction: discord.Interaction):
+        await interaction.response.edit_message()
         self.choice = Action.BLOCK
 
     @discord.ui.button(style=discord.ButtonStyle.green, emoji="\N{CROSSED SWORDS}")
     async def parry(self, button: discord.ui.Button, 
             interaction: discord.Interaction):
+        await interaction.response.edit_message()
         self.choice = Action.PARRY
 
     @discord.ui.button(style=discord.ButtonStyle.red, emoji="\u2764")
     async def heal(self, button: discord.ui.Button, 
             interaction: discord.Interaction):
+        await interaction.response.edit_message()
         self.choice = Action.HEAL
 
     @discord.ui.button(style=discord.ButtonStyle.grey, emoji="\u23F1")
     async def bide(self, button: discord.ui.Button, 
             interaction: discord.Interaction):
+        await interaction.response.edit_message()
         self.choice = Action.BIDE
+
+
+class WaitingView(PlayerOnlyView):
+    def __init__(self, user: discord.Member):
+        super().__init__(user, timeout=30)
+
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="💀")
+    async def cont(self, button: discord.ui.Button, 
+            interaction: discord.Interaction):
+        await interaction.response.edit_message()
+        self.stop()

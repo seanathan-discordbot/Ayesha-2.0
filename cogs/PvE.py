@@ -107,7 +107,6 @@ class PvE(commands.Cog):
         choices = engine.recommend_action(boss, results, 2)
         while engine:
             actor = engine.actor
-            view = None
 
             boss_predict = ""
             choices = engine.recommend_action(boss, results, 2)
@@ -161,13 +160,14 @@ class PvE(commands.Cog):
                         f"You fled the battle as you ran out of time to move.")
                 action = view.choice
             else:
+                view = Action.WaitingView(ctx.author)
                 await interaction.edit_original_message(
                     content=None,
                     embed=embed,
-                    view=None
+                    view=view
                 )
                 action = choices[0]
-                await asyncio.sleep(2)  # If boss turn, let player read results
+                await view.wait()  # If boss turn, let player read results
 
             # Process turn and generate responses
             results = engine.process_turn(action)
