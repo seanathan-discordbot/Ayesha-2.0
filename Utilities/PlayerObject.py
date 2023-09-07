@@ -804,7 +804,7 @@ class Player:
         """Returns the player's HP stat, calculated from all other sources.
         The value returned by this method is 'the final say' on the stat.
         """
-        hp = 500 + self.level * 3
+        hp = 500 + self.level * 8
         hp += self.acolyte1.get_hp()
         hp += self.acolyte2.get_hp()
         hp += Vars.ORIGINS[self.origin]['hp_bonus']
