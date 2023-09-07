@@ -92,50 +92,13 @@ class Boss(Belligerent):
             name = random.choice(NAMES)
 
         occupation = "Boss"
-        crit_damage = 50
-        armor_pen = 0
-        if difficulty == 1:
-            attack = 1
-            crit_rate = 0
-            hp = 50
-            defense = 10
-            speed = 1
-        elif difficulty < 16:
-            attack = difficulty * 7
-            crit_rate = int(difficulty * 1.2) + 5
-            hp = difficulty * 67
-            defense = int(difficulty * 1.2)
-            speed = 25
-        elif difficulty < 25:
-            attack = difficulty * 10
-            crit_rate = int(difficulty * 1.5) + 5
-            hp = difficulty * 75
-            defense = int(difficulty * 1.3)
-            speed = 30
-        elif difficulty < 40:
-            attack = difficulty * 20
-            crit_rate = 65
-            hp = difficulty * 125
-            defense = 40
-            speed = 32
-            crit_damage = 65
-            armor_pen = 10
-        elif difficulty < 50:
-            attack = difficulty * 25
-            crit_rate = 75
-            hp = difficulty * 140
-            defense = 55
-            speed = 35
-            crit_damage = 80
-            armor_pen = 12
-        else:
-            attack = difficulty * 28
-            crit_rate = 78
-            hp = difficulty * 150
-            defense = 70
-            speed = 38
-            crit_damage = 100
-            armor_pen = 15
+        attack = 5 * (difficulty**(7/4)) // 6
+        crit_rate = int(min((difficulty/3)**(15/8), 75))
+        crit_damage = max(difficulty+25, 50)
+        hp = int((3600 / (1 + (2.718)**(-(difficulty-16)/5))) - 100)
+        defense = min(difficulty * 8 // 7, 65)
+        speed = min(difficulty//2 + 20, 40)
+        armor_pen = 0 if difficulty < 25 else 10
 
         super().__init__(
             name, occupation, attack, crit_rate, crit_damage, hp, defense, 

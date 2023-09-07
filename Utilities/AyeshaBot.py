@@ -19,7 +19,7 @@ class Ayesha(commands.AutoShardedBot):
         self.trading_players = {}
         self.training_players = {}
 
-        super().__init__(command_prefix = "%", case_insensitive = True)
+        super().__init__(command_prefix = "%", case_insensitive = True, debug_guilds=[762118688567984151])
 
         # Create connection pools of the bot databases
         self.db = self.loop.run_until_complete(create_db_pool())
