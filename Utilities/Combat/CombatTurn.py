@@ -65,7 +65,7 @@ class CombatTurn:
         def breakdown(coll: Dict[str, Modifier]):
             keys = sorted(coll, key=lambda k: coll[k].final, reverse=True)
             sources = [
-                f"{k} ({int(coll[k].magnitude)}\*{coll[k].multiplier})"
+                f"{k} ({int(coll[k].magnitude)}\*{coll[k].multiplier:.2f})"
                 for k in keys
             ]
             return ", ".join(sources)
