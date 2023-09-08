@@ -7,17 +7,18 @@ from discord.ext.commands import BucketType, cooldown
 import asyncio
 import random
 import time
+from typing import Iterable, Tuple
 
-from Utilities import Checks, CombatObject, ItemObject, PlayerObject, Vars
+from Utilities import Checks, Vars, ItemObject
 from Utilities.Analytics import stringify_gains
-from Utilities.CombatObject import CombatInstance
 from Utilities.AyeshaBot import Ayesha
+from Utilities.Combat import Action, Belligerent, CombatEngine
+
 
 class PvE(commands.Cog):
-    """PvE Text"""
-
-    def __init__(self, bot : Ayesha):
+    def __init__(self, bot: Ayesha) -> None:
         self.bot = bot
+
 
     # EVENTS
     @commands.Cog.listener()
@@ -25,238 +26,214 @@ class PvE(commands.Cog):
         print("PvE is ready.")
 
     # AUXILIARY FUNCTIONS
-    def level_to_rewards(self, level):
-        """Returns the rarity of armor/accessory based on the level the player beat
-        Dict: weapon, armor
-        """
-        if level < 2:
-            armor = "Cloth"
-            accessory = random.choice(["Wood", "Glass", "Copper"])
-        elif level < 5:
-            armor = "Leather"
-            accessory = random.choice(["Glass", "Copper", "Jade"])
-        elif level < 9:
-            armor = "Gambeson"
-            accessory = random.choice(["Copper", "Jade", "Pearl"])
-        elif level == 9:
-            armor = "Bearskin"
-            accessory = random.choice(["Copper", "Jade", "Pearl"])
-        elif level == 13:
-            armor = "Wolfskin"
-            accessory = random.choice(["Pearl", "Aquamarine", "Sappire"])
-        elif level < 15:
-            armor = "Bronze"
-            accessory = "Sapphire"
-        elif level < 18:
-            armor = "Ceramic Plate"
-            accessory = random.choice(["Sapphire", "Amethyst"])
-        elif level < 21:
-            armor = "Chainmail"
-            accessory = random.choice(["Sapphire", "Amethyst", "Ruby"])
-        elif level < 25:
-            armor = "Iron"
-            accessory = random.choice(["Ruby", "Garnet"])
-        elif level < 40:
-            armor = "Steel"
-            accessory = random.choice(["Ruby", "Garnet", "Diamond"])
-        elif level < 50:
-            armor = random.choice(["Steel", "Mysterious"])
-            accessory = random.choice(["Garnet", "Diamond", "Emerald"])
-        else:
-            armor = random.choice(["Mysterious", "Dragonscale"])
-            accessory = random.choice(["Emerald", "Black Opal"])
-
-        return { "armor" : armor, "accessory" : accessory }
+    def list2str(self, arr: Iterable):
+        return " ".join(str(x) for x in arr)
+    
+    def gold(self, level: int):
+        return random.randint(level**2 + 20, level**2 + 80)
+    
+    def xp(self, level: int, hp: int, max_hp: int):
+        return 5 * int(2**(level/10) * (level+10)**2 * (hp / max_hp + .33))
+    
+    def level2items(self, level: int) -> Tuple[str, str]:
+        if level <= 0:
+            raise ValueError("Level must be a positive integer")
+        armor = accessory = None
+        match level:
+            case a if level in (1, 2):
+                armor = "Cloth"
+                accessory = random.choice(["Wood", "Glass", "Copper"])
+            case b if level in (3, 4, 5):
+                armor = "Leather"
+                accessory = random.choice(["Glass", "Copper", "Jade"])
+            case c if level in (6, 7, 8):
+                armor = "Gambeson"
+                accessory = random.choice(["Copper", "Jade", "Pearl"])
+            case d if level in (9,):
+                armor = "Bearskin"
+                accessory = random.choice(["Copper", "Jade", "Pearl"])
+            case e if level in (10, 11, 12, 14, 15):
+                armor = "Bronze"
+                accessory = "Sapphire"
+            case f if level in (13,):
+                armor = "Wolfskin"
+                accessory = random.choice(["Pearl", "Aquamarine", "Sappire"])
+            case g if level in (16, 17):
+                armor = "Ceramic Plate"
+                accessory = random.choice(["Sapphire", "Amethyst"])
+            case h if level in (18, 19, 20):
+                armor = "Chainmail"
+                accessory = random.choice(["Sapphire", "Amethyst", "Ruby"])
+            case i if level in (21, 22, 23, 24):
+                armor = "Iron"
+                accessory = random.choice(["Ruby", "Garnet"])
+            case j if level in range(25, 41):
+                armor = "Steel"
+                accessory = random.choice(["Ruby", "Garnet", "Diamond"])
+            case k if level in range(41, 51):
+                armor = random.choice(["Steel", "Mysterious"])
+                accessory = random.choice(["Garnet", "Diamond", "Emerald"])
+            case DEFAULT:
+                armor = random.choice(["Mysterious", "Dragonscale"])
+                accessory = random.choice(["Emerald", "Black Opal"])
+            
+        return armor, accessory
 
     # COMMANDS
     @commands.slash_command()
     @commands.check(Checks.is_player)
     @cooldown(1, 15, BucketType.user)
-    async def pve(self, ctx,
+    async def pve(self, ctx: discord.ApplicationContext,
             level : Option(int,
                 description="The difficulty level of your opponent",
-                min_value=1),
-            auto : Option(str,
-                description=(
-                    "Play interactive with buttons or simulate an automatic "
-                    "battle for decreased rewards"),
-                choices = [
-                    OptionChoice("Play Interactively", "Y"),
-                    OptionChoice("Play Auto (Decreased Rewards)", "N")],
-                required = False,
-                default = "Y")):
+                min_value=1)
+        ):
         """Fight an enemy for gold, xp, and items!"""
+        # Create Belligerents
         async with self.bot.db.acquire() as conn:
-            author = await PlayerObject.get_player_by_id(conn, ctx.author.id)
-        # Create belligerents
-        if level > author.pve_limit:
+            player = await Belligerent.CombatPlayer.from_id(conn, ctx.author.id)
+
+        if level > player.player.pve_limit:
+            ctx.command.reset_cooldown(ctx)
             return await ctx.respond(
                 f"You cannot attempt this level yet! To challenge bosses past "
-                f"level 25, you will have to beat each level sequentially. "
-                f"You can currently challenge up to level {author.pve_limit}.")
+                f"level 25, you will have to beat each level sequentially. You "
+                f"can currently challenge up to level {player.player.pve_limit}.")
 
-        player = CombatObject.Belligerent.load_player(player=author)
-        boss = CombatObject.Belligerent.load_boss(difficulty=level)
-        
-        # Main game loop
         interaction = await ctx.respond("Loading battle...")
-        turn_counter = 1
-        boss_next_move = random.choices(
-            population=[
-                ("Attack", "🗡️"), 
-                ("Block", "\N{SHIELD}"), 
-                ("Parry", "\N{CROSSED SWORDS}"), 
-                ("Heal", "\u2764"), 
-                ("Bide", "\u23F1")],
-            weights=[50, 20, 20, 3, 7])[0]
-        # Stores string information to display to player
-        recent_turns = [
-            f"Battle begins between **{player.name}** and **{boss.name}**.",] 
-        while turn_counter <= 25: # Manually broken if HP hits 0
-            # Update information display
+        boss = Belligerent.Boss(level)
+
+        # Main Game Loop
+        engine, results = CombatEngine.CombatEngine.initialize(player, boss)
+        choices = engine.recommend_action(boss, results, 2)
+        while engine:
+            actor = engine.actor
+
+            boss_predict = ""
+            choices = engine.recommend_action(boss, results, 2)
+            if actor == player:
+                # Player gets 50% chance to see the boss' next move
+                # Higher in practice as the generator can give same answer
+                fake_action = choices[random.randint(0, 1)].value
+                boss_predict = f"\n{boss.name} looks poised to {fake_action}"
+            desc = results.description + (boss_predict if actor.is_player else "")
+            
             embed = discord.Embed(
                 title=f"{player.name} vs. {boss.name} (Level {level})",
-                color=Vars.ABLUE)
+                color=Vars.ABLUE
+            )
+            embed.set_thumbnail(url="https://i.imgur.com/d7srIjy.png")
             embed.add_field(name="Attack", value=player.attack)
-            embed.add_field(name="Crit Rate", value=f"{player.crit}%")
-            embed.add_field(name="HP", value=player.current_hp)
+            embed.add_field(
+                name="Crit Rate/Damage", 
+                value=f"{player.crit_rate}%/+{player.crit_damage}%"
+            )
+            embed.add_field(
+                name="HP",
+                value=f"{player.current_hp}/{player.max_hp}"
+            )
             embed.add_field(name="Defense", value=f"{player.defense}%")
+            embed.add_field(name="Speed", value=player.speed)
+            embed.add_field(name="DEF Pen", value=player.armor_pen)
             embed.add_field(
-                name=f"Enemy HP: `{boss.current_hp}`",
+                name=f"Enemy HP: `{boss.current_hp}`   {self.list2str(boss.status)}",
                 value=(
-                    f"🗡️ Attack, \N{SHIELD} Block, \N{CROSSED SWORDS} "
-                    f"Parry, \u2764 Heal, \u23F1 Bide"),
+                    f"🗡️ Attack, \N{SHIELD} Brace, \N{CROSSED SWORDS} "
+                    f"Thrust, \u2764 Heal, \u23F1 Bide"),
                 inline=False)
             embed.add_field(
-                name=f"Turn {turn_counter} of 25", 
-                value="\n".join(recent_turns[-3:]),
+                name=f"Turn {results.turn}   {self.list2str(player.status)}", 
+                value=desc,
                 inline=False)
 
-            if auto == "Y":
-                view = CombatObject.ActionChoice(author_id=ctx.author.id)
-            else:
-                view = discord.ui.View() # Create empty view for compatibility
-            # Remaking the view every time is a bit of a problem but results
-            # in more readable code than having one view handle everything
-            await interaction.edit_original_message(
-                content=None, embed=embed, view=view)
+            if actor.is_player:
+                # Update information display
+                view = Action.ActionView(ctx.author)
+                await interaction.edit_original_message(
+                    content=None,
+                    embed=embed,
+                    view=view
+                )
 
-            # Determine belligerent actions
-            if auto == "Y":
                 await view.wait()
-                if view.choice is None:
+                if not view.choice:
                     return await ctx.respond(
                         f"You fled the battle as you ran out of time to move.")
-                player.last_move = view.choice
+                action = view.choice
             else:
-                await asyncio.sleep(3)
-                player.last_move = random.choices(
-                    population=["Attack", "Block", "Parry", "Heal", "Bide"],
-                    weights=[50, 20, 20, 3, 7])[0]
+                view = Action.WaitingView(ctx.author)
+                await interaction.edit_original_message(
+                    content=None,
+                    embed=embed,
+                    view=view
+                )
+                action = choices[0]
+                await view.wait()  # If boss turn, let player read results
 
-            boss.last_move = boss_next_move[0]
-            boss_next_move = random.choices(
-                population=[
-                    ("Attack", "🗡️"), 
-                    ("Block", "\N{SHIELD}"), 
-                    ("Parry", "\N{CROSSED SWORDS}"), 
-                    ("Heal", "\u2764"), 
-                    ("Bide", "\u23F1")],
-                weights=[50, 20, 20, 3, 7])[0]
+            # Process turn and generate responses
+            results = engine.process_turn(action)
 
-            # Calculate damage based off actions
-            combat_turn = CombatInstance(player, boss, turn_counter)
-            turn_msg = combat_turn.get_turn_str()
-            if random.randint(1, 100) < 60: # ~65% chance of accurate prediction 
-                turn_msg += (
-                    f"**{boss.name}** seems poised to "
-                    f"**{boss_next_move[1]}**!")
-            else: # Throw the player off with a lie (might be true though)
-                deception = random.choice(
-                    ["🗡️", "\N{SHIELD}", "\N{CROSSED SWORDS}", 
-                     "\u2764", "\u23F1"])
-                turn_msg += f"**{boss.name}** seems poised to **{deception}**!"
-            recent_turns.append(turn_msg)
-            player, boss = combat_turn.apply_damage() # Apply to belligerents
+        # Process Game End; `results` will hold last turn info
+        victor = engine.get_victor()
 
-            # Check for victory
-            if boss.current_hp <= 0 or player.current_hp <= 0:
-                break
-
-            # Set up for next turn
-            player, boss = CombatInstance.on_turn_end(player, boss)
-
-            turn_counter += 1
-
-        # With loop over, determine winner and give rewards
         async with self.bot.db.acquire() as conn:
-            weapon = None
-            armor = None
-            accessory = None
-
-            if boss.current_hp <= 0: # Win
+            armor = accessory = weapon = None
+            if isinstance(victor, Belligerent.CombatPlayer):  # Victory condition
                 victory = True
-                if player.current_hp < 1:
-                    player.current_hp = 1
+                gold = self.gold(level)
+                xp = self.xp(level, player.current_hp, player.max_hp)
 
-                gold = random.randint(level**2 + 20, level**2 + 80)
-                xp = 2**(level/10)
-                xp *= (level+10)**2 # Put weight on high levels and HP
-                xp *= (player.current_hp / 750) + .2
-                xp = int(xp)
-
-                if auto == "N": # Quarter rewards if PvE was automatic
-                    gold = gold // 4
-                    xp = xp // 4
-
-                # Possibly get weapons + armor
-                item_rarities = self.level_to_rewards(level)
-                if random.randint(1, 10) == 1 or player.type == "Merchant":
-                    if level <= 30:
-                        weapon = await ItemObject.create_weapon(
-                            conn, author.disc_id)
-                    elif level <= 50:
-                        attack = random.randint(120, 140)
-                        crit = random.randint(10, 20)
-                        weapon = await ItemObject.create_weapon(
-                            conn, author.disc_id, attack, crit)
-                    else:
-                        attack = random.randint(130, 150)
-                        crit = random.randint(15, 20)
-                        weapon = await ItemObject.create_weapon(
-                            conn, author.disc_id, attack, crit)
-
+                armor_type, accessory_type = self.level2items(level)
                 if random.randint(1, 15) == 1:
                     armor = await ItemObject.create_armor(
-                        conn=conn, user_id=author.disc_id,
+                        conn=conn,
+                        user_id=player.player.disc_id,
                         type=random.choice(("Helmet", "Bodypiece", "Boots")),
-                        material=item_rarities['armor'])
-
+                        material=armor_type
+                    )
                 if random.randint(1, 20) == 1:
                     accessory = await ItemObject.create_accessory(
-                        conn, author.disc_id, item_rarities['accessory'],
-                        random.choice(list(Vars.ACCESSORY_BONUS)))
+                        conn=conn,
+                        user_id=player.player.disc_id,
+                        type=accessory_type,
+                        prefix=random.choice(list(Vars.ACCESSORY_BONUS))
+                    )
+                if random.randint(1, 10) == 1 or player.occupation == "Merchant":
+                    if level <= 30:
+                        weapon = await ItemObject.create_weapon(
+                            conn, player.player.disc_id)
+                    elif level <= 50:
+                        attack = random.randint(120, 140)
+                        crit_rate = random.randint(10, 20)
+                        weapon = await ItemObject.create_weapon(
+                            conn, player.player.disc_id, attack, crit_rate
+                        )
+                    else:
+                        attack = random.randint(130, 150)
+                        crit_rate = random.randint(15, 20)
+                        weapon = await ItemObject.create_weapon(
+                            conn, player.player.disc_id, attack, crit_rate
+                        )
 
                 title = f"You have defeated {boss.name}!"
                 header = f"You had {player.current_hp} HP remaining."
 
-            else: # Loss
+            else:
                 victory = False
-                if boss.current_hp < 1:
-                    boss.current_hp = 1
                 gold = 0
                 xp = 5 * level + 20
 
                 title = f"You were defeated by {boss.name}!"
                 header = f"They had {boss.current_hp} HP remaining."
 
-            # ON GAME END event technically
-            gold_bonus_sources = []
-            xp_bonus_sources = []
+            # ON_GAME_END : Other event that's independent of combat
+            # Lines of code for combat: 50, calculating rewards: 99999999999 wth
+            gold_bonus, gold_bonus_sources = 0, []
+            xp_bonus, xp_bonus_sources = 0, []
             try:
                 sean = player.get_acolyte("Sean")
                 bonus = int(xp * (sean.get_effect_modifier(0) * .01))
-                xp += bonus
+                xp_bonus += bonus
                 xp_bonus_sources.append((bonus, "Sean"))
             except AttributeError:
                 pass
@@ -264,7 +241,7 @@ class PvE(commands.Cog):
             try:
                 spartacus = player.get_acolyte("Spartacus")
                 bonus = spartacus.get_effect_modifier(0)
-                gold += bonus
+                gold_bonus += bonus
                 gold_bonus_sources.append((bonus, "Spartacus"))
             except AttributeError:
                 pass
@@ -272,26 +249,32 @@ class PvE(commands.Cog):
             if player.accessory.prefix == "Lucky":
                 mult = Vars.ACCESSORY_BONUS["Lucky"][player.accessory.type]
                 bonus = int(xp * (mult / 100.0))
-                xp += bonus
+                xp_bonus += bonus
                 xp_bonus_sources.append((bonus, "Lucky Accessory"))
                 bonus = int(gold * (mult / 100.0))
-                gold += bonus
+                gold_bonus += bonus
                 gold_bonus_sources.append((bonus, "Lucky Accessory"))
             if player.accessory.prefix == "Old" and level >= 25 and victory:
                 gravitas = Vars.ACCESSORY_BONUS["Old"][player.accessory.type]
-                await author.give_gravitas(conn, gravitas)
+                await player.player.give_gravitas(conn, gravitas)
             try: # 20% booster for 30 minutes after voting for bot
-                if int(time.time()) < self.bot.recent_voters[player.disc_id]:
+                if int(time.time()) < self.bot.recent_voters[player.player.disc_id]:
                     bonus = xp // 5
-                    xp += bonus
+                    xp_bonus += bonus
                     xp_bonus_sources.append((bonus, "voting for the bot"))
                     bonus = gold // 5
-                    gold += bonus
+                    gold_bonus += bonus
                     gold_bonus_sources.append((bonus, "voting for the bot"))
             except KeyError:
                 pass
+            gold += gold_bonus
+            xp += xp_bonus
 
-            # Create and send embed
+            await player.player.give_gold(conn, gold)
+            await player.player.check_xp_increase(conn, ctx, xp)
+            await player.player.log_pve(conn, victory)
+
+            # Create and send result embed
             gold_gains_str = stringify_gains("gold", gold, gold_bonus_sources)
             xp_gains_str = stringify_gains("xp", xp, xp_bonus_sources)
             embed = discord.Embed(title=title, color=Vars.ABLUE)
@@ -322,16 +305,14 @@ class PvE(commands.Cog):
                         f"`{accessory.id}`: **{accessory.name}**"),
                     inline=False)
 
-            await author.give_gold(conn, gold)
-            await author.check_xp_increase(conn, ctx, xp)
-            await author.log_pve(conn, victory)
-            if level == author.pve_limit and victory:
-                await author.increment_pve_limit(conn)
+            if level == player.player.pve_limit and victory:
+                await player.player.increment_pve_limit(conn)
                 embed.set_footer(
-                    text=f"You have unlocked PvE level {author.pve_limit}.")
+                    text=f"You have unlocked PvE level {player.player.pve_limit}.")
+
 
         await interaction.edit_original_message(embed=embed, view=None)
 
-
-def setup(bot):
+        
+def setup(bot: Ayesha):
     bot.add_cog(PvE(bot))

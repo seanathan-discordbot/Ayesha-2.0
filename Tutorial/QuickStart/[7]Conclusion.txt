@@ -1,0 +1,9 @@
+Thanks for reading this tutorial! I described a handful of important commands to you, but Ayesha has over 50 commands and so much more available for you to do! So get some friends and learn the intricate secrets of the bot together!
+
+For some more in-depth details, you can read the other tutorials, although they are by no means necessary. They just expand on what is written here.
+
+Need help with something? Check out the `/help` command!
+
+Suggestions? Bugs? Want to meet more players? Join the [support server](https://discord.gg/FRTTARhN44).
+
+Support us by voting on [top.gg](https://top.gg/bot/767234703161294858)!

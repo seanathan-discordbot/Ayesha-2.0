@@ -7,8 +7,8 @@ from discord.ext.commands import BucketType, cooldown
 import asyncio
 import random
 
-from Utilities import Checks, CombatObject, PlayerObject, Vars
-from Utilities.CombatObject import Belligerent, CombatInstance
+from Utilities import Checks, PlayerObject, Vars
+from Utilities.Combat import Belligerent, CombatEngine, CombatTurn
 from Utilities.ConfirmationMenu import ConfirmationMenu
 from Utilities.AyeshaBot import Ayesha
 
@@ -41,15 +41,43 @@ class PvP(commands.Cog):
         print("PvP is ready.")
 
     # AUXILIARY FUNCTIONS
-    async def run_pvp(self, ctx, author : discord.Member, 
-            opponent : discord.Member):
+    def create_embed(self,
+            data: CombatTurn.CombatTurn,
+            player1: Belligerent.CombatPlayer,
+            player2: Belligerent.CombatPlayer,
+            message: str = ""
+    ) -> discord.Embed:
+        """Create the PvP UI given the combatants and recent turn data."""
+        # Update information display
+        embed = discord.Embed(
+            title = f"Battle: {player1.name} vs. {player2.name}",
+            color = Vars.ABLUE)
+        for p in (player1, player2):
+            embed.add_field(
+                name=p.name,
+                value=(
+                    f"ATK: `{p.attack}` | "
+                    f"CRIT: `{p.crit_rate}%/{p.crit_damage}%`\n"
+                    f"HP: `{p.current_hp}` | DEF: `{p.defense}%`\n"
+                    f"SPD: `{p.speed}` | PEN: `{p.armor_pen}`"))
+        embed.add_field(
+            name="Battle Log",
+            value=data.description + (f'\n{message}' if message else message),
+            inline=False)
+        return embed
+
+    async def run_pvp(self, 
+            ctx: discord.ApplicationContext, 
+            author : discord.Member, 
+            opponent : discord.Member
+    ):
         """Runs the PvP instance."""
         if author.id == opponent.id:
             return await ctx.respond(
                 f"You cannot challenge yourself.")
 
         # Ask for permission to perform PvP
-        view = ConfirmationMenu(user=opponent)
+        view = ConfirmationMenu(user=opponent, timeout=30.0)
         interaction = await ctx.respond(
             content=(
                 f"{opponent.mention}, {author.mention} is challenging you "
@@ -64,88 +92,36 @@ class PvP(commands.Cog):
 
         # If they accept, load the players and create belligerents
         async with self.bot.db.acquire() as conn:
-            initiator = await PlayerObject.get_player_by_id(conn, author.id)
-            adversary = await PlayerObject.get_player_by_id(conn, opponent.id)
-        player1 = CombatObject.Belligerent.load_player(initiator)
-        player2 = CombatObject.Belligerent.load_player(adversary)
+            player1 = await Belligerent.CombatPlayer.from_id(conn, author.id)
+            player2 = await Belligerent.CombatPlayer.from_id(conn, opponent.id)
 
         # Main game loop, should be as close to PvE as possible
         # interaction = await ctx.respond("Loading battle...")
-        turn_counter = 1
-        recent_turns = [
-            f"Battle begins between **{player1.name}** and **{player2.name}**."]
-        while turn_counter <= 25:
-            # Update information display
-            embed = discord.Embed(
-                title = f"Battle: {player1.name} vs. {player2.name}",
-                color = Vars.ABLUE)
-            embed.add_field(
-                name=player1.name,
-                value=(
-                    f"ATK: `{player1.attack}` | CRIT: `{player1.crit}%`\n"
-                    f"HP: `{player1.current_hp}` | DEF: `{player1.defense}%`"))
-            embed.add_field(
-                name=player2.name,
-                value=(
-                    f"ATK: `{player2.attack}` | CRIT: `{player2.crit}%`\n"
-                    f"HP: `{player2.current_hp}` | DEF: `{player2.defense}%`"))
-            log = ""
-            for turn in recent_turns[-5:]:
-                log += f"{turn}\n\n"
-            embed.add_field(
-                name="Battle Log",
-                value=log,
-                inline=False)
+        engine, results = CombatEngine.CombatEngine.initialize(player1, player2)
+        while engine:
+            embed = self.create_embed(results, player1, player2)
 
             await interaction.edit_original_message(
                 content=None, embed=embed, view=None)
 
             # Determine belligerent actions
-            player1.last_move = random.choices(
-                population=["Attack", "Block", "Parry", "Heal", "Bide"],
-                weights=[50, 20, 20, 3, 7])[0]
-            player2.last_move = random.choices(
-                population=["Attack", "Block", "Parry", "Heal", "Bide"],
-                weights=[50, 20, 20, 3, 7])[0]
+            action = engine.recommend_action(engine.actor, results)[0]
 
             # Calculate damage based off actions
-            combat_turn = CombatInstance(player1, player2, turn_counter)
-            recent_turns.append(combat_turn.get_turn_str())
-            player1, player2 = combat_turn.apply_damage()
-
-            # Check for victory
-            if player1.current_hp <= 0 or player2.current_hp <= 0:
-                break
-
-            # Set up for next turn
-            player1, player2 = CombatInstance.on_turn_end(player1, player2)
-
-            turn_counter += 1
+            results = engine.process_turn(action)
             await asyncio.sleep(3)
 
         # With loop over, determine winner and give rewards
+        victor = engine.get_victor()
+        loser = player2 if victor == player1 else player1
         async with self.bot.db.acquire() as conn:
-            if player1.current_hp > player2.current_hp:
-                await initiator.log_pvp(conn, True)
-                await adversary.log_pvp(conn, False)
-                recent_turns.append(
-                    f"**{author.mention} has proven their strength!**")
-            elif player1.current_hp < player2.current_hp:
-                await initiator.log_pvp(conn, False)
-                await adversary.log_pvp(conn, True)
-                recent_turns.append(
-                    f"**{opponent.mention} has proven their strength!**")
-            else:
-                await initiator.log_pvp(conn, False)
-                await adversary.log_pvp(conn, False)
-                recent_turns.append(
-                    f"**The battle has ended in a draw!**")
+            await victor.player.log_pvp(conn, True)
+            await loser.player.log_pvp(conn, False)
 
-        log = ""
-        for turn in recent_turns[-5:]:
-            log += f"{turn}\n\n"
-        embed.set_field_at(2, name="Battle Log", value=log, inline=False)
+        log = f"**{victor.name} has proven their strength!**"
+        embed = self.create_embed(results, player1, player2, log)
         await interaction.edit_original_message(embed=embed)
+
 
     # COMMANDS
     @commands.slash_command()
@@ -177,9 +153,9 @@ class PvP(commands.Cog):
             matches = []
             i = 0
             while i < len(players):
-                players[i]["Belligerent"] = Belligerent.load_player(players[i]["Player"])
+                players[i]["Belligerent"] = Belligerent.CombatPlayer(players[i]["Player"])
                 try:
-                    players[i+1]["Belligerent"] = Belligerent.load_player(players[i+1]["Player"])
+                    players[i+1]["Belligerent"] = Belligerent.CombatPlayer(players[i+1]["Player"])
                 except KeyError: #In case there are an odd amount of players
                     pass
                 finally:
@@ -198,26 +174,26 @@ class PvP(commands.Cog):
             Otherwise it will base the victor off the proportions of the attack.
             Return the winner and loser in that order."""
             # See if one side lands a critical hit
-            player1["Belligerent"].crit *= 2
-            player1["Belligerent"].crit -= player2["Belligerent"].defense
+            player1["Belligerent"].crit_rate *= 2
+            player1["Belligerent"].crit_rate -= player2["Belligerent"].defense
 
-            player2["Belligerent"].crit *= 2
-            player2["Belligerent"].crit -= player1["Belligerent"].defense
-            player2["Belligerent"].crit += player1["Belligerent"].crit
+            player2["Belligerent"].crit_rate *= 2
+            player2["Belligerent"].crit_rate -= player1["Belligerent"].defense
+            player2["Belligerent"].crit_rate += player1["Belligerent"].crit_rate
 
             random_crit = random.randint(0, 1000)
-            if random_crit < player1["Belligerent"].crit:
+            if random_crit < player1["Belligerent"].crit_rate:
                 return player1, player2
-            elif random_crit < player2["Belligerent"].crit:
+            elif random_crit < player2["Belligerent"].crit_rate:
                 return player2, player1
             
             # Weigh the sum of each player's stats
             p1 = player1["Belligerent"].attack * 4 \
-                + player1["Belligerent"].crit * 8 \
+                + player1["Belligerent"].crit_rate * 8 \
                 + player1["Belligerent"].defense * 9 \
                 + player1["Belligerent"].max_hp
             p2 = player2["Belligerent"].attack * 4 \
-                + player2["Belligerent"].crit * 8 \
+                + player2["Belligerent"].crit_rate * 8 \
                 + player2["Belligerent"].defense * 9 \
                 + player2["Belligerent"].max_hp
 
@@ -260,7 +236,7 @@ class PvP(commands.Cog):
             while len(players) < 2**n:
                 boss_level = random.randint(1, 14)
                 fake_player = {
-                    "Belligerent" : Belligerent.load_boss(boss_level)
+                    "Belligerent" : Belligerent.Boss(boss_level)
                 }
                 players.append(fake_player)
 

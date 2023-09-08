@@ -1,0 +1,6 @@
+Page 2 shows all your combat stats. In combat, there are 7 main stats: Attack, Critical Rate, Critical Damage, HP, defense, speed, and armor penetration. These stats can be increased by many things such as your level, weapons, armor, accessories, and acolytes (all will be explained), and the occupation and origin you just set.
+
+Luckily, you start off with a cheap weapon. You can view it with `/inventory`. This will open your list of weapons. 
+Use `/inventory` to see the list of weapons you own, and get the ID of the your 'Wooden Spear' (a number like this: `50000`). Then do `/equip`, select 'Equip a Weapon', select the id option, and type your weapon's ID there. You have equipped your first weapon! 
+
+When you get armor and accessories in the future, you can find them in the `/inventory` as well and equip them in the same way you equipped your weapon. You can get some types of armor for gold by buying them in the `/shop`, but accessories are attainable only through PvE.

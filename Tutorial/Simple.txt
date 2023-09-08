@@ -1,0 +1,10 @@
+`/start <character name>` to create a character
+`/profile` to view your character
+`/pve <level>` to fight enemies
+`/inventory` to view your weapons
+`/equip` to equip a weapon
+`/summon` to get new weapons and acolytes
+`/tavern list` to view your acolytes
+`/tavern equip` to equip an acolyte (you can have 2 equipped)
+
+Read the `/tutorial` with topic 'Quick-Start Guide' to get more in-depth explanations of these commands!"

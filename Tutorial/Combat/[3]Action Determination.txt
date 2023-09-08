@@ -1,0 +1,7 @@
+Another historical tidbit: before the days of slash commands, menus, and buttons, bot devs were forced to using reactions to get a player's input. But Discord limited adding reactions to messages, and so the interactive PvE of today was once a boring, automatic PvE, like PvP.
+
+The fact above brings the question of how attacks are determined. In the past, there existed a `%strategy` command in which you set the proportion of each action. Then a Discord update added buttons that we could use instead of spamming emojis, so players could choose what they wanted, and strategy got moved to a hidden location.
+
+Now as of Ayesha 2.4, bosses now also have a tiny bit of intellect to their move choices. They'll generally try to attack when they can, but play defensively as their HP drops.
+
+You can note that in your PvE battle log, you are even told what the boss will do on the next turn! You may have also wisely deduced that the I, Ayesha, am also a liar. You can find in `cogs/PvE.py`, the [calculation](https://github.com/seanathan-discordbot/Ayesha-2.0/blob/main/cogs/PvE.py) that only 50% of the time I am telling the truth. In the rest of the cases, I select another random action to display, but since that random choice can also be the correct once, the real probability is a little above 50%.

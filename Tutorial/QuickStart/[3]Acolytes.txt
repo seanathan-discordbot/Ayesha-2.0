@@ -1,0 +1,15 @@
+To help you in your journeys, you can also hire experienced characters called acolytes to boost your stats further! The `/tavern` command has a suite of services related to acolytes.
+
+You can view all acolytes in the game with the `/tavern list` command. Each acolyte has varying stats which boost your own, and a cool gameplay effect that can boost some aspect of play, often making viable a certain strategy in combat.
+
+Go through the list and meet all the acolytes! When you find one that you like, you can hire them with the `/tavern recruit` command. Just put their name in and they will join you! This action costs **rubidics**, which you gain by levelling up, so choose wisely.
+
+You can attain a specific acolyte up to 3 times. On the 2nd and 3rd time, you boost their gameplay effect. In the example below, Paterius has (1★) next to his name. This means that you have a Lvl 1 Paterius. His effect is at its most basic level. Note that the effect appears like this: 
+**Effect**: Increases damage by [**9**/12/15]%, along with a flat 15 bonus.
+The bolded **9** means that your damage increases by 9% in combat.
+
+Now look at Aulus, who is (3★). His effect looks like this:
+**Effect:** Crit hits increase attack by [40/50/**60**] for the remainder of the battle.
+This player decided to `/tavern recruit` Aulus 3 times, boosting his effect from increasing ATK by 40 to incrasing it to 60. If you find an acolyte is central to your gameplay, you can boost their effect this way by recruiting them the extra second and third time.
+
+Finally, you'll notice that Arsaces has only a (-). This indicates that you have not yet hired this acolyte, and can't invite them to your party at all until you spend a rubidic to recruit them.

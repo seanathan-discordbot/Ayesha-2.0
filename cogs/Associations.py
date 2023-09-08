@@ -13,7 +13,7 @@ import time
 
 from Utilities import AssociationObject, Checks, PlayerObject, Vars
 from Utilities.Analytics import stringify_gains
-from Utilities.CombatObject import Belligerent, CombatInstance
+from Utilities.Combat import Belligerent, CombatEngine
 from Utilities.ConfirmationMenu import ConfirmationMenu
 from Utilities.Finances import Transaction
 from Utilities.AyeshaBot import Ayesha
@@ -111,7 +111,7 @@ class Associations(commands.Cog):
                 name=f"{player.char_name} [{player.guild_rank}]",
                 value=(
                     f"Level `{player.level}`, with `{player.get_attack()}` "
-                    f"ATK, `{player.get_crit()}` CRIT, `{player.get_hp()}` HP, "
+                    f"ATK, `{player.get_crit_rate()}` CRIT, `{player.get_hp()}` HP, "
                     f"`{player.get_defense()}` DEF"),
                 inline=False)
             iteration += 1
@@ -169,7 +169,7 @@ class Associations(commands.Cog):
                         value = (
                             f"Name: {champion.char_name}\n"
                             f"ATK/CRIT: `{champion.get_attack()}`/"
-                            f"`{champion.get_crit()}`%\n"
+                            f"`{champion.get_crit_rate()}`%\n"
                             f"HP/DEF: `{champion.get_hp()}`/"
                             f"`{champion.get_defense()}`%"))
                 except AttributeError:
@@ -728,8 +728,8 @@ class Associations(commands.Cog):
 
         # Change to Belligerents for easier stat changes
         for i in range(len(att_team)):
-            att_team[i] = Belligerent.load_player(att_team[i])
-            def_team[i] = Belligerent.load_player(def_team[i])
+            att_team[i] = Belligerent.CombatPlayer(att_team[i])
+            def_team[i] = Belligerent.CombatPlayer(def_team[i])
 
         # Nerf repeat characters
         for team in (att_team, def_team):
@@ -747,29 +747,22 @@ class Associations(commands.Cog):
         battle_results = []
 
         for i in range(len(att_team)): # Always 3
-            turn_counter = 0
+            engine, results = CombatEngine.CombatEngine.initialize(
+                att_team[i], def_team[i], 15
+            )
             battle_log = []
-            while True:
-                moves = random.choices( # Determine player moves
-                    population=["Attack", "Block", "Parry"],
-                    weights=[50, 25, 25],
-                    k=2)
-                att_team[i].last_move = moves[0]
-                def_team[i].last_move = moves[1]
-                # Simulate the battle
-                combat = CombatInstance(att_team[i], def_team[i], turn_counter)
-                battle_log.append(combat.get_turn_str())
-                att_team[i], def_team[i] = combat.apply_damage()
+            while engine:
+                battle_log.append(results.description)
+                actor = engine.actor
+                action = engine.recommend_action(actor, results)
+                engine.process_turn(action)
+            battle_log.append(results.description)
+            
+            if engine.get_victor() == att_team[i]:
+                attacker_wins += 1
+            else:
+                defender_wins += 1
 
-                # Break loop under these victory conditions
-                if turn_counter > 15 or att_team[i].current_hp <= 0:
-                    defender_wins += 1
-                    break
-                elif def_team[i].current_hp <= 0:
-                    attacker_wins += 1
-                    break
-                
-                turn_counter += 1
             # With battle over, create embed displaying results
             embed = discord.Embed(
                 title=f"Battle for {attacker.base}: {i+1}",
@@ -777,18 +770,18 @@ class Associations(commands.Cog):
             embed.add_field(
                 name=att_team[i].name,
                 value=(
-                    f"ATK: `{att_team[i].attack}` | CRIT: `{att_team[i].crit}%`"
+                    f"ATK: `{att_team[i].attack}` | CRIT: `{att_team[i].crit_rate}%`"
                     f"\nHP: `{att_team[i].current_hp}` | DEF: "
                     f"`{att_team[i].defense}%`"))  
             embed.add_field(
                 name=def_team[i].name,
                 value=(
-                    f"ATK: `{def_team[i].attack}` | CRIT: `{def_team[i].crit}%`"
+                    f"ATK: `{def_team[i].attack}` | CRIT: `{def_team[i].crit_rate}%`"
                     f"\nHP: `{def_team[i].current_hp}` | DEF: "
                     f"`{def_team[i].defense}%`"))
             embed.add_field(
                 name="Battle Log", 
-                value="\n\n".join(battle_log[-5:]),
+                value="\n\n".join(battle_log[-3:]),
                 inline=False)
             battle_results.append(embed)
 

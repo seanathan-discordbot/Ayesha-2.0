@@ -1,0 +1,5 @@
+Now that you've hired an acolyte, they remain in your tavern until you call on them! To have them contribute to your gameplay and stats, use the `/tavern equip` command to add them to your party.
+
+You can have up to 2 acolytes in your team, so when you equip an acolyte, you have to specify whether they join Slot 1 or 2. Which slot they are in has no effect on gameplay; they contribute to your team regardless.
+
+Mix and match different acolytes together to see if you can come up with interesting strategies in PvE, which is coming up next!
