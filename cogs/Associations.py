@@ -650,7 +650,11 @@ class Associations(commands.Cog):
             #     return await ctx.respond(
             #         "This player is not in your association.")
             # Otherwise sets the champion
-            await assc.set_champion(conn, target.disc_id, slot)
+            try:
+                await assc.set_champion(conn, target.disc_id, slot)
+            except Checks.PlayerAlreadyChampion:
+                return await ctx.respond("This player is already a champion.")
+
             await ctx.respond(
                 f"Added {target.char_name} to your the brotherhood's "
                 f"roster of champions.")
