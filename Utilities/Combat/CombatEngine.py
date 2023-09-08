@@ -231,13 +231,24 @@ class CombatEngine:
 
     def set_next_actor(self):
         """Calculate and set the next combatant to move based on speed values"""
-        while self.player1.cooldown > 0 and self.player2.cooldown > 0:
-            self.player1.cooldown -= self.player1.speed
-            self.player2.cooldown -= self.player2.speed
-        if self.player1.cooldown <= self.player2.cooldown:
+        r1 = self.player1.cooldown / self.player1.speed
+        r2 = self.player2.cooldown / self.player2.speed
+
+        if r1 <= r2:  # Player 1 reaches 0 faster, they go next
             self.actor, self.target = self.player1, self.player2
         else:
             self.actor, self.target = self.player2, self.player1
+
+        self.player1.cooldown -= r1 * self.player1.speed
+        self.player2.cooldown -= r2 * self.player2.speed 
+
+        # while self.player1.cooldown > 0 and self.player2.cooldown > 0:
+        #     self.player1.cooldown -= self.player1.speed
+        #     self.player2.cooldown -= self.player2.speed
+        # if self.player1.cooldown <= self.player2.cooldown:
+        #     self.actor, self.target = self.player1, self.player2
+        # else:
+        #     self.actor, self.target = self.player2, self.player1
         self.actor.cooldown = 1000
 
 
