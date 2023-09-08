@@ -101,7 +101,7 @@ class Bide(BaseStatus):
     
     def on_remove(self):
         self.target.attack -= self.attack_boost
-        self.target.speed -= self.target.speed
+        self.target.speed -= self.speed_boost
 
 
 class Slow(BaseStatus):
