@@ -109,7 +109,7 @@ class Occupations(commands.Cog):
             else:
                 await ctx.respond("You decided not to change your occupation.")
                 ctx.command.reset_cooldown(ctx)
-            await msg.delete_original_message()
+            await msg.delete_original_response()
 
         else:
             view = ConfirmationMenu(user=ctx.author, timeout=30.0)
@@ -139,7 +139,7 @@ class Occupations(commands.Cog):
             else:
                 await ctx.respond("You decided not to change your origin.")
                 ctx.command.reset_cooldown(ctx)
-            await msg.delete_original_message()
+            await msg.delete_original_response()
 
 
 def setup(bot):

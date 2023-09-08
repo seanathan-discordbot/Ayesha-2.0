@@ -609,17 +609,17 @@ class Travel(commands.Cog):
             await view.wait()
             self.bot.training_players.pop(ctx.author.id)
             if view.value is None:
-                return await interaction.edit_original_message(
+                return await interaction.edit_original_response(
                     content="Timed out.", view=None)
             elif not view.value:
-                return await interaction.edit_original_message(
+                return await interaction.edit_original_response(
                     content="You cancelled the upgrade.", view=None)
 
             if player.gold < purchase.paying_price:
-                await interaction.edit_original_message(view=None)
+                await interaction.edit_original_response(view=None)
                 raise Checks.NotEnoughGold(purchase.paying_price, player.gold)
             if player.resources["iron"] < iron_cost:
-                await interaction.edit_original_message(view=None)
+                await interaction.edit_original_response(view=None)
                 raise Checks.NotEnoughResources(
                     "iron", iron_cost, player.resources["iron"])
 
@@ -632,7 +632,7 @@ class Travel(commands.Cog):
                 f"`{iron_cost}` iron, increasing its ATK to "
                 f"`{weapon.attack}`! {print_tax}")
             await player.give_resource(conn, "iron", iron_cost*-1)
-            await interaction.edit_original_message(
+            await interaction.edit_original_response(
                 content=message, view=None)
 
 def setup(bot):

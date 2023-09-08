@@ -87,7 +87,7 @@ class PvP(commands.Cog):
         if view.value:
             pass
         else:
-            return await interaction.edit_original_message(
+            return await interaction.edit_original_response(
                 content="They declined.", view=None)
 
         # If they accept, load the players and create belligerents
@@ -101,7 +101,7 @@ class PvP(commands.Cog):
         while engine:
             embed = self.create_embed(results, player1, player2)
 
-            await interaction.edit_original_message(
+            await interaction.edit_original_response(
                 content=None, embed=embed, view=None)
 
             # Determine belligerent actions
@@ -120,7 +120,7 @@ class PvP(commands.Cog):
 
         log = f"**{victor.name} has proven their strength!**"
         embed = self.create_embed(results, player1, player2, log)
-        await interaction.edit_original_message(embed=embed)
+        await interaction.edit_original_response(embed=embed)
 
 
     # COMMANDS
@@ -207,7 +207,7 @@ class PvP(commands.Cog):
         view = JoinMenu(ctx.author)
         interaction = await ctx.respond(content="Join Tournament", view=view)
         await view.wait()
-        await interaction.edit_original_message(view=None)
+        await interaction.edit_original_response(view=None)
 
         # Parse the people who joined the tournament
         if len(view.players) < 2:

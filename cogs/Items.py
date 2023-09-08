@@ -516,7 +516,7 @@ class Items(commands.Cog):
                 await ctx.respond("They accepted the offer.")
             else:
                 await ctx.respond("They declined your offer.")
-            await msg.delete_original_message()
+            await msg.delete_original_response()
             self.bot.trading_players.pop(ctx.author.id)
 
 

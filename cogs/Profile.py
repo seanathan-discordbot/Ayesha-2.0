@@ -192,7 +192,7 @@ class Profile(commands.Cog):
                 await ctx.respond(f"Started the game: {name}")
         else:
             await ctx.respond(f"You cancelled :(")
-        await msg.delete_original_message()
+        await msg.delete_original_response()
 
     @commands.slash_command(name="profile", )
     async def self_profile(self, ctx, player : Option(discord.Member,

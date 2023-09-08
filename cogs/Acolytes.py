@@ -260,10 +260,10 @@ class Acolytes(commands.Cog):
 
             await view.wait()
             if view.value is None:
-                await msg.delete_original_message()
+                await msg.delete_original_response()
                 return await ctx.respond("Timed out.")
             elif not view.value:
-                await msg.delete_original_message()
+                await msg.delete_original_response()
                 return await ctx.respond("Cancelled the transaction.")
 
             # Add acolyte to player's tavern
@@ -271,7 +271,7 @@ class Acolytes(commands.Cog):
                 new_acolyte = await OwnedAcolyte.create_acolyte(conn, 
                     ctx.author.id, name)
             except Checks.DuplicateAcolyte as e:
-                return await msg.edit_original_message(
+                return await msg.edit_original_response(
                     content=(
                         f"You have already recruited **{name}** for the "
                         "maximum of 3 times. Try again with another acolyte "
@@ -296,7 +296,7 @@ class Acolytes(commands.Cog):
             embed.set_footer(text=(
                 f"Equip {new_acolyte.name} with '/recruit {new_acolyte.name}'."))
 
-            await msg.edit_original_message(embed=embed, view=None)
+            await msg.edit_original_response(embed=embed, view=None)
             await player.give_rubidics(conn, -1)
 
 

@@ -149,7 +149,7 @@ class PvE(commands.Cog):
             if actor.is_player:
                 # Update information display
                 view = Action.ActionView(ctx.author)
-                await interaction.edit_original_message(
+                await interaction.edit_original_response(
                     content=None,
                     embed=embed,
                     view=view
@@ -162,7 +162,7 @@ class PvE(commands.Cog):
                 action = view.choice
             else:
                 view = Action.WaitingView(ctx.author)
-                await interaction.edit_original_message(
+                await interaction.edit_original_response(
                     content=None,
                     embed=embed,
                     view=view
@@ -311,7 +311,7 @@ class PvE(commands.Cog):
                     text=f"You have unlocked PvE level {player.player.pve_limit}.")
 
 
-        await interaction.edit_original_message(embed=embed, view=None)
+        await interaction.edit_original_response(embed=embed, view=None)
 
         
 def setup(bot: Ayesha):
