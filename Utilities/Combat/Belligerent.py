@@ -69,11 +69,6 @@ class Belligerent(ABC):
     @abstractmethod
     def __str__(self) -> str:
         return f"(HP: {self.current_hp}/{self.max_hp})"
-
-    def __lt__(self, other: "Belligerent"):
-        if not isinstance(other, Belligerent):
-            raise TypeError
-        return self.cooldown < other.cooldown
     
     @property
     def current_hp(self):
