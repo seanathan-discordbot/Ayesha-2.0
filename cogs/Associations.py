@@ -507,7 +507,7 @@ class Associations(commands.Cog):
                     f"`/association view` to see it!"))
             else:
                 await ctx.respond("They declined your offer.")
-            await msg.delete_original_message()
+            await msg.delete_original_response()
         
     @a.command()
     @commands.check(Checks.is_player)
