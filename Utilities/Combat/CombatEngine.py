@@ -377,6 +377,12 @@ class CombatEngine:
                 data.actor.crit_rate *= 2
         except AttributeError:
             pass
+        try:
+            onion = data.target.get_acolyte("Onion")
+            if self.turn == onion.get_effect_modifier(0):
+                data.target.crit_rate *= 2
+        except AttributeError:
+            pass
 
         try:
             ajar = data.actor.get_acolyte("Ajar")
