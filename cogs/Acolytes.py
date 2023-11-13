@@ -13,8 +13,8 @@ from Utilities.AyeshaBot import Ayesha
 from Utilities.ConfirmationMenu import ConfirmationMenu
 
 def acolyte_equipped(player,acolyte_id):
-    id_1=player.acolyte1.id
-    id_2=player.acolyte2.id
+    id_1=player.acolyte1.id or -1  # If no aco equipped, then None = None
+    id_2=player.acolyte2.id or -1  # Then change this to -1 to prevent false pos
     return (acolyte_id==id_1 or acolyte_id==id_2)
 
 async def get_all_acolytes(conn : asyncpg.Connection, 
