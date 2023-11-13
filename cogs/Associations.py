@@ -185,8 +185,8 @@ class Associations(commands.Cog):
             embeds.append(self.write_member_page(i, member_list))
 
         # Paginate and send association information
-            paginator = pages.Paginator(pages=embeds, timeout=30)
-            await paginator.respond(ctx.interaction)
+        paginator = pages.Paginator(pages=embeds, timeout=30)
+        await paginator.respond(ctx.interaction)
 
     # COMMANDS
     @a.command()
